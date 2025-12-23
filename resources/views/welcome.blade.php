@@ -461,7 +461,7 @@
                             <i class="fas fa-bullhorn text-white"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-lg">UTHM Digital </h3>
+                            <h3 class="font-bold text-lg">UTHM Digital Bulletin</h3>
                             <p class="text-sm text-gray-400">Official Platform</p>
                         </div>
                     </div>

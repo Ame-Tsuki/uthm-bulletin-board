@@ -219,7 +219,7 @@
                  class="h-16 w-auto object-contain">
         </div>
         <div>
-            <h1 class="text-xl font-bold text-uthm-blue">UTHM Digital Bulletin</h1>
+            <h1 class="text-xl font-bold text-uthm-blue">UTHM Digital Bulletin Board</h1>
             <p class="text-xs text-gray-500">Official Communication Platform</p>
         </div>
     </a>
@@ -461,7 +461,7 @@
                             <i class="fas fa-bullhorn text-white"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-lg">UTHM Digital </h3>
+                            <h3 class="font-bold text-lg">UTHM Digital Bulletin Board </h3>
                             <p class="text-sm text-gray-400">Official Platform</p>
                         </div>
                     </div>

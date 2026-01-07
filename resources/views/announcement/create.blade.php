@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Announcement - UTHM Bulletin Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .badge-urgent { background-color: #fee2e2; color: #dc2626; }
+        .badge-academic { background-color: #dbeafe; color: #1d4ed8; }
+        .badge-events { background-color: #f3e8ff; color: #7c3aed; }
+        .badge-general { background-color: #f0f9ff; color: #0369a1; }
+        .badge-important { background-color: #fef3c7; color: #d97706; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Simple Header -->
+    <nav class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="{{ route('announcements.index') }}" class="flex items-center">
+                        <i class="fas fa-arrow-left text-gray-600 mr-2"></i>
+                        <span class="text-gray-700">Back to Announcements</span>
+                    </a>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-gray-600 mr-4">{{ auth()->user()->name }}</span>
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="py-8">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Page Header -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">Create New Announcement</h1>
+                <p class="mt-2 text-gray-600">Share important updates with students and staff</p>
+            </div>
+
+            <!-- Success/Error Messages -->
+            @if(session('success'))
+                <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                        <span class="text-green-800">{{ session('success') }}</span>
+                    </div>
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle text-red-500 mr-3"></i>
+                        <div>
+                            <h4 class="font-medium text-red-900">Please fix the following errors:</h4>
+                            <ul class="mt-2 text-red-700 text-sm">
+                                @foreach($errors->all() as $error)
+                                    <li class="flex items-center mt-1">
+                                        <i class="fas fa-circle text-xs mr-2"></i>{{ $error }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Create Form -->
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <div class="p-6">
+                    <form action="{{ route('announcements.store') }}" method="POST">
+                        @csrf
+
+                        <!-- Title -->
+                        <div class="mb-6">
+                            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                                Announcement Title <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="title" 
+                                   name="title" 
+                                   value="{{ old('title') }}"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="Enter announcement title"
+                                   required>
+                            <p class="mt-1 text-sm text-gray-500">Make it clear and descriptive</p>
+                        </div>
+
+                        <!-- Category and Priority -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <!-- Category -->
+                            <div>
+                                <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Category <span class="text-red-500">*</span>
+                                </label>
+                                <select id="category" 
+                                        name="category" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        required>
+                                    <option value="">Select Category</option>
+                                    <option value="urgent" {{ old('category') == 'urgent' ? 'selected' : '' }}>Urgent</option>
+                                    <option value="academic" {{ old('category') == 'academic' ? 'selected' : '' }}>Academic</option>
+                                    <option value="events" {{ old('category') == 'events' ? 'selected' : '' }}>Events</option>
+                                    <option value="general" {{ old('category') == 'general' ? 'selected' : '' }}>General</option>
+                                    <option value="important" {{ old('category') == 'important' ? 'selected' : '' }}>Important</option>
+                                </select>
+                            </div>
+
+                            <!-- Priority -->
+                            <div>
+                                <label for="priority" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Priority
+                                </label>
+                                <select id="priority" 
+                                        name="priority" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="normal" {{ old('priority', 'normal') == 'normal' ? 'selected' : '' }}>Normal</option>
+                                    <option value="important" {{ old('priority') == 'important' ? 'selected' : '' }}>Important</option>
+                                    <option value="urgent" {{ old('priority') == 'urgent' ? 'selected' : '' }}>Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Department -->
+                        <div class="mb-6">
+                            <label for="department" class="block text-sm font-medium text-gray-700 mb-2">
+                                Department/Office
+                            </label>
+                            <input type="text" 
+                                   id="department" 
+                                   name="department" 
+                                   value="{{ old('department') }}"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="e.g., IT Department, Academic Affairs Office">
+                        </div>
+
+                        <!-- Content -->
+                        <div class="mb-6">
+                            <label for="content" class="block text-sm font-medium text-gray-700 mb-2">
+                                Content <span class="text-red-500">*</span>
+                            </label>
+                            <textarea id="content" 
+                                      name="content" 
+                                      rows="10"
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="Enter announcement details..."
+                                      required>{{ old('content') }}</textarea>
+                            <p class="mt-1 text-sm text-gray-500">You can use basic HTML formatting if needed</p>
+                        </div>
+
+                        <!-- Dates -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <!-- Publish Date -->
+                            <div>
+                                <label for="publish_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Publish Date
+                                </label>
+                                <input type="datetime-local" 
+                                       id="publish_date" 
+                                       name="publish_date" 
+                                       value="{{ old('publish_date') }}"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <p class="mt-1 text-sm text-gray-500">Leave empty to publish immediately</p>
+                            </div>
+
+                            <!-- Expiry Date -->
+                            <div>
+                                <label for="expiry_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Expiry Date
+                                </label>
+                                <input type="datetime-local" 
+                                       id="expiry_date" 
+                                       name="expiry_date" 
+                                       value="{{ old('expiry_date') }}"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <p class="mt-1 text-sm text-gray-500">Optional - when this announcement should expire</p>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-6 border-t border-gray-200">
+                            <div>
+                                <a href="{{ route('announcements.index') }}" 
+                                   class="inline-flex items-center px-5 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-arrow-left mr-2"></i>
+                                    Cancel
+                                </a>
+                            </div>
+                            <div class="flex gap-4">
+                                <button type="button" 
+                                        onclick="resetForm()"
+                                        class="inline-flex items-center px-5 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-redo mr-2"></i>
+                                    Reset
+                                </button>
+                                <button type="submit" 
+                                        class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow">
+                                    <i class="fas fa-paper-plane mr-2"></i>
+                                    Publish Announcement
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <h3 class="font-medium text-blue-900 mb-3 flex items-center">
+                    <i class="fas fa-lightbulb mr-2"></i> Tips for Effective Announcements
+                </h3>
+                <ul class="text-blue-700 text-sm space-y-2">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
+                        <span>Use clear and concise titles that summarize the announcement</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
+                        <span>Include all relevant details: dates, times, locations, contacts</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
+                        <span>Use appropriate categories and priorities for better visibility</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
+                        <span>Set expiry dates for time-sensitive announcements</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set min date for publish date to today
+            const today = new Date();
+            const todayString = today.toISOString().slice(0, 16);
+            const publishDateInput = document.getElementById('publish_date');
+            const expiryDateInput = document.getElementById('expiry_date');
+            
+            publishDateInput.min = todayString;
+            
+            // Set min date for expiry date based on publish date
+            publishDateInput.addEventListener('change', function() {
+                if (this.value) {
+                    expiryDateInput.min = this.value;
+                }
+            });
+            
+            // Set expiry date min if publish date already has value
+            if (publishDateInput.value) {
+                expiryDateInput.min = publishDateInput.value;
+            }
+        });
+        
+        function resetForm() {
+            if (confirm('Are you sure you want to reset the form? All entered data will be lost.')) {
+                document.querySelector('form').reset();
+            }
+        }
+    </script>
+</body>
+</html>

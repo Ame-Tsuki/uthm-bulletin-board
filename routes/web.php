@@ -75,19 +75,33 @@ Route::middleware(['auth'])->group(function () {
         }
     })->name('dashboard');
 
+// Profile Route
+Route::get('/profile', function() {
+    $user = auth()->user();
+    return view('profile', compact('user'));
+})->name('profile')->middleware('auth');
+
+Route::get('/settings', function() {
+    $user = auth()->user(); // Pass the user just in case
+    return view('settings', compact('user')); // Points to settings.blade.php
+})->name('settings')->middleware('auth');
+
     // Student Dashboard
     Route::get('/student/dashboard', function () {
-        return view('student.dashboard');
+        $user = auth()->user();
+        return view('student.dashboard', compact('user'));
     })->name('student.dashboard')->middleware('role:student');
 
     // Staff Dashboard
     Route::get('/staff/dashboard', function () {
-        return view('staff.dashboard');
+        $user = auth()->user();
+        return view('staff.dashboard', compact('user'));
     })->name('staff.dashboard')->middleware('role:staff');
 
     // Club Dashboard
     Route::get('/club/dashboard', function () {
-        return view('club.dashboard');
+        $user = auth()->user();
+        return view('club.dashboard', compact('user'));
     })->name('club.dashboard')->middleware('role:club_admin');
 
     // Announcement Routes
@@ -96,6 +110,19 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/announcement/{id}', [AnnouncementController::class, 'show'])->name('announcements.show');
     });
 });
+
+// Announcement Routes
+Route::resource('announcements', AnnouncementController::class);
+
+// Additional announcement routes
+Route::post('/announcements/{announcement}/archive', [AnnouncementController::class, 'archive'])
+    ->name('announcements.archive');
+Route::post('/announcements/{announcement}/publish', [AnnouncementController::class, 'publish'])
+    ->name('announcements.publish');
+Route::get('/announcements/published', [AnnouncementController::class, 'published'])
+    ->name('announcements.published');
+Route::get('/announcements/drafts', [AnnouncementController::class, 'drafts'])
+    ->name('announcements.drafts');
 
 // Admin Routes (Require Admin Role)
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {

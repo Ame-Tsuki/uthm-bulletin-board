@@ -162,20 +162,25 @@
             </div>
         </div>
 
-        <!-- User Profile -->
-        <div class="p-4 border-b border-gray-200">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center shrink-0">
-                    <span class="font-bold text-green-700">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
-                </div>
-                <div class="sidebar-text">
-                    <h3 class="font-medium text-gray-900">{{ Auth::user()->name }}</h3>
-                    <p class="text-xs text-gray-500">{{ Auth::user()->uthm_id }}</p>
-                </div>
-            </div>
-        </div>
+       
 
         <!-- Dashboard Navigation - EXACT SAME ORDER AS MAIN DASHBOARD -->
+
+                     <!-- User Profile - Now Clickable -->
+<a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
+    <div class="p-4 border-b border-gray-200">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
+                <span class="font-bold uthm-blue">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+            </div>
+            <div class="sidebar-text">
+                <h3 class="font-medium text-gray-900">{{ $user->name }}</h3>
+                <p class="text-xs text-gray-500">{{ $user->uthm_id ?? 'UTHM Member' }}</p>
+            </div>
+        </div>
+    </div>
+</a>
+
         <nav class="p-4">
             <ul class="space-y-2">
                 <!-- Dashboard -->
@@ -222,16 +227,7 @@
                     </a>
                 </li>
 
-                <!-- Student Dashboard (Current Page) -->
-                <li>
-                    <a href="{{ route('student.dashboard') }}" 
-                       class="flex items-center p-3 rounded-lg bg-green-50 text-green-700">
-                        <div class="shrink-0">
-                            <i class="fas fa-user-graduate w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Student Dashboard</span>
-                    </a>
-                </li>
+                
 
                 <!-- Clubs -->
                 <li>
@@ -308,22 +304,25 @@
                                 <i class="fas fa-chevron-down text-gray-500"></i>
                             </button>
                             
-                            <!-- Dropdown Menu -->
                             <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden">
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-user mr-2"></i> My Profile
-                                </a>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-cog mr-2"></i> Settings
-                                </a>
-                                <div class="border-t border-gray-200 my-2"></div>
-                                <form action="{{ route('logout') }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                                    </button>
-                                </form>
-                            </div>
+    
+    <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <i class="fas fa-user mr-2"></i> My Profile
+    </a>
+    
+    <a href="{{ route('settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <i class="fas fa-cog mr-2"></i> Settings
+    </a>
+    
+    <div class="border-t border-gray-200 my-2"></div>
+    
+    <form action="{{ route('logout') }}" method="POST">
+        @csrf
+        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+        </button>
+    </form>
+</div>
                         </div>
                     </div>
                 </div>

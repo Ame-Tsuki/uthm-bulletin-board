@@ -167,6 +167,21 @@
                 </div>
             </div>
         </div>
+        
+        <!-- User Profile - Now Clickable -->
+<a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
+    <div class="p-4 border-b border-gray-200">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
+                <span class="font-bold uthm-blue">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+            </div>
+            <div class="sidebar-text">
+                <h3 class="font-medium text-gray-900">{{ $user->name }}</h3>
+                <p class="text-xs text-gray-500">{{ $user->uthm_id ?? 'UTHM Member' }}</p>
+            </div>
+        </div>
+    </div>
+</a>
 
         <!-- Dashboard Navigation -->
         <nav class="p-4">

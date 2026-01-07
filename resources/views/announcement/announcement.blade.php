@@ -111,6 +111,36 @@
         .uthm-green { color: #6ea342; }
         .uthm-yellow { color: #ffc107; }
         .uthm-red { color: #dc3545; }
+
+        /* Floating button */
+        .floating-add-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 86, 166, 0.3);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 86, 166, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(0, 86, 166, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 86, 166, 0);
+            }
+        }
+        
+        /* Mobile floating button */
+        @media (max-width: 768px) {
+            .floating-add-btn {
+                bottom: 5rem;
+                right: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -148,18 +178,20 @@
             </div>
         </div>
 
-        <!-- User Profile -->
-        <div class="p-4 border-b border-gray-200">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
-                    <span class="font-bold uthm-blue">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
-                </div>
-                <div class="sidebar-text">
-                    <h3 class="font-medium text-gray-900">{{ $user->name }}</h3>
-                    <p class="text-xs text-gray-500">{{ $user->uthm_id ?? 'UTHM Member' }}</p>
-                </div>
+                          <!-- User Profile - Now Clickable -->
+<a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
+    <div class="p-4 border-b border-gray-200">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
+                <span class="font-bold uthm-blue">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+            </div>
+            <div class="sidebar-text">
+                <h3 class="font-medium text-gray-900">{{ $user->name }}</h3>
+                <p class="text-xs text-gray-500">{{ $user->uthm_id ?? 'UTHM Member' }}</p>
             </div>
         </div>
+    </div>
+</a>
 
         <!-- Dashboard Navigation -->
         <nav class="p-4">
@@ -208,39 +240,8 @@
                     </a>
                 </li>
 
-                <!-- Role-Based Navigation -->
-                @if($user->role === 'admin')
-                    <li class="pt-4">
-                        <p class="sidebar-text text-xs text-gray-500 uppercase tracking-wider px-3">Admin</p>
-                        <a href="{{ route('admin.dashboard') }}" 
-                           class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 transition-colors mt-2">
-                            <div class="shrink-0">
-                                <i class="fas fa-cogs w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Admin Panel</span>
-                        </a>
-                    </li>
-                @elseif($user->role === 'staff')
-                    <li>
-                        <a href="{{ route('staff.dashboard') }}" 
-                           class="flex items-center p-3 rounded-lg hover:bg-yellow-50 text-yellow-600 transition-colors">
-                            <div class="shrink-0">
-                                <i class="fas fa-user-tie w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Staff Dashboard</span>
-                        </a>
-                    </li>
-                @elseif($user->role === 'student')
-                    <li>
-                        <a href="{{ route('student.dashboard') }}" 
-                           class="flex items-center p-3 rounded-lg hover:bg-green-50 text-green-600 transition-colors">
-                            <div class="shrink-0">
-                                <i class="fas fa-user-graduate w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Student Dashboard</span>
-                        </a>
-                    </li>
-                @endif
+               
+                
 
                 <!-- Clubs -->
                 <li>
@@ -304,9 +305,11 @@
                                 Create Announcement
                             </button>
                             <div id="quick-create-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden">
-                                <a href="{{ route('admin.announcements.create') ?? '#' }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <!-- ADD THIS: Direct link to create announcement -->
+                                <a href="{{ route('announcements.create') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-bullhorn mr-2"></i> New Announcement
                                 </a>
+                                <!-- End of addition -->
                                 <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-calendar-check mr-2"></i> New Event
                                 </a>
@@ -371,20 +374,37 @@
                             <p class="mt-2 text-gray-600">Stay updated with the latest news and announcements from UTHM</p>
                         </div>
                         <div class="mt-4 sm:mt-0">
-                            <!-- Category Filter -->
-                            <form method="GET" action="{{ route('announcements.index') }}" class="inline-block">
-                                <select name="category" onchange="this.form.submit()" 
-                                        class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">All Categories</option>
-                                    <option value="academic" {{ request('category') == 'academic' ? 'selected' : '' }}>Academic</option>
-                                    <option value="events" {{ request('category') == 'events' ? 'selected' : '' }}>Events</option>
-                                    <option value="general" {{ request('category') == 'general' ? 'selected' : '' }}>General</option>
-                                    <option value="urgent" {{ request('category') == 'urgent' ? 'selected' : '' }}>Urgent</option>
-                                </select>
-                            </form>
-                        </div>
+                    <!-- Add Post Button -->
+                        <a href="{{ route('announcements.create') }}" 
+                        class="inline-flex items-center px-5 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-md">
+                        <i class="fas fa-plus-circle mr-2"></i>
+                        Add New Post
+                        </a>
+                </div>
                     </div>
                 </div>
+
+                <!-- ADD THIS: Create Announcement Card (for admin/staff only) -->
+                @if(in_array($user->role, ['admin']))
+                <div class="mb-8 bg-gradient-to-r from-blue-50 to-uthm-blue-light border border-blue-200 rounded-xl shadow-sm p-5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="bg-uthm-blue text-white p-3 rounded-lg mr-4">
+                                <i class="fas fa-bullhorn text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-lg">Ready to share an announcement?</h3>
+                                <p class="text-gray-600 text-sm mt-1">Create a new announcement to inform students and staff about important updates.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('announcements.create') }}" 
+                           class="inline-flex items-center px-5 py-3 bg-uthm-blue text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow">
+                            <i class="fas fa-plus mr-2"></i>
+                            Create Announcement
+                        </a>
+                    </div>
+                </div>
+                @endif
 
                 <!-- Filters -->
                 <div class="mb-8 bg-white rounded-xl shadow p-4">
@@ -633,6 +653,16 @@
                         <h3 class="text-xl font-medium text-gray-900 mb-2">No announcements yet</h3>
                         <p class="text-gray-600 mb-6">When announcements are created, they will appear here.</p>
                         <p class="text-sm text-gray-500">Demo announcements are shown above for reference.</p>
+                        <!-- ADD THIS: Add button to create first announcement -->
+                        @if(in_array($user->role, ['admin', 'staff']))
+                        <div class="mt-8">
+                            <a href="{{ route('announcements.create') }}" 
+                               class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-lg">
+                                <i class="fas fa-plus-circle mr-2 text-lg"></i>
+                                Create Your First Announcement
+                            </a>
+                        </div>
+                        @endif
                     </div>
                 @endif
 
@@ -656,6 +686,14 @@
                 </div>
             </div>
         </footer>
+
+        <!-- ADD THIS: Floating "Add Post" Button -->
+        @if(in_array($user->role, ['admin', 'staff']))
+        <a href="{{ route('announcements.create') }}" 
+           class="floating-add-btn bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors hover:shadow-xl">
+            <i class="fas fa-plus text-2xl"></i>
+        </a>
+        @endif
     </div>
 
     <!-- JavaScript -->
@@ -715,6 +753,15 @@
                     e.stopPropagation();
                     quickCreateMenu.classList.toggle('hidden');
                 });
+                
+                // Fix the create announcement link in dropdown
+                const createAnnouncementLink = quickCreateMenu.querySelector('a[href*="announcements.create"]');
+                if (createAnnouncementLink) {
+                    createAnnouncementLink.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        window.location.href = this.href;
+                    });
+                }
             }
             
             // Close menus when clicking outside

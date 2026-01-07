@@ -65,7 +65,7 @@ Route::middleware(['auth'])->group(function () {
                 return redirect()->route('admin.dashboard');
             case 'staff':
                 return redirect()->route('staff.dashboard');
-            case 'club':
+            case 'club_admin':
                 return redirect()->route('club.dashboard');
             case 'student':
                 return redirect()->route('student.dashboard');
@@ -88,7 +88,7 @@ Route::middleware(['auth'])->group(function () {
     // Club Dashboard
     Route::get('/club/dashboard', function () {
         return view('club.dashboard');
-    })->name('club.dashboard')->middleware('role:club');
+    })->name('club.dashboard')->middleware('role:club_admin');
 
     // Announcement Routes
     Route::middleware(['verified'])->group(function () {

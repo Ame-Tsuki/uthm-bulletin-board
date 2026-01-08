@@ -439,161 +439,8 @@
                     </div>
                 </div>
 
-                <!-- Demo Notice -->
-                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                    <div class="flex items-start">
-                        <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
-                        <div>
-                            <h4 class="font-medium text-blue-900">Demo Mode</h4>
-                            <p class="text-blue-700 text-sm mt-1">This is a demonstration. When you create announcements in the admin panel, they will appear here.</p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Announcements Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Announcement Card 1 -->
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200">
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium badge-urgent">
-                                        <i class="fas fa-exclamation-circle mr-1"></i> Urgent
-                                    </span>
-                                    <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-general">
-                                        General
-                                    </span>
-                                </div>
-                                <span class="text-sm text-gray-500">
-                                    <i class="far fa-clock mr-1"></i> Dec 19, 2023
-                                </span>
-                            </div>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mb-3">System Maintenance This Weekend</h3>
-                            
-                            <p class="text-gray-600 mb-4 line-clamp-2">
-                                There will be a scheduled system maintenance on Saturday, December 23rd from 2:00 AM to 6:00 AM. All UTHM digital services will be temporarily unavailable during this period.
-                            </p>
-                            
-                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-user-tie mr-2"></i>
-                                    <span>IT Department</span>
-                                </div>
-                                <a href="/announcement/1" 
-                                   class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
-                                    View Details
-                                    <i class="fas fa-arrow-right ml-2"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Announcement Card 2 -->
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200">
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium badge-important">
-                                        <i class="fas fa-star mr-1"></i> Important
-                                    </span>
-                                    <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-academic">
-                                        Academic
-                                    </span>
-                                </div>
-                                <span class="text-sm text-gray-500">
-                                    <i class="far fa-clock mr-1"></i> Dec 18, 2023
-                                </span>
-                            </div>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mb-3">Final Exam Schedule Release</h3>
-                            
-                            <p class="text-gray-600 mb-4 line-clamp-2">
-                                The final examination schedule for Semester 1, 2023/2024 has been published. Students can access their exam timetable through the Student Portal.
-                            </p>
-                            
-                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-user-tie mr-2"></i>
-                                    <span>Academic Affairs Office</span>
-                                </div>
-                                <a href="/announcement/2" 
-                                   class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
-                                    View Details
-                                    <i class="fas fa-arrow-right ml-2"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Announcement Card 3 -->
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200">
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium badge-events">
-                                        <i class="fas fa-calendar-alt mr-1"></i> Events
-                                    </span>
-                                </div>
-                                <span class="text-sm text-gray-500">
-                                    <i class="far fa-clock mr-1"></i> Dec 17, 2023
-                                </span>
-                            </div>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mb-3">Career Fair 2024</h3>
-                            
-                            <p class="text-gray-600 mb-4 line-clamp-2">
-                                UTHM Annual Career Fair will be held on January 15-17, 2024 at Dewan Sultan Ibrahim. Over 100 companies from various industries will participate.
-                            </p>
-                            
-                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-user-tie mr-2"></i>
-                                    <span>Career Center</span>
-                                </div>
-                                <a href="/announcement/3" 
-                                   class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
-                                    View Details
-                                    <i class="fas fa-arrow-right ml-2"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Announcement Card 4 -->
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200">
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium badge-academic">
-                                        Academic
-                                    </span>
-                                </div>
-                                <span class="text-sm text-gray-500">
-                                    <i class="far fa-clock mr-1"></i> Dec 16, 2023
-                                </span>
-                            </div>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mb-3">Semester Break Activities</h3>
-                            
-                            <p class="text-gray-600 mb-4 line-clamp-2">
-                                Various activities and workshops are planned for the semester break. Registration opens next week for all interested students.
-                            </p>
-                            
-                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-user-tie mr-2"></i>
-                                    <span>Student Affairs</span>
-                                </div>
-                                <a href="/announcement/4" 
-                                   class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
-                                    View Details
-                                    <i class="fas fa-arrow-right ml-2"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Database Announcements -->
                     @forelse($announcements as $announcement)
                         <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200">
@@ -631,7 +478,7 @@
                                         <i class="fas fa-user-tie mr-2"></i>
                                         <span>{{ $announcement->author->name ?? 'Admin' }}</span>
                                     </div>
-                                    <a href="/announcement/{{ $announcement->id }}" 
+                                    <a href="{{ route('announcements.show', $announcement) }}" 
                                        class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
                                         View Details
                                         <i class="fas fa-arrow-right ml-2"></i>
@@ -652,8 +499,6 @@
                         </div>
                         <h3 class="text-xl font-medium text-gray-900 mb-2">No announcements yet</h3>
                         <p class="text-gray-600 mb-6">When announcements are created, they will appear here.</p>
-                        <p class="text-sm text-gray-500">Demo announcements are shown above for reference.</p>
-                        <!-- ADD THIS: Add button to create first announcement -->
                         @if(in_array($user->role, ['admin', 'staff']))
                         <div class="mt-8">
                             <a href="{{ route('announcements.create') }}" 

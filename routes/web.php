@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\ProfileController;
 
 // Public Routes (No Auth Required)
 Route::get('/', function () {
@@ -75,16 +76,20 @@ Route::middleware(['auth'])->group(function () {
         }
     })->name('dashboard');
 
-// Profile Route
-Route::get('/profile', function() {
-    $user = auth()->user();
-    return view('profile', compact('user'));
-})->name('profile')->middleware('auth');
+    // Profile Routes
+    Route::get('/profile', function() {
+        $user = auth()->user();
+        return view('profile', compact('user'));
+    })->name('profile');
+    
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-Route::get('/settings', function() {
-    $user = auth()->user(); // Pass the user just in case
-    return view('settings', compact('user')); // Points to settings.blade.php
-})->name('settings')->middleware('auth');
+    Route::get('/settings', function() {
+        $user = auth()->user(); // Pass the user just in case
+        return view('settings', compact('user')); // Points to settings.blade.php
+    })->name('settings');
 
     // Student Dashboard
     Route::get('/student/dashboard', function () {

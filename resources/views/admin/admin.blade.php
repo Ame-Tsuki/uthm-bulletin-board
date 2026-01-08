@@ -46,7 +46,7 @@
                             <i class="fas fa-users text-blue-600 text-xl"></i>
                         </div>
                         <div>
-                            <h3 class="text-2xl font-bold">1,247</h3>
+                            <h3 class="text-2xl font-bold">{{ $stats['total_users'] ?? 0 }}</h3>
                             <p class="text-gray-600">Total Users</p>
                         </div>
                     </div>
@@ -54,22 +54,22 @@
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="flex items-center">
                         <div class="bg-green-100 p-3 rounded-lg mr-4">
-                            <i class="fas fa-bullhorn text-green-600 text-xl"></i>
+                            <i class="fas fa-user-graduate text-green-600 text-xl"></i>
                         </div>
                         <div>
-                            <h3 class="text-2xl font-bold">324</h3>
-                            <p class="text-gray-600">Active Announcements</p>
+                            <h3 class="text-2xl font-bold">{{ $stats['students'] ?? 0 }}</h3>
+                            <p class="text-gray-600">Students</p>
                         </div>
                     </div>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow">
                     <div class="flex items-center">
                         <div class="bg-yellow-100 p-3 rounded-lg mr-4">
-                            <i class="fas fa-flag text-yellow-600 text-xl"></i>
+                            <i class="fas fa-user-tie text-yellow-600 text-xl"></i>
                         </div>
                         <div>
-                            <h3 class="text-2xl font-bold">12</h3>
-                            <p class="text-gray-600">Pending Reports</p>
+                            <h3 class="text-2xl font-bold">{{ $stats['staff'] ?? 0 }}</h3>
+                            <p class="text-gray-600">Staff</p>
                         </div>
                     </div>
                 </div>
@@ -79,7 +79,7 @@
                             <i class="fas fa-user-clock text-purple-600 text-xl"></i>
                         </div>
                         <div>
-                            <h3 class="text-2xl font-bold">8</h3>
+                            <h3 class="text-2xl font-bold">{{ $stats['unverified_users'] ?? 0 }}</h3>
                             <p class="text-gray-600">Pending Verifications</p>
                         </div>
                     </div>
@@ -98,7 +98,7 @@
                             </div>
                             <div class="flex-1">
                                 <h3 class="font-bold">Verify New Users</h3>
-                                <p class="text-sm text-gray-600">8 users pending verification</p>
+                                <p class="text-sm text-gray-600">{{ $stats['unverified_users'] ?? 0 }} users pending verification</p>
                             </div>
                             <i class="fas fa-chevron-right text-gray-400"></i>
                         </a>
@@ -147,58 +147,54 @@
 
             <!-- Recent Activity -->
             <div class="bg-white shadow-sm rounded-lg p-6">
-                <h2 class="text-2xl font-bold mb-6">Recent System Activity</h2>
+                <h2 class="text-2xl font-bold mb-6">Recent Users</h2>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead>
                             <tr class="bg-gray-50">
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
+                            @forelse($stats['recent_users'] ?? [] as $user)
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                            <span class="text-blue-800 font-bold">MA</span>
+                                            <span class="text-blue-800 font-bold">{{ strtoupper(substr($user->name, 0, 2)) }}</span>
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">Muhammad Amir</div>
-                                            <div class="text-sm text-gray-500">AI230102</div>
+                                            <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
+                                            <div class="text-sm text-gray-500">{{ $user->email }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                        Created announcement
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        {{ ucfirst($user->role) }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">10:30 AM</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">10.0.0.1</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($user->is_verified)
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            Verified
+                                        </span>
+                                    @else
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                            Unverified
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $user->created_at->format('M d, Y') }}</td>
                             </tr>
+                            @empty
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
-                                            <span class="text-red-800 font-bold">S</span>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">System</div>
-                                            <div class="text-sm text-gray-500">Automated</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                        Flagged content
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">09:15 AM</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">System</td>
+                                <td colspan="4" class="px-6 py-4 text-center text-gray-500">No recent users</td>
                             </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>

@@ -21,6 +21,27 @@ return Application::configure(basePath: dirname(__DIR__))
     ]);
 })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            // #region agent log
+            $logData = [
+                'location' => 'app.php:24',
+                'message' => 'Exception handler triggered',
+                'data' => [
+                    'exception_class' => get_class($e),
+                    'exception_message' => $e->getMessage(),
+                    'exception_code' => $e->getCode(),
+                    'exception_file' => $e->getFile(),
+                    'exception_line' => $e->getLine(),
+                    'request_uri' => $request->getRequestUri(),
+                ],
+                'timestamp' => time() * 1000,
+                'sessionId' => 'debug-session',
+                'runId' => 'run1',
+                'hypothesisId' => 'E'
+            ];
+            file_put_contents(base_path('.cursor/debug.log'), json_encode($logData) . "\n", FILE_APPEND);
+            // #endregion
+            return null; // Let Laravel handle it normally
+        });
     })->create();
     

@@ -70,10 +70,97 @@ class AnnouncementController extends Controller
     /**
      * Display a single announcement.
      */
-    public function show(Announcement $announcement): View
+    public function show($id): View
     {
+        // #region agent log
+        $logPath = base_path('.cursor/debug.log');
+        if (!is_dir(dirname($logPath))) {
+            mkdir(dirname($logPath), 0755, true);
+        }
+        $logData = [
+            'location' => 'AnnouncementController.php:73',
+            'message' => 'show method entry',
+            'data' => [
+                'route_param_id' => $id,
+                'param_type' => gettype($id),
+            ],
+            'timestamp' => time() * 1000,
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'A'
+        ];
+        file_put_contents($logPath, json_encode($logData) . "\n", FILE_APPEND);
+        // #endregion
+        
+        // #region agent log
+        $logData2 = [
+            'location' => 'AnnouncementController.php:88',
+            'message' => 'Before announcement lookup',
+            'data' => ['id' => $id],
+            'timestamp' => time() * 1000,
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'B'
+        ];
+        file_put_contents($logPath, json_encode($logData2) . "\n", FILE_APPEND);
+        // #endregion
+        
+        // Manually resolve the announcement since route uses {id} instead of {announcement}
+        $announcement = Announcement::find($id);
+        
+        // #region agent log
+        $logData3 = [
+            'location' => 'AnnouncementController.php:95',
+            'message' => 'After announcement lookup',
+            'data' => [
+                'announcement_found' => $announcement !== null,
+                'announcement_id' => $announcement->id ?? null,
+                'announcement_title' => $announcement->title ?? null,
+            ],
+            'timestamp' => time() * 1000,
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'C'
+        ];
+        file_put_contents($logPath, json_encode($logData3) . "\n", FILE_APPEND);
+        // #endregion
+        
+        if (!$announcement) {
+            // #region agent log
+            $logData4 = [
+                'location' => 'AnnouncementController.php:108',
+                'message' => 'Announcement not found',
+                'data' => ['id' => $id],
+                'timestamp' => time() * 1000,
+                'sessionId' => 'debug-session',
+                'runId' => 'run1',
+                'hypothesisId' => 'D'
+            ];
+            file_put_contents($logPath, json_encode($logData4) . "\n", FILE_APPEND);
+            // #endregion
+            
+            abort(404, 'Announcement not found');
+        }
+        
         // Get authenticated user
         $user = auth()->user();
+        
+        // #region agent log
+        $logData5 = [
+            'location' => 'AnnouncementController.php:120',
+            'message' => 'Before view return',
+            'data' => [
+                'user_id' => $user->id ?? null,
+                'announcement_id' => $announcement->id ?? null,
+                'author_relationship_loaded' => isset($announcement->author) ? true : false,
+            ],
+            'timestamp' => time() * 1000,
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'E'
+        ];
+        file_put_contents($logPath, json_encode($logData5) . "\n", FILE_APPEND);
+        // #endregion
         
         // Return view with single announcement
         return view('announcement.show', compact('announcement', 'user'));

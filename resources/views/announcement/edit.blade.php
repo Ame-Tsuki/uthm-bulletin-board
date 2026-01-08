@@ -25,7 +25,8 @@
                             <div class="col-md-12">
                                 <div class="alert alert-info">
                                     <i class="fas fa-info-circle"></i> 
-                                    <strong>Created:</strong> {{ $announcement->created_at->format('F d, Y H:i') }}
+                                    {{-- FIX APPLIED: Using null-safe operator ?-> for robustness --}}
+                                    <strong>Created:</strong> {{ $announcement->created_at?->format('F d, Y H:i') ?? 'N/A' }}
                                     @if($announcement->user)
                                         by {{ $announcement->user->name }}
                                     @endif
@@ -53,11 +54,11 @@
                             <div class="col-md-12 mb-3">
                                 <label for="content" class="form-label fw-bold">Content *</label>
                                 <textarea class="form-control @error('content') is-invalid @enderror" 
-                                          id="content" 
-                                          name="content" 
-                                          rows="10" 
-                                          placeholder="Enter announcement content" 
-                                          required>{{ old('content', $announcement->content) }}</textarea>
+                                              id="content" 
+                                              name="content" 
+                                              rows="10" 
+                                              placeholder="Enter announcement content" 
+                                              required>{{ old('content', $announcement->content) }}</textarea>
                                 @error('content')
                                     <div class="invalid-feedback">
                                         {{ $message }}
@@ -88,7 +89,8 @@
                                        class="form-control @error('publish_date') is-invalid @enderror" 
                                        id="publish_date" 
                                        name="publish_date" 
-                                       value="{{ old('publish_date', $announcement->publish_date ? $announcement->publish_date->format('Y-m-d\TH:i') : '') }}">
+                                       {{-- FIX APPLIED: Using null-safe operator ?-> for clean formatting of nullable date --}}
+                                       value="{{ old('publish_date', $announcement->publish_date?->format('Y-m-d\TH:i') ?? '') }}">
                                 @error('publish_date')
                                     <div class="invalid-feedback">
                                         {{ $message }}
@@ -103,7 +105,8 @@
                                        class="form-control @error('expiry_date') is-invalid @enderror" 
                                        id="expiry_date" 
                                        name="expiry_date" 
-                                       value="{{ old('expiry_date', $announcement->expiry_date ? $announcement->expiry_date->format('Y-m-d\TH:i') : '') }}">
+                                       {{-- FIX APPLIED: Using null-safe operator ?-> for clean formatting of nullable date --}}
+                                       value="{{ old('expiry_date', $announcement->expiry_date?->format('Y-m-d\TH:i') ?? '') }}">
                                 @error('expiry_date')
                                     <div class="invalid-feedback">
                                         {{ $message }}
@@ -118,8 +121,8 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <a href="#" 
-                                           class="btn btn-outline-danger" 
-                                           onclick="event.preventDefault(); document.getElementById('delete-form').submit();">
+                                            class="btn btn-outline-danger" 
+                                            onclick="event.preventDefault(); document.getElementById('delete-form').submit();">
                                             <i class="fas fa-trash"></i> Delete
                                         </a>
                                     </div>
@@ -139,7 +142,6 @@
                         </div>
                     </form>
 
-                    <!-- Delete Form -->
                     <form id="delete-form" action="{{ route('announcements.destroy', $announcement) }}" method="POST" class="d-none">
                         @csrf
                         @method('DELETE')
@@ -185,13 +187,19 @@
         const publishDateInput = document.getElementById('publish_date');
         const expiryDateInput = document.getElementById('expiry_date');
         
+        // Initial set if publish date exists
         if (publishDateInput.value) {
             expiryDateInput.min = publishDateInput.value;
         }
         
+        // Update min date when publish date changes
         publishDateInput.addEventListener('change', function() {
-            if (this.value) {
-                expiryDateInput.min = this.value;
+            // Set min to the selected publish date, or null/empty if cleared
+            expiryDateInput.min = this.value;
+            
+            // Optional: If expiry date is already set before the new publish date, clear it
+            if (this.value && expiryDateInput.value && expiryDateInput.value < this.value) {
+                expiryDateInput.value = '';
             }
         });
         
@@ -213,6 +221,7 @@
         const form = document.querySelector('form');
         
         form.addEventListener('submit', function(e) {
+            // Check if the status is being changed TO 'published' from another state
             if (statusSelect.value === 'published' && '{{ $announcement->status }}' !== 'published') {
                 if (!confirm('Are you sure you want to publish this announcement? It will be visible to users.')) {
                     e.preventDefault();

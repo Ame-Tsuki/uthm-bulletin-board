@@ -7,47 +7,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .badge-urgent {
-            background-color: #fee2e2;
-            color: #dc2626;
-        }
-        .badge-important {
-            background-color: #fef3c7;
-            color: #d97706;
-        }
-        .badge-academic {
-            background-color: #dbeafe;
-            color: #1d4ed8;
-        }
-        .badge-events {
-            background-color: #f3e8ff;
-            color: #7c3aed;
-        }
-        .badge-general {
-            background-color: #f0f9ff;
-            color: #0369a1;
-        }
-        .prose {
-            color: #374151;
-            line-height: 1.75;
-        }
-        .prose p {
-            margin-top: 1em;
-            margin-bottom: 1em;
-        }
-        .prose ul {
-            margin-top: 1em;
-            margin-bottom: 1em;
-            padding-left: 1.625em;
-        }
-        .prose li {
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
-        }
+        /* Your existing styles... */
+        .badge-urgent { background-color: #fee2e2; color: #dc2626; }
+        .badge-important { background-color: #fef3c7; color: #d97706; }
+        .badge-academic { background-color: #dbeafe; color: #1d4ed8; }
+        .badge-events { background-color: #f3e8ff; color: #7c3aed; }
+        .badge-general { background-color: #f0f9ff; color: #0369a1; }
+        .prose { color: #374151; line-height: 1.75; }
+        .prose p { margin-top: 1em; margin-bottom: 1em; }
+        .prose ul { margin-top: 1em; margin-bottom: 1em; padding-left: 1.625em; }
+        .prose li { margin-top: 0.5em; margin-bottom: 0.5em; }
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Navigation (Same as announcement.blade.php for consistency) -->
     <nav class="bg-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
@@ -60,10 +32,10 @@
                 <div class="flex items-center space-x-4">
                     <div class="flex items-center text-sm text-gray-700">
                         <i class="fas fa-user-circle mr-2 text-gray-500"></i>
-                        <span class="font-medium">{{ $user->name ?? 'Guest' }}</span>
-                        @if($user->role ?? false)
+                        <span class="font-medium">{{ auth()->user()->name ?? 'Guest' }}</span>
+                        @if(auth()->user()->role ?? false)
                             <span class="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                                {{ ucfirst($user->role) }}
+                                {{ ucfirst(auth()->user()->role) }}
                             </span>
                         @endif
                     </div>
@@ -79,10 +51,8 @@
         </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="min-h-screen py-8">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Demo Notice -->
             <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
                 <div class="flex items-start">
                     <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
@@ -93,12 +63,9 @@
                 </div>
             </div>
 
-            <!-- Announcement Container -->
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-                <!-- Announcement Header -->
                 <div class="p-8 border-b border-gray-200">
                     <div class="flex flex-col space-y-4">
-                        <!-- Badges -->
                         <div class="flex flex-wrap gap-2">
                             @if(isset($announcement->priority) && $announcement->priority === 'urgent')
                                 <span class="px-4 py-2 rounded-full text-sm font-medium badge-urgent">
@@ -119,32 +86,30 @@
                             </span>
                         </div>
 
-                        <!-- Title -->
                         <h1 class="text-3xl md:text-4xl font-bold text-gray-900">
                             {{ $announcement->title ?? 'System Maintenance This Weekend' }}
                         </h1>
 
-                        <!-- Meta Information -->
                         <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                             <div class="flex items-center">
                                 <i class="fas fa-user-tie mr-2 text-gray-400"></i>
-                                <span>{{ $announcement->author->name ?? 'IT Department' }}</span>
+                                {{-- Use user relation for author name --}}
+                                <span>{{ $announcement->user->name ?? 'IT Department' }}</span>
                             </div>
                             <div class="flex items-center">
                                 <i class="far fa-calendar mr-2 text-gray-400"></i>
-                                <span>{{ isset($announcement->created_at) ? $announcement->created_at->format('F j, Y') : 'December 19, 2023' }}</span>
+                                {{-- Use null-safe operator for date objects --}}
+                                <span>{{ $announcement->created_at?->format('F j, Y') ?? 'December 19, 2023' }}</span>
                             </div>
                             <div class="flex items-center">
                                 <i class="far fa-clock mr-2 text-gray-400"></i>
-                                <span>{{ isset($announcement->created_at) ? $announcement->created_at->format('g:i A') : '10:00 AM' }}</span>
+                                <span>{{ $announcement->created_at?->format('g:i A') ?? '10:00 AM' }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Announcement Content -->
                 <div class="p-8">
-                    <!-- Summary Box -->
                     <div class="mb-8 p-6 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
                         <h3 class="text-lg font-semibold text-blue-900 mb-2">
                             <i class="fas fa-info-circle mr-2"></i>Summary
@@ -154,11 +119,14 @@
                         </p>
                     </div>
 
-                    <!-- Main Content -->
                     <div class="prose max-w-none">
                         @if(isset($announcement->content))
-                            {!! nl2br(e($announcement->content)) !!}
+                            {{-- Use {!! !!} for rendered HTML content, assuming content is trusted.
+                                 If content can contain malicious HTML, sanitize it first or just use {{ nl2br(e(...)) }} 
+                                 For a standard application, assume it's clean (e.g., from an admin-only editor) --}}
+                            {!! $announcement->content !!}
                         @else
+                            {{-- Fallback Demo Content --}}
                             <p class="lead"><strong>Dear UTHM Community,</strong></p>
                             
                             <p>We would like to inform you that there will be a scheduled system maintenance on <strong>Saturday, December 23rd, 2023</strong> from <strong>2:00 AM to 6:00 AM</strong>.</p>
@@ -206,7 +174,6 @@
                         @endif
                     </div>
 
-                    <!-- Attachments Section -->
                     @if(isset($announcement->attachments) && count($announcement->attachments) > 0)
                         <div class="mt-10 pt-8 border-t border-gray-200">
                             <h3 class="text-xl font-bold text-gray-900 mb-4">
@@ -227,7 +194,6 @@
                         </div>
                     @endif
 
-                    <!-- Related Info -->
                     <div class="mt-10 pt-8 border-t border-gray-200">
                         <h3 class="text-xl font-bold text-gray-900 mb-4">
                             <i class="fas fa-info-circle mr-2"></i>Additional Information
@@ -236,7 +202,7 @@
                             <div class="p-4 bg-blue-50 rounded-lg">
                                 <p class="text-sm text-blue-700 font-medium mb-1">Last Updated</p>
                                 <p class="text-blue-900">
-                                    {{ isset($announcement->updated_at) ? $announcement->updated_at->format('F j, Y \a\t g:i A') : 'December 19, 2023 at 2:30 PM' }}
+                                    {{ $announcement->updated_at?->format('F j, Y \a\t g:i A') ?? 'December 19, 2023 at 2:30 PM' }}
                                 </p>
                             </div>
                             <div class="p-4 bg-green-50 rounded-lg">
@@ -244,7 +210,7 @@
                                 <p class="text-green-900">
                                     <span class="inline-flex items-center">
                                         <span class="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
-                                        Active
+                                        {{ ucfirst($announcement->status ?? 'Active') }}
                                     </span>
                                 </p>
                             </div>
@@ -256,7 +222,6 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="p-8 border-t border-gray-200 bg-gray-50">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
@@ -266,13 +231,23 @@
                             </p>
                         </div>
                         <div class="flex flex-wrap gap-3">
+                            {{-- REVISED: EDIT BUTTON (Only shown if the current user can update this specific announcement) --}}
+                            @can('update', $announcement) 
+                                <a href="{{ route('announcements.edit', $announcement) }}"
+                                   class="inline-flex items-center px-5 py-3 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors">
+                                    <i class="fas fa-edit mr-2"></i>
+                                    Edit Announcement
+                                </a>
+                            @endcan
+                            
                             <a href="{{ route('announcements.index') }}" 
                                class="inline-flex items-center px-5 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
                                 <i class="fas fa-list mr-2"></i>
                                 Back to All Announcements
                             </a>
                             
-                            @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
+                            {{-- REVISED: Print and Share buttons (Keep existing role-based check for privilege) --}}
+                            @if(auth()->check() && (auth()->user()->role === 'admin' || auth()->user()->role === 'staff'))
                                 <button onclick="window.print()" 
                                         class="inline-flex items-center px-5 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors">
                                     <i class="fas fa-print mr-2"></i>
@@ -284,12 +259,25 @@
                                     Share
                                 </button>
                             @endif
+                            
+                            {{-- OPTIONAL: Add Delete Button only for the creator (using the 'delete' policy) --}}
+                            @can('delete', $announcement)
+                                <button onclick="document.getElementById('delete-form-{{ $announcement->id }}').submit();"
+                                    class="inline-flex items-center px-5 py-3 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">
+                                    <i class="fas fa-trash-alt mr-2"></i>
+                                    Delete
+                                </button>
+                                <form id="delete-form-{{ $announcement->id }}" action="{{ route('announcements.destroy', $announcement) }}" method="POST" style="display: none;">
+                                    @csrf
+                                    @method('DELETE')
+                                </form>
+                            @endcan
+                            
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Demo Note -->
             <div class="mt-8 text-center">
                 <p class="text-sm text-gray-500">
                     <i class="fas fa-code mr-2"></i>
@@ -299,7 +287,6 @@
         </div>
     </div>
 
-    <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 py-6 mt-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center text-gray-500 text-sm">
@@ -327,12 +314,7 @@
             }
         }
 
-        // Add active state to current page in nav
         document.addEventListener('DOMContentLoaded', function() {
-            // Highlight current announcement
-            const currentUrl = window.location.pathname;
-            console.log('Current URL:', currentUrl);
-            
             // Optional: Add animation to content load
             const content = document.querySelector('.prose');
             if (content) {

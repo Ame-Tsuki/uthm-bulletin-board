@@ -178,7 +178,7 @@
             </div>
         </div>
 
-                          <!-- User Profile - Now Clickable -->
+        <!-- User Profile - Now Clickable -->
 <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
     <div class="p-4 border-b border-gray-200">
         <div class="flex items-center space-x-3">

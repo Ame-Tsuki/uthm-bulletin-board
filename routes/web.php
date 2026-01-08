@@ -112,7 +112,7 @@ Route::get('/settings', function() {
 });
 
 // Announcement Routes
-Route::resource('announcements', AnnouncementController::class);
+Route::resource('announcements', AnnouncementController::class)->middleware(['auth', 'verified']);
 
 // Additional announcement routes
 Route::post('/announcements/{announcement}/archive', [AnnouncementController::class, 'archive'])

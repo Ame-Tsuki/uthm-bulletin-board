@@ -149,7 +149,7 @@
                     </div>
                     <div class="sidebar-text">
                         <h2 class="font-bold text-gray-900">UTHM Bulletin</h2>
-                        <p class="text-xs text-gray-500">Student Dashboard</p>
+                        <p class="text-xs text-gray-500">Staff Dashboard</p>
                     </div>
                 </div>
                 
@@ -275,7 +275,7 @@
                 <div class="flex justify-between h-16">
                     <!-- Breadcrumb -->
                     <div class="flex items-center">
-                        <h1 class="text-xl font-bold text-gray-900">Student Dashboard</h1>
+                        <h1 class="text-xl font-bold text-gray-900">Staff Dashboard</h1>
                         <span class="mx-2 text-gray-400">/</span>
                         <span class="text-gray-600">Overview</span>
                     </div>

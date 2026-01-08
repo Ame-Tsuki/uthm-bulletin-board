@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Announcement;
 use Illuminate\View\View;
+use Illuminate\Auth\Access\AuthorizationException; // Import for clear authorization error
 use Illuminate\Http\RedirectResponse;
 
 class AnnouncementController extends Controller
@@ -31,8 +32,7 @@ class AnnouncementController extends Controller
     {
         $user = auth()->user();
         
-        // Check if user has permission to create announcements
-        // You may want to add authorization here
+        // You may want to add authorization here, e.g., $this->authorize('create', Announcement::class);
         return view('announcement.create', compact('user'));
     }
 
@@ -52,7 +52,8 @@ class AnnouncementController extends Controller
             'expiry_date' => 'nullable|date|after_or_equal:publish_date',
         ]);
 
-        // Add author_id to the validated data
+        // Note: I'm assuming your Announcement model uses 'author_id' 
+        // in the fillable array and is used as the foreign key to the User model.
         $validated['author_id'] = auth()->id();
         
         // Set default priority if not provided
@@ -84,64 +85,59 @@ class AnnouncementController extends Controller
      */
     public function edit(Announcement $announcement): View
     {
-        $user = auth()->user();
-        
-        // Add authorization check if needed
-        // $this->authorize('update', $announcement);
-        
-        return view('announcement.edit', compact('announcement', 'user'));
+        // This line checks the Policy's 'update' method.
+        $this->authorize('update', $announcement); 
+
+        return view('announcements.edit', compact('announcement'));
     }
 
     /**
-     * Update the specified announcement in storage.
+     * Update the specified resource in storage.
      */
     public function update(Request $request, Announcement $announcement): RedirectResponse
     {
-        // Add authorization check if needed
-        // $this->authorize('update', $announcement);
-
-        // Validate the request data
-        $validated = $request->validate([
+        // Authorization check on update submission
+        $this->authorize('update', $announcement); 
+        
+        // Validate and update
+        $announcement->update($request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'category' => 'required|in:urgent,academic,events,general,important',
-            'priority' => 'nullable|in:urgent,important,normal',
-            'department' => 'nullable|string|max:100',
+            'status' => 'required|in:draft,published,archived',
             'publish_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date|after_or_equal:publish_date',
-        ]);
+            'expiry_date' => 'nullable|date|after_or_equal:publish_date', // Adjusted validation
+        ]));
 
-        // Update the announcement
-        $announcement->update($validated);
-
-        return redirect()->route('announcements.index')
-            ->with('success', 'Announcement updated successfully.');
+        return redirect()->route('announcements.show', $announcement)
+                         ->with('success', 'Announcement updated successfully.');
     }
 
     /**
-     * Remove the specified announcement from storage.
+     * Remove the specified resource from storage.
      */
     public function destroy(Announcement $announcement): RedirectResponse
     {
-        // Add authorization check if needed
-        // $this->authorize('delete', $announcement);
-        
-        // Delete the announcement
+        // Authorization check on deletion
+        $this->authorize('delete', $announcement); 
+
         $announcement->delete();
 
         return redirect()->route('announcements.index')
-            ->with('success', 'Announcement deleted successfully.');
+                         ->with('success', 'Announcement deleted successfully.');
     }
-
-    /**
-     * Additional CRUD methods (optional)
-     */
+    
+    // ----------------------------------------------------------------------
+    // THE METHODS BELOW HAVE BEEN MOVED INSIDE THE CLASS BLOCK TO FIX THE PARSE ERROR
+    // ----------------------------------------------------------------------
 
     /**
      * Archive the specified announcement.
      */
     public function archive(Announcement $announcement): RedirectResponse
     {
+        // Authorization check for archiving (optional, but recommended)
+        // e.g., $this->authorize('archive', $announcement); 
+        
         $announcement->update(['status' => 'archived']);
         
         return redirect()->route('announcements.index')
@@ -153,6 +149,9 @@ class AnnouncementController extends Controller
      */
     public function publish(Announcement $announcement): RedirectResponse
     {
+        // Authorization check for publishing (optional, but recommended)
+        // e.g., $this->authorize('publish', $announcement); 
+        
         $announcement->update(['status' => 'published']);
         
         return redirect()->route('announcements.index')
@@ -184,4 +183,4 @@ class AnnouncementController extends Controller
             
         return view('announcement.announcement', compact('announcements', 'user'));
     }
-}
+} // <-- This is now the final closing brace for the class

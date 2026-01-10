@@ -5,8 +5,8 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\Auth\CustomLoginController;
 use App\Http\Controllers\Auth\CustomRegisterController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ProfileController;
@@ -28,6 +28,12 @@ Route::middleware('guest')->group(function () {
     
     
 });
+
+// Password Reset Routes
+Route::get('password/reset', [PasswordResetLinkController::class, 'create'])->name('password.request');
+Route::post('password/email', [PasswordResetLinkController::class, 'store'])->name('password.email');
+Route::get('password/reset/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+Route::post('password/reset', [NewPasswordController::class, 'store'])->name('password.update');
 
 // Email Verification Routes
 Route::middleware('auth')->group(function () {

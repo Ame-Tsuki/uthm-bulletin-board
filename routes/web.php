@@ -9,6 +9,8 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
 
 // Public Routes (No Auth Required)
 Route::get('/', function () {
@@ -27,6 +29,12 @@ Route::middleware('guest')->group(function () {
     
     
 });
+
+// Password Reset Routes
+Route::get('password/reset', [PasswordResetLinkController::class, 'create'])->name('password.request');
+Route::post('password/email', [PasswordResetLinkController::class, 'store'])->name('password.email');
+Route::get('password/reset/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
+Route::post('password/reset', [NewPasswordController::class, 'store'])->name('password.update');
 
 // Email Verification Routes
 Route::middleware('auth')->group(function () {

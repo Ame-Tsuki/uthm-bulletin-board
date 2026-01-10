@@ -38,6 +38,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'admin';
     }
 
+    
+public function getEmailForPasswordReset()
+{
+    return $this->email; // This should return the correct email
+}
+
+
+
     public function isVerifiedMember()
     {
         return $this->is_verified;

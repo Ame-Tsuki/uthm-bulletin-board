@@ -38,6 +38,26 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'admin';
     }
 
+    public function isStaff()
+    {
+        return $this->role === 'staff';
+    }
+
+    public function isClubAdmin()
+    {
+        return $this->role === 'club_admin';
+    }
+
+    public function isStudent()
+    {
+        return $this->role === 'student';
+    }
+
+    public function getEmailForPasswordReset()
+{
+    return $this->email; // This should return the correct email
+}
+
     public function isVerifiedMember()
     {
         return $this->is_verified;

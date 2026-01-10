@@ -371,6 +371,30 @@
                     </div>
                 </div>
 
+                <!-- Announcement Type Tabs -->
+                <div class="mb-8 bg-white rounded-xl shadow p-4">
+                    <div class="flex flex-wrap gap-4">
+                        <h3 class="text-lg font-medium text-gray-900 self-center">Filter by:</h3>
+                        <div class="flex space-x-2">
+                            <button onclick="filterByType('all')" 
+                                    id="tab-all"
+                                    class="px-4 py-2 rounded-lg text-sm font-medium tab-active">
+                                All Announcements
+                            </button>
+                            <button onclick="filterByType('official')" 
+                                    id="tab-official"
+                                    class="px-4 py-2 rounded-lg text-sm font-medium tab-inactive">
+                                <i class="fas fa-check-circle mr-2"></i>Official Announcements
+                            </button>
+                            <button onclick="filterByType('unofficial')" 
+                                    id="tab-unofficial"
+                                    class="px-4 py-2 rounded-lg text-sm font-medium tab-inactive">
+                                <i class="fas fa-users mr-2"></i>Unofficial Announcements
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ADD THIS: Create Announcement Card (for admin/staff only) -->
                 @if(in_array($user->role, ['admin']))
                 <div class="mb-8 bg-gradient-to-r from-blue-50 to-uthm-blue-light border border-blue-200 rounded-xl shadow-sm p-5">
@@ -427,23 +451,38 @@
                 </div>
 
                 <!-- Announcements Grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div id="announcements-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Database Announcements -->
                     @forelse($announcements as $announcement)
-                        <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200">
+                        <div class="announcement-card bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200" 
+                             data-type="{{ $announcement->is_official ? 'official' : 'unofficial' }}"
+                             data-category="{{ $announcement->category }}"
+                             data-priority="{{ $announcement->priority }}">
                             <div class="p-6">
                                 <div class="flex justify-between items-start mb-4">
                                     <div>
+                                        <!-- Official/Unofficial Badge -->
+                                        @if($announcement->is_official)
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium badge-official">
+                                                <i class="fas fa-check-circle mr-1"></i> Official
+                                            </span>
+                                        @else
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium badge-unofficial">
+                                                <i class="fas fa-users mr-1"></i> Unofficial
+                                            </span>
+                                        @endif
+<!-- Priority Badge -->
                                         @if($announcement->priority === 'urgent')
-                                            <span class="px-3 py-1 rounded-full text-xs font-medium badge-urgent">
+                                            <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-urgent">
                                                 <i class="fas fa-exclamation-circle mr-1"></i> Urgent
                                             </span>
                                         @elseif($announcement->priority === 'important')
-                                            <span class="px-3 py-1 rounded-full text-xs font-medium badge-important">
+                                            <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-important">
                                                 <i class="fas fa-star mr-1"></i> Important
                                             </span>
                                         @endif
                                         
+                                        <!-- Category Badge -->
                                         <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-{{ $announcement->category }}">
                                             {{ ucfirst($announcement->category) }}
                                         </span>
@@ -464,6 +503,11 @@
                                     <div class="flex items-center text-sm text-gray-500">
                                         <i class="fas fa-user-tie mr-2"></i>
                                         <span>{{ $announcement->author->name ?? 'Admin' }}</span>
+                                        @if($announcement->is_official)
+                                            <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                                                <i class="fas fa-shield-alt mr-1"></i>Verified
+                                            </span>
+                                        @endif
                                     </div>
                                     <a href="{{ route('announcements.show', $announcement) }}" 
                                        class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">

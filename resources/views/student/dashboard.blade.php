@@ -229,20 +229,11 @@
 
                 
 
-                <!-- Clubs -->
-                <li>
-                    <a href="#" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-users w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Clubs</span>
-                    </a>
-                </li>
+               
 
                 <!-- Settings -->
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('settings') }}" 
                        class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
                         <div class="shrink-0">
                             <i class="fas fa-cog w-5 h-5"></i>
@@ -251,19 +242,21 @@
                     </a>
                 </li>
 
-                <!-- Logout - MOVED HERE TO MATCH MAIN DASHBOARD -->
-                <li class="pt-4 border-t border-gray-200">
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" 
-                                class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
-                            <div class="shrink-0">
-                                <i class="fas fa-sign-out-alt w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Logout</span>
-                        </button>
-                    </form>
-                </li>
+                <
+                 <!-- Logout -->
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" 
+                        class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
+                    <div class="shrink-0">
+                        <i class="fas fa-sign-out-alt w-5 h-5"></i>
+                    </div>
+                    <span class="sidebar-text ml-3">Logout</span>
+                </button>
+            </form>
+        </div>
+    </div>
             </ul>
         </nav>
 

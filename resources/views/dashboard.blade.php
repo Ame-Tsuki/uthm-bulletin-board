@@ -264,20 +264,10 @@
                     </li>
                 @endif
 
-                <!-- Clubs -->
-                <li>
-                    <a href="#" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-users w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Clubs</span>
-                    </a>
-                </li>
 
                 <!-- Settings -->
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('settings') }}"
                        class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
                         <div class="shrink-0">
                             <i class="fas fa-cog w-5 h-5"></i>
@@ -365,7 +355,7 @@
                                 <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-user mr-2"></i> My Profile
                                 </a>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <a href="{{ route('settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-cog mr-2"></i> Settings
                                 </a>
                                 <div class="border-t border-gray-200 my-2"></div>

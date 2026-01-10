@@ -160,11 +160,11 @@
             <div class="flex items-center justify-between">
                 <!-- Logo -->
                 <div class="flex items-center space-x-3 overflow-hidden">
-                    <div class="bg-uthm-blue text-white p-2 rounded-lg shrink-0">
-                        <i class="fas fa-bullhorn text-lg"></i>
+                    <div class="bg-green-600 text-white p-2 rounded-lg shrink-0">
+                        <i class="fas fa-user-graduate text-lg"></i>
                     </div>
                     <div class="sidebar-text">
-                        <h2 class="font-bold uthm-blue">UTHM Bulletin</h2>
+                        <h2 class="font-bold text-gray-900">UTHM Bulletin</h2>
                         <p class="text-xs text-gray-500">Announcements</p>
                     </div>
                 </div>

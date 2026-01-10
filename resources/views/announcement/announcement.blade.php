@@ -183,11 +183,11 @@
     <div class="p-4 border-b border-gray-200">
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
-                <span class="font-bold uthm-blue">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
             </div>
             <div class="sidebar-text">
-                <h3 class="font-medium text-gray-900">{{ $user->name }}</h3>
-                <p class="text-xs text-gray-500">{{ $user->uthm_id ?? 'UTHM Member' }}</p>
+                <h3 class="font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</h3>
+                <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
             </div>
         </div>
     </div>
@@ -332,12 +332,12 @@
                         <div class="relative">
                             <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100">
                                 <div class="w-8 h-8 bg-uthm-blue-light rounded-full flex items-center justify-center">
-                                    <span class="font-bold uthm-blue">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
-                                </div>
-                                <div class="hidden md:block text-left">
-                                    <p class="text-sm font-medium text-gray-900">{{ $user->name }}</p>
-                                    <p class="text-xs text-gray-500">{{ $user->uthm_id ?? 'UTHM Member' }}</p>
-                                </div>
+    <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
+</div>
+<div class="hidden md:block text-left">
+    <p class="text-sm font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</p>
+    <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
+</div>
                                 <i class="fas fa-chevron-down text-gray-500"></i>
                             </button>
                             

@@ -122,12 +122,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/announcements/published', [AnnouncementController::class, 'published'])->name('announcements.published');
     Route::get('/announcements/drafts', [AnnouncementController::class, 'drafts'])->name('announcements.drafts');
     
-    // Single announcement
-    Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
-    
-    // Create
+    // Create (must be before {announcement} route)
     Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
     Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
+    
+    // Single announcement (must be after specific routes like 'create')
+    Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
     
     // Edit/Update
     Route::get('/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit');

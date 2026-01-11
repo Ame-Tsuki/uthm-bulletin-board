@@ -416,20 +416,6 @@
                 updateFormAction(officialRadio);
             }
         }
-        
-        // Optional: If you want to submit to different routes based on selection
-        // function submitForm() {
-        //     const form = document.getElementById('announcementForm');
-        //     const isOfficial = document.querySelector('input[name="is_official"]:checked').value;
-            
-        //     if (isOfficial === '1') {
-        //         form.action = "{{ route('announcements.store.official') }}";
-        //     } else {
-        //         form.action = "{{ route('announcements.store.unofficial') }}";
-        //     }
-            
-        //     form.submit();
-        // }
     </script>
 </body>
 </html>

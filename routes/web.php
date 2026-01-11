@@ -95,23 +95,77 @@ Route::middleware(['auth'])->group(function () {
         return view('settings', compact('user')); // Points to settings.blade.php
     })->name('settings');
 
-    // Student Dashboard
-    Route::get('/student/dashboard', function () {
-        $user = auth()->user();
-        return view('student.dashboard', compact('user'));
-    })->name('student.dashboard')->middleware('role:student');
+    // Student Dashboard & Calendar
+    Route::middleware('role:student')->group(function () {
+        Route::get('/student/dashboard', function () {
+            $user = auth()->user();
+            return view('student.dashboard', compact('user'));
+        })->name('student.dashboard');
+        
+        Route::get('/student/calendar', function () {
+            $user = auth()->user();
+            $events = []; // Initialize events array - can be populated from database later
+            $academicYear = date('Y'); // Current academic year
+            $currentMonth = date('n'); // Current month (1-12)
+            $currentYear = date('Y'); // Current year
+            
+            return view('student.calendar', compact('user', 'events', 'academicYear', 'currentMonth', 'currentYear'));
+        })->name('student.calendar');
+    });
 
-    // Staff Dashboard
-    Route::get('/staff/dashboard', function () {
-        $user = auth()->user();
-        return view('staff.dashboard', compact('user'));
-    })->name('staff.dashboard')->middleware('role:staff');
+    // Staff Dashboard & Calendar
+    Route::middleware('role:staff')->group(function () {
+        Route::get('/staff/dashboard', function () {
+            $user = auth()->user();
+            return view('staff.dashboard', compact('user'));
+        })->name('staff.dashboard');
+        
+        Route::get('/staff/calendar', function () {
+            $user = auth()->user();
+            return view('staff.calendar', compact('user'));
+        })->name('staff.calendar');
+    });
 
-    // Club Dashboard
-    Route::get('/club/dashboard', function () {
+    // Club Dashboard & Calendar
+    Route::middleware('role:club_admin')->group(function () {
+        Route::get('/club/dashboard', function () {
+            $user = auth()->user();
+            return view('club.dashboard', compact('user'));
+        })->name('club.dashboard');
+        
+        Route::get('/club/calendar', function () {
+            $user = auth()->user();
+            return view('club.calendar', compact('user'));
+        })->name('club.calendar');
+    });
+
+    // Admin Dashboard & Calendar
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/admin/calendar', function () {
+            $user = auth()->user();
+            return view('admin.calendar', compact('user'));
+        })->name('admin.calendar');
+    });
+
+    // General Calendar Route (for all authenticated users)
+    Route::get('/calendar', function () {
         $user = auth()->user();
-        return view('club.dashboard', compact('user'));
-    })->name('club.dashboard')->middleware('role:club_admin');
+        
+        // Redirect to role-specific calendar
+        switch ($user->role) {
+            case 'admin':
+                return redirect()->route('admin.calendar');
+            case 'staff':
+                return redirect()->route('staff.calendar');
+            case 'club_admin':
+                return redirect()->route('club.calendar');
+            case 'student':
+                return redirect()->route('student.calendar');
+            default:
+                // Fallback to student calendar if role not recognized
+                return view('student.calendar', compact('user'));
+        }
+    })->name('calendar');
 
   // Announcement Routes
 Route::middleware(['auth', 'verified'])->group(function () {

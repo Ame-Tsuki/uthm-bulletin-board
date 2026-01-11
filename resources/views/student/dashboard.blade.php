@@ -207,7 +207,7 @@
 
                 <!-- Calendar -->
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('student.calendar') }}"
                        class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
                         <div class="shrink-0">
                             <i class="fas fa-calendar-alt w-5 h-5"></i>
@@ -526,7 +526,7 @@
                         <div class="bg-white rounded-xl shadow p-6">
                             <div class="flex justify-between items-center mb-6">
                                 <h3 class="text-lg font-bold text-gray-900">Upcoming Events</h3>
-                                <a href="#" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">
+                                <a href="{{ route('student.calendar') }}" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">
                                     View Calendar <i class="fas fa-arrow-right ml-1"></i>
                                 </a>
                             </div>

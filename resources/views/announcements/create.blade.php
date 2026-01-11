@@ -12,6 +12,25 @@
         .badge-events { background-color: #f3e8ff; color: #7c3aed; }
         .badge-general { background-color: #f0f9ff; color: #0369a1; }
         .badge-important { background-color: #fef3c7; color: #d97706; }
+        .badge-official { background-color: #dcfce7; color: #166534; }
+        .badge-unofficial { background-color: #fef3c7; color: #92400e; }
+        
+        /* Radio card styles */
+        .posting-option-card {
+            transition: all 0.2s ease;
+            border: 2px solid #e5e7eb;
+        }
+        .posting-option-card:hover {
+            border-color: #3b82f6;
+        }
+        .posting-option-card.selected {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .posting-option-card input[type="radio"]:checked + div {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -44,7 +63,7 @@
             <!-- Page Header -->
             <div class="mb-8">
                 <h1 class="text-3xl font-bold text-gray-900">Create New Announcement</h1>
-                <p class="mt-2 text-gray-600">Share important updates with students and staff</p>
+                <p class="mt-2 text-gray-600">Share updates with students and staff - choose where to post</p>
             </div>
 
             <!-- Success/Error Messages -->
@@ -78,8 +97,75 @@
             <!-- Create Form -->
             <div class="bg-white rounded-xl shadow overflow-hidden">
                 <div class="p-6">
-                    <form action="{{ route('announcements.store') }}" method="POST">
+                    <form action="{{ route('announcements.store') }}" method="POST" id="announcementForm">
                         @csrf
+
+                        <!-- Posting Destination -->
+                        <div class="mb-8 p-6 bg-gray-50 rounded-xl">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Where would you like to post?</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Official Announcement Option -->
+                                <label class="cursor-pointer">
+                                    <input type="radio" 
+                                           name="is_official" 
+                                           value="1" 
+                                           {{ old('is_official', '1') == '1' ? 'checked' : '' }}
+                                           class="hidden"
+                                           onchange="updateFormAction(this)">
+                                    <div class="posting-option-card p-5 rounded-xl border-2 {{ old('is_official', '1') == '1' ? 'selected border-green-500 bg-green-50' : 'border-gray-200' }}">
+                                        <div class="flex items-start">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                                                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                                                </div>
+                                            </div>
+                                            <div class="ml-4">
+                                                <h4 class="font-semibold text-gray-900">Official Announcement</h4>
+                                                <p class="mt-1 text-sm text-gray-600">
+                                                    Verified announcements from university administration. 
+                                                    Will appear on the main bulletin board.
+                                                </p>
+                                                <div class="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    <i class="fas fa-globe mr-1"></i> Main Bulletin Board
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+
+                                <!-- Unofficial Announcement Option -->
+                                <label class="cursor-pointer">
+                                    <input type="radio" 
+                                           name="is_official" 
+                                           value="0" 
+                                           {{ old('is_official') == '0' ? 'checked' : '' }}
+                                           class="hidden"
+                                           onchange="updateFormAction(this)">
+                                    <div class="posting-option-card p-5 rounded-xl border-2 {{ old('is_official') == '0' ? 'selected border-amber-500 bg-amber-50' : 'border-gray-200' }}">
+                                        <div class="flex items-start">
+                                            <div class="flex-shrink-0">
+                                                <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                                                    <i class="fas fa-bullhorn text-amber-600 text-xl"></i>
+                                                </div>
+                                            </div>
+                                            <div class="ml-4">
+                                                <h4 class="font-semibold text-gray-900">Unofficial Announcement</h4>
+                                                <p class="mt-1 text-sm text-gray-600">
+                                                    Informal updates, student notices, or department news. 
+                                                    Will appear on the unofficial announcements page.
+                                                </p>
+                                                <div class="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                                    <i class="fas fa-users mr-1"></i> Unofficial Page
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                            
+                            <!-- Hidden field to store the posting type for form submission -->
+                            <input type="hidden" name="posting_type" id="posting_type" value="{{ old('is_official', '1') == '1' ? 'official' : 'unofficial' }}">
+                        </div>
 
                         <!-- Title -->
                         <div class="mb-6">
@@ -204,9 +290,12 @@
                                     Reset
                                 </button>
                                 <button type="submit" 
+                                        id="submitButton"
                                         class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow">
                                     <i class="fas fa-paper-plane mr-2"></i>
-                                    Publish Announcement
+                                    <span id="submitButtonText">
+                                        {{ old('is_official', '1') == '1' ? 'Publish to Official Board' : 'Post to Unofficial Page' }}
+                                    </span>
                                 </button>
                             </div>
                         </div>
@@ -222,15 +311,19 @@
                 <ul class="text-blue-700 text-sm space-y-2">
                     <li class="flex items-start">
                         <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
+                        <span><strong>Official Announcements:</strong> University policies, official notices, verified information</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
+                        <span><strong>Unofficial Announcements:</strong> Student club activities, informal notices, department updates</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
                         <span>Use clear and concise titles that summarize the announcement</span>
                     </li>
                     <li class="flex items-start">
                         <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
                         <span>Include all relevant details: dates, times, locations, contacts</span>
-                    </li>
-                    <li class="flex items-start">
-                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
-                        <span>Use appropriate categories and priorities for better visibility</span>
                     </li>
                     <li class="flex items-start">
                         <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
@@ -263,13 +356,80 @@
             if (publishDateInput.value) {
                 expiryDateInput.min = publishDateInput.value;
             }
+            
+            // Initialize posting option cards based on current selection
+            updatePostingOptionCards();
         });
+        
+        function updateFormAction(radio) {
+            const postingType = radio.value === '1' ? 'official' : 'unofficial';
+            document.getElementById('posting_type').value = postingType;
+            
+            // Update button text
+            const submitButtonText = document.getElementById('submitButtonText');
+            const submitButton = document.getElementById('submitButton');
+            
+            if (radio.value === '1') {
+                submitButtonText.textContent = 'Publish to Official Board';
+                submitButton.className = 'inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow';
+            } else {
+                submitButtonText.textContent = 'Post to Unofficial Page';
+                submitButton.className = 'inline-flex items-center px-6 py-3 bg-amber-600 text-white font-medium rounded-lg hover:bg-amber-700 transition-colors shadow';
+            }
+            
+            // Update card styling
+            updatePostingOptionCards();
+        }
+        
+        function updatePostingOptionCards() {
+            // Get all radio buttons
+            const officialRadio = document.querySelector('input[name="is_official"][value="1"]');
+            const unofficialRadio = document.querySelector('input[name="is_official"][value="0"]');
+            
+            // Get card containers
+            const officialCard = officialRadio.closest('label').querySelector('.posting-option-card');
+            const unofficialCard = unofficialRadio.closest('label').querySelector('.posting-option-card');
+            
+            // Reset all cards
+            officialCard.classList.remove('selected', 'border-green-500', 'bg-green-50', 'border-amber-500', 'bg-amber-50');
+            unofficialCard.classList.remove('selected', 'border-green-500', 'bg-green-50', 'border-amber-500', 'bg-amber-50');
+            
+            // Apply appropriate styling based on selection
+            if (officialRadio.checked) {
+                officialCard.classList.add('selected', 'border-green-500', 'bg-green-50');
+                unofficialCard.classList.add('border-gray-200');
+            } else {
+                unofficialCard.classList.add('selected', 'border-amber-500', 'bg-amber-50');
+                officialCard.classList.add('border-gray-200');
+            }
+        }
         
         function resetForm() {
             if (confirm('Are you sure you want to reset the form? All entered data will be lost.')) {
                 document.querySelector('form').reset();
+                
+                // Reset radio buttons to default (Official)
+                const officialRadio = document.querySelector('input[name="is_official"][value="1"]');
+                officialRadio.checked = true;
+                
+                // Update UI
+                updateFormAction(officialRadio);
             }
         }
+        
+        // Optional: If you want to submit to different routes based on selection
+        // function submitForm() {
+        //     const form = document.getElementById('announcementForm');
+        //     const isOfficial = document.querySelector('input[name="is_official"]:checked').value;
+            
+        //     if (isOfficial === '1') {
+        //         form.action = "{{ route('announcements.store.official') }}";
+        //     } else {
+        //         form.action = "{{ route('announcements.store.unofficial') }}";
+        //     }
+            
+        //     form.submit();
+        // }
     </script>
 </body>
 </html>

@@ -128,73 +128,73 @@
                         @method('PUT')
 
                         <!-- Posting Destination (Only show if column exists) -->
-                        @if($hasOfficialColumn ?? false)
-                        <div class="mb-8 p-6 bg-gray-50 rounded-xl">
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">Where should this announcement appear?</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <!-- Official Announcement Option -->
-                                <label class="cursor-pointer">
-                                    <input type="radio" 
-                                           name="is_official" 
-                                           value="1" 
-                                           {{ old('is_official', $announcement->is_official ? '1' : '0') == '1' ? 'checked' : '' }}
-                                           class="hidden"
-                                           onchange="updateFormAction(this)">
-                                    <div class="posting-option-card p-5 rounded-xl border-2 {{ old('is_official', $announcement->is_official ? '1' : '0') == '1' ? 'selected border-green-500 bg-green-50' : 'border-gray-200' }}">
-                                        <div class="flex items-start">
-                                            <div class="flex-shrink-0">
-                                                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                                                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                                                </div>
-                                            </div>
-                                            <div class="ml-4">
-                                                <h4 class="font-semibold text-gray-900">Official Announcement</h4>
-                                                <p class="mt-1 text-sm text-gray-600">
-                                                    Verified announcements from university administration. 
-                                                    Will appear on the main bulletin board.
-                                                </p>
-                                                <div class="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    <i class="fas fa-globe mr-1"></i> Main Bulletin Board
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </label>
-
-                                <!-- Unofficial Announcement Option -->
-                                <label class="cursor-pointer">
-                                    <input type="radio" 
-                                           name="is_official" 
-                                           value="0" 
-                                           {{ old('is_official', $announcement->is_official ? '1' : '0') == '0' ? 'checked' : '' }}
-                                           class="hidden"
-                                           onchange="updateFormAction(this)">
-                                    <div class="posting-option-card p-5 rounded-xl border-2 {{ old('is_official', $announcement->is_official ? '1' : '0') == '0' ? 'selected border-amber-500 bg-amber-50' : 'border-gray-200' }}">
-                                        <div class="flex items-start">
-                                            <div class="flex-shrink-0">
-                                                <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
-                                                    <i class="fas fa-bullhorn text-amber-600 text-xl"></i>
-                                                </div>
-                                            </div>
-                                            <div class="ml-4">
-                                                <h4 class="font-semibold text-gray-900">Unofficial Announcement</h4>
-                                                <p class="mt-1 text-sm text-gray-600">
-                                                    Informal updates, student notices, or department news. 
-                                                    Will appear on the unofficial announcements page.
-                                                </p>
-                                                <div class="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                                    <i class="fas fa-users mr-1"></i> Unofficial Page
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                            
-                            <!-- Hidden field to store the posting type for form submission -->
-                            <input type="hidden" name="posting_type" id="posting_type" value="{{ old('is_official', $announcement->is_official ? '1' : '0') == '1' ? 'official' : 'unofficial' }}">
+@if($hasOfficialColumn ?? false)
+<div class="mb-8 p-6 bg-gray-50 rounded-xl">
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Where should this announcement appear?</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Official Announcement Option -->
+        <label class="cursor-pointer">
+            <input type="radio" 
+                   name="announcement_type"
+                   value="official"
+                   {{ old('announcement_type', $announcement->is_official ? 'official' : 'unofficial') == 'official' ? 'checked' : '' }}
+                   class="hidden"
+                   onchange="updateFormAction(this)">
+            <div class="posting-option-card p-5 rounded-xl border-2 {{ old('announcement_type', $announcement->is_official ? 'official' : 'unofficial') == 'official' ? 'selected border-green-500 bg-green-50' : 'border-gray-200' }}">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
                         </div>
-                        @endif
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="font-semibold text-gray-900">Official Announcement</h4>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Verified announcements from university administration. 
+                            Will appear on the main bulletin board.
+                        </p>
+                        <div class="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-globe mr-1"></i> Main Bulletin Board
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </label>
+
+        <!-- Unofficial Announcement Option -->
+        <label class="cursor-pointer">
+            <input type="radio" 
+                   name="announcement_type"
+                   value="unofficial"
+                   {{ old('announcement_type', $announcement->is_official ? 'official' : 'unofficial') == 'unofficial' ? 'checked' : '' }}
+                   class="hidden"
+                   onchange="updateFormAction(this)">
+            <div class="posting-option-card p-5 rounded-xl border-2 {{ old('announcement_type', $announcement->is_official ? 'official' : 'unofficial') == 'unofficial' ? 'selected border-amber-500 bg-amber-50' : 'border-gray-200' }}">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                            <i class="fas fa-bullhorn text-amber-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="font-semibold text-gray-900">Unofficial Announcement</h4>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Informal updates, student notices, or department news. 
+                            Will appear on the unofficial announcements page.
+                        </p>
+                        <div class="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            <i class="fas fa-users mr-1"></i> Unofficial Page
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </label>
+    </div>
+    
+    <!-- Hidden field to store the posting type for form submission -->
+    <input type="hidden" name="announcement_type" id="announcement_type_hidden" value="{{ old('announcement_type', $announcement->is_official ? 'official' : 'unofficial') }}">
+</div>
+@endif
 
                         <!-- Title -->
                         <div class="mb-6">
@@ -282,6 +282,8 @@
                                 <option value="draft" {{ old('status', $announcement->status ?? 'draft') == 'draft' ? 'selected' : '' }}>Draft</option>
                                 <option value="published" {{ old('status', $announcement->status) == 'published' ? 'selected' : '' }}>Published</option>
                                 <option value="archived" {{ old('status', $announcement->status) == 'archived' ? 'selected' : '' }}>Archived</option>
+                                <!-- Add pending_verification if needed -->
+                                <option value="pending_verification" {{ old('status', $announcement->status) == 'pending_verification' ? 'selected' : '' }}>Pending Verification</option>
                             </select>
                             @error('status')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -427,7 +429,7 @@
             
             // Add confirmation when changing status to published
             const statusSelect = document.getElementById('status');
-            const form = document.querySelector('form[method="POST"]');
+            const form = document.getElementById('announcementForm');
             
             if (form && statusSelect) {
                 form.addEventListener('submit', function(e) {
@@ -441,7 +443,7 @@
             }
             
             // Initialize posting option cards if they exist
-            if (document.querySelector('input[name="is_official"]')) {
+            if (document.querySelector('input[name="announcement_type"]')) {
                 updatePostingOptionCards();
             }
         });
@@ -453,13 +455,18 @@
         }
         
         function updateFormAction(radio) {
-            const postingType = radio.value === '1' ? 'official' : 'unofficial';
-            document.getElementById('posting_type').value = postingType;
+            const announcementType = radio.value; // 'official' or 'unofficial'
+            
+            // Update hidden field
+            const hiddenField = document.getElementById('announcement_type_hidden');
+            if (hiddenField) {
+                hiddenField.value = announcementType;
+            }
             
             // Update button text
             const submitButtonText = document.getElementById('submitButtonText');
             
-            if (radio.value === '1') {
+            if (announcementType === 'official') {
                 submitButtonText.textContent = 'Update & Move to Official Board';
             } else {
                 submitButtonText.textContent = 'Update & Move to Unofficial Page';
@@ -470,9 +477,9 @@
         }
         
         function updatePostingOptionCards() {
-            // Get all radio buttons
-            const officialRadio = document.querySelector('input[name="is_official"][value="1"]');
-            const unofficialRadio = document.querySelector('input[name="is_official"][value="0"]');
+            // Get all radio buttons with name 'announcement_type'
+            const officialRadio = document.querySelector('input[name="announcement_type"][value="official"]');
+            const unofficialRadio = document.querySelector('input[name="announcement_type"][value="unofficial"]');
             
             if (!officialRadio || !unofficialRadio) return;
             

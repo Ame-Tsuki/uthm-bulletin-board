@@ -59,16 +59,21 @@
                     @enderror
                 </div>
 
-                <!-- Remember Me -->
+                <!-- Remember Me & Forgot Password-->
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center">
-                        <input id="remember" name="remember" type="checkbox" 
-                               class="h-4 w-4 text-uthm-blue focus:ring-uthm-blue border-gray-300 rounded">
-                        <label for="remember" class="ml-2 block text-sm text-gray-900">
-                            Remember me
-                        </label>
-                    </div>
-                </div>
+    <div class="flex items-center">
+        <input id="remember" name="remember" type="checkbox" 
+               class="h-4 w-4 text-uthm-blue focus:ring-uthm-blue border-gray-300 rounded">
+        <label for="remember" class="ml-2 block text-sm text-gray-900">
+            Remember me
+        </label>
+    </div>
+    <div class="text-sm">
+        <a href="{{ route('password.request') }}" class="font-medium text-uthm-blue hover:underline">
+            Forgot your password?
+        </a>
+    </div>
+</div>
 
                 <!-- Submit Button -->
                 <div>

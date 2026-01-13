@@ -12,14 +12,20 @@ class Announcement extends Model
         'content',
         'category',
         'priority',
+        'is_official',
+        'attachments',
         'faculty',
+        'status',
         'author_id',
         'published_at',
-        'is_active',
+        'expiry_date',
     ];
 
     protected $casts = [
+        'is_official' => 'boolean',
         'published_at' => 'datetime',
+        'expiry_date' => 'date',
+        'attachments' => 'array',
         'is_active' => 'boolean',
     ];
 

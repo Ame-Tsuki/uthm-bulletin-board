@@ -103,6 +103,14 @@
             background-color: #f0f9ff;
             color: #0369a1;
         }
+        .badge-official {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .badge-unofficial {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
         
         /* Custom colors */
         .uthm-blue { color: #0056a6; }
@@ -111,6 +119,52 @@
         .uthm-green { color: #6ea342; }
         .uthm-yellow { color: #ffc107; }
         .uthm-red { color: #dc3545; }
+
+        /* Floating button */
+        .floating-add-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 86, 166, 0.3);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 86, 166, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(0, 86, 166, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 86, 166, 0);
+            }
+        }
+        
+        /* Mobile floating button */
+        @media (max-width: 768px) {
+            .floating-add-btn {
+                bottom: 5rem;
+                right: 1.5rem;
+            }
+        }
+        
+        /* Tab styles */
+        .tab-active {
+            background-color: #0056a6;
+            color: white;
+        }
+        
+        .tab-inactive {
+            background-color: #f3f4f6;
+            color: #6b7280;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .tab-inactive:hover {
+            background-color: #e5e7eb;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -130,8 +184,8 @@
             <div class="flex items-center justify-between">
                 <!-- Logo -->
                 <div class="flex items-center space-x-3 overflow-hidden">
-                    <div class="bg-uthm-blue text-white p-2 rounded-lg shrink-0">
-                        <i class="fas fa-bullhorn text-lg"></i>
+                    <div class="bg-green-600 text-white p-2 rounded-lg shrink-0">
+                        <i class="fas fa-user-graduate text-lg"></i>
                     </div>
                     <div class="sidebar-text">
                         <h2 class="font-bold uthm-blue">UTHM Bulletin</h2>
@@ -148,18 +202,20 @@
             </div>
         </div>
 
-        <!-- User Profile -->
-        <div class="p-4 border-b border-gray-200">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
-                    <span class="font-bold uthm-blue">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
-                </div>
-                <div class="sidebar-text">
-                    <h3 class="font-medium text-gray-900">{{ $user->name }}</h3>
-                    <p class="text-xs text-gray-500">{{ $user->uthm_id ?? 'UTHM Member' }}</p>
+        <!-- User Profile - Now Clickable -->
+        <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
+                        <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
+                    </div>
+                    <div class="sidebar-text">
+                        <h3 class="font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</h3>
+                        <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
 
         <!-- Dashboard Navigation -->
         <nav class="p-4">
@@ -208,54 +264,9 @@
                     </a>
                 </li>
 
-                <!-- Role-Based Navigation -->
-                @if($user->role === 'admin')
-                    <li class="pt-4">
-                        <p class="sidebar-text text-xs text-gray-500 uppercase tracking-wider px-3">Admin</p>
-                        <a href="{{ route('admin.dashboard') }}" 
-                           class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 transition-colors mt-2">
-                            <div class="shrink-0">
-                                <i class="fas fa-cogs w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Admin Panel</span>
-                        </a>
-                    </li>
-                @elseif($user->role === 'staff')
-                    <li>
-                        <a href="{{ route('staff.dashboard') }}" 
-                           class="flex items-center p-3 rounded-lg hover:bg-yellow-50 text-yellow-600 transition-colors">
-                            <div class="shrink-0">
-                                <i class="fas fa-user-tie w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Staff Dashboard</span>
-                        </a>
-                    </li>
-                @elseif($user->role === 'student')
-                    <li>
-                        <a href="{{ route('student.dashboard') }}" 
-                           class="flex items-center p-3 rounded-lg hover:bg-green-50 text-green-600 transition-colors">
-                            <div class="shrink-0">
-                                <i class="fas fa-user-graduate w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Student Dashboard</span>
-                        </a>
-                    </li>
-                @endif
-
-                <!-- Clubs -->
-                <li>
-                    <a href="#" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-users w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Clubs</span>
-                    </a>
-                </li>
-
                 <!-- Settings -->
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('settings') }}" 
                        class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
                         <div class="shrink-0">
                             <i class="fas fa-cog w-5 h-5"></i>
@@ -304,7 +315,7 @@
                                 Create Announcement
                             </button>
                             <div id="quick-create-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden">
-                                <a href="{{ route('admin.announcements.create') ?? '#' }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <a href="{{ route('announcements.create') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-bullhorn mr-2"></i> New Announcement
                                 </a>
                                 <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
@@ -329,11 +340,11 @@
                         <div class="relative">
                             <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100">
                                 <div class="w-8 h-8 bg-uthm-blue-light rounded-full flex items-center justify-center">
-                                    <span class="font-bold uthm-blue">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                    <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
                                 </div>
                                 <div class="hidden md:block text-left">
-                                    <p class="text-sm font-medium text-gray-900">{{ $user->name }}</p>
-                                    <p class="text-xs text-gray-500">{{ $user->uthm_id ?? 'UTHM Member' }}</p>
+                                    <p class="text-sm font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</p>
+                                    <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
                                 </div>
                                 <i class="fas fa-chevron-down text-gray-500"></i>
                             </button>
@@ -370,21 +381,51 @@
                             <h2 class="text-3xl font-bold text-gray-900">Announcements</h2>
                             <p class="mt-2 text-gray-600">Stay updated with the latest news and announcements from UTHM</p>
                         </div>
-                        <div class="mt-4 sm:mt-0">
-                            <!-- Category Filter -->
-                            <form method="GET" action="{{ route('announcements.index') }}" class="inline-block">
-                                <select name="category" onchange="this.form.submit()" 
-                                        class="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    <option value="">All Categories</option>
-                                    <option value="academic" {{ request('category') == 'academic' ? 'selected' : '' }}>Academic</option>
-                                    <option value="events" {{ request('category') == 'events' ? 'selected' : '' }}>Events</option>
-                                    <option value="general" {{ request('category') == 'general' ? 'selected' : '' }}>General</option>
-                                    <option value="urgent" {{ request('category') == 'urgent' ? 'selected' : '' }}>Urgent</option>
-                                </select>
-                            </form>
+                    </div>
+                </div>
+
+                <!-- Announcement Type Navigation -->
+                <div class="mb-8 bg-white rounded-xl shadow p-4">
+                    <div class="flex flex-wrap gap-4">
+                        <h3 class="text-lg font-medium text-gray-900 self-center">View:</h3>
+                        <div class="flex space-x-2">
+                            <a href="{{ route('announcements.index') }}" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.index') ? 'tab-active' : 'tab-inactive' }}">
+                                All Announcements
+                            </a>
+                            <a href="{{ route('announcements.official') }}" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.official') ? 'tab-active' : 'tab-inactive' }}">
+                                <i class="fas fa-check-circle mr-2"></i>Official Announcements
+                            </a>
+                            <a href="{{ route('announcements.unofficial') }}" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.unofficial') ? 'tab-active' : 'tab-inactive' }}">
+                                <i class="fas fa-users mr-2"></i>Unofficial Announcements
+                            </a>
                         </div>
                     </div>
                 </div>
+
+                <!-- Create Announcement Card (for admin/staff only) -->
+                @if(in_array($user->role, ['admin', 'staff']))
+                <div class="mb-8 bg-gradient-to-r from-blue-50 to-uthm-blue-light border border-blue-200 rounded-xl shadow-sm p-5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="bg-uthm-blue text-white p-3 rounded-lg mr-4">
+                                <i class="fas fa-bullhorn text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-lg">Ready to share an announcement?</h3>
+                                <p class="text-gray-600 text-sm mt-1">Create a new announcement to inform students and staff about important updates.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('announcements.create') }}" 
+                           class="inline-flex items-center px-5 py-3 bg-uthm-blue text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow">
+                            <i class="fas fa-plus mr-2"></i>
+                            Create Announcement
+                        </a>
+                    </div>
+                </div>
+                @endif
 
                 <!-- Filters -->
                 <div class="mb-8 bg-white rounded-xl shadow p-4">
@@ -392,7 +433,7 @@
                         <div class="flex flex-wrap gap-2">
                             <button onclick="filterAnnouncements('all')" 
                                     class="px-4 py-2 bg-uthm-blue text-white rounded-lg text-sm font-medium">
-                                All Announcements
+                                All Categories
                             </button>
                             <button onclick="filterAnnouncements('urgent')" 
                                     class="px-4 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100">
@@ -406,12 +447,17 @@
                                     class="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-100">
                                 <i class="fas fa-calendar-alt mr-2"></i>Events
                             </button>
+                            <button onclick="filterAnnouncements('general')" 
+                                    class="px-4 py-2 bg-uthm-blue-light text-uthm-blue rounded-lg text-sm font-medium hover:bg-blue-100">
+                                <i class="fas fa-newspaper mr-2"></i>General
+                            </button>
                         </div>
                         
                         <div class="flex items-center">
                             <div class="relative">
                                 <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                                 <input type="text" 
+                                       id="search-input"
                                        placeholder="Search announcements..." 
                                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64">
                             </div>
@@ -419,177 +465,40 @@
                     </div>
                 </div>
 
-                <!-- Demo Notice -->
-                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                    <div class="flex items-start">
-                        <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
-                        <div>
-                            <h4 class="font-medium text-blue-900">Demo Mode</h4>
-                            <p class="text-blue-700 text-sm mt-1">This is a demonstration. When you create announcements in the admin panel, they will appear here.</p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Announcements Grid -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Announcement Card 1 -->
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200">
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium badge-urgent">
-                                        <i class="fas fa-exclamation-circle mr-1"></i> Urgent
-                                    </span>
-                                    <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-general">
-                                        General
-                                    </span>
-                                </div>
-                                <span class="text-sm text-gray-500">
-                                    <i class="far fa-clock mr-1"></i> Dec 19, 2023
-                                </span>
-                            </div>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mb-3">System Maintenance This Weekend</h3>
-                            
-                            <p class="text-gray-600 mb-4 line-clamp-2">
-                                There will be a scheduled system maintenance on Saturday, December 23rd from 2:00 AM to 6:00 AM. All UTHM digital services will be temporarily unavailable during this period.
-                            </p>
-                            
-                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-user-tie mr-2"></i>
-                                    <span>IT Department</span>
-                                </div>
-                                <a href="/announcement/1" 
-                                   class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
-                                    View Details
-                                    <i class="fas fa-arrow-right ml-2"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Announcement Card 2 -->
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200">
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium badge-important">
-                                        <i class="fas fa-star mr-1"></i> Important
-                                    </span>
-                                    <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-academic">
-                                        Academic
-                                    </span>
-                                </div>
-                                <span class="text-sm text-gray-500">
-                                    <i class="far fa-clock mr-1"></i> Dec 18, 2023
-                                </span>
-                            </div>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mb-3">Final Exam Schedule Release</h3>
-                            
-                            <p class="text-gray-600 mb-4 line-clamp-2">
-                                The final examination schedule for Semester 1, 2023/2024 has been published. Students can access their exam timetable through the Student Portal.
-                            </p>
-                            
-                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-user-tie mr-2"></i>
-                                    <span>Academic Affairs Office</span>
-                                </div>
-                                <a href="/announcement/2" 
-                                   class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
-                                    View Details
-                                    <i class="fas fa-arrow-right ml-2"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Announcement Card 3 -->
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200">
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium badge-events">
-                                        <i class="fas fa-calendar-alt mr-1"></i> Events
-                                    </span>
-                                </div>
-                                <span class="text-sm text-gray-500">
-                                    <i class="far fa-clock mr-1"></i> Dec 17, 2023
-                                </span>
-                            </div>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mb-3">Career Fair 2024</h3>
-                            
-                            <p class="text-gray-600 mb-4 line-clamp-2">
-                                UTHM Annual Career Fair will be held on January 15-17, 2024 at Dewan Sultan Ibrahim. Over 100 companies from various industries will participate.
-                            </p>
-                            
-                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-user-tie mr-2"></i>
-                                    <span>Career Center</span>
-                                </div>
-                                <a href="/announcement/3" 
-                                   class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
-                                    View Details
-                                    <i class="fas fa-arrow-right ml-2"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Announcement Card 4 -->
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200">
-                        <div class="p-6">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <span class="px-3 py-1 rounded-full text-xs font-medium badge-academic">
-                                        Academic
-                                    </span>
-                                </div>
-                                <span class="text-sm text-gray-500">
-                                    <i class="far fa-clock mr-1"></i> Dec 16, 2023
-                                </span>
-                            </div>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mb-3">Semester Break Activities</h3>
-                            
-                            <p class="text-gray-600 mb-4 line-clamp-2">
-                                Various activities and workshops are planned for the semester break. Registration opens next week for all interested students.
-                            </p>
-                            
-                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <i class="fas fa-user-tie mr-2"></i>
-                                    <span>Student Affairs</span>
-                                </div>
-                                <a href="/announcement/4" 
-                                   class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
-                                    View Details
-                                    <i class="fas fa-arrow-right ml-2"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
+                <div id="announcements-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Database Announcements -->
                     @forelse($announcements as $announcement)
-                        <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200">
+                        <div class="announcement-card bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200" 
+                             data-type="{{ $announcement->is_official ? 'official' : 'unofficial' }}"
+                             data-category="{{ $announcement->category }}"
+                             data-priority="{{ $announcement->priority }}">
                             <div class="p-6">
                                 <div class="flex justify-between items-start mb-4">
                                     <div>
+                                        <!-- Official/Unofficial Badge -->
+                                        @if($announcement->is_official)
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium badge-official">
+                                                <i class="fas fa-check-circle mr-1"></i> Official
+                                            </span>
+                                        @else
+                                            <span class="px-3 py-1 rounded-full text-xs font-medium badge-unofficial">
+                                                <i class="fas fa-users mr-1"></i> Unofficial
+                                            </span>
+                                        @endif
+                                        
+                                        <!-- Priority Badge -->
                                         @if($announcement->priority === 'urgent')
-                                            <span class="px-3 py-1 rounded-full text-xs font-medium badge-urgent">
+                                            <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-urgent">
                                                 <i class="fas fa-exclamation-circle mr-1"></i> Urgent
                                             </span>
                                         @elseif($announcement->priority === 'important')
-                                            <span class="px-3 py-1 rounded-full text-xs font-medium badge-important">
+                                            <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-important">
                                                 <i class="fas fa-star mr-1"></i> Important
                                             </span>
                                         @endif
                                         
+                                        <!-- Category Badge -->
                                         <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-{{ $announcement->category }}">
                                             {{ ucfirst($announcement->category) }}
                                         </span>
@@ -610,8 +519,13 @@
                                     <div class="flex items-center text-sm text-gray-500">
                                         <i class="fas fa-user-tie mr-2"></i>
                                         <span>{{ $announcement->author->name ?? 'Admin' }}</span>
+                                        @if($announcement->is_official)
+                                            <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                                                <i class="fas fa-shield-alt mr-1"></i>Verified
+                                            </span>
+                                        @endif
                                     </div>
-                                    <a href="/announcement/{{ $announcement->id }}" 
+                                    <a href="{{ route('announcements.show', $announcement) }}" 
                                        class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
                                         View Details
                                         <i class="fas fa-arrow-right ml-2"></i>
@@ -625,16 +539,38 @@
                 </div>
 
                 <!-- No Announcements Message -->
-                @if($announcements->count() == 0)
-                    <div class="text-center py-12">
-                        <div class="inline-block p-6 bg-gray-100 rounded-full mb-4">
-                            <i class="fas fa-bullhorn text-gray-400 text-4xl"></i>
-                        </div>
-                        <h3 class="text-xl font-medium text-gray-900 mb-2">No announcements yet</h3>
-                        <p class="text-gray-600 mb-6">When announcements are created, they will appear here.</p>
-                        <p class="text-sm text-gray-500">Demo announcements are shown above for reference.</p>
+                <div id="no-announcements-message" class="text-center py-12" style="display: {{ $announcements->count() == 0 ? 'block' : 'none' }}">
+                    <div class="inline-block p-6 bg-gray-100 rounded-full mb-4">
+                        <i class="fas fa-bullhorn text-gray-400 text-4xl"></i>
                     </div>
-                @endif
+                    <h3 class="text-xl font-medium text-gray-900 mb-2" id="no-announcements-title">
+                        @if(request()->routeIs('announcements.official'))
+                            No Official Announcements
+                        @elseif(request()->routeIs('announcements.unofficial'))
+                            No Unofficial Announcements
+                        @else
+                            No announcements yet
+                        @endif
+                    </h3>
+                    <p class="text-gray-600 mb-6" id="no-announcements-description">
+                        @if(request()->routeIs('announcements.official'))
+                            There are no official announcements at the moment.
+                        @elseif(request()->routeIs('announcements.unofficial'))
+                            There are no unofficial announcements at the moment.
+                        @else
+                            When announcements are created, they will appear here.
+                        @endif
+                    </p>
+                    @if(in_array($user->role, ['admin', 'staff']))
+                    <div class="mt-8">
+                        <a href="{{ route('announcements.create') }}" 
+                           class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-lg">
+                            <i class="fas fa-plus-circle mr-2 text-lg"></i>
+                            Create Your First Announcement
+                        </a>
+                    </div>
+                    @endif
+                </div>
 
                 <!-- Pagination -->
                 @if($announcements->hasPages())
@@ -656,6 +592,14 @@
                 </div>
             </div>
         </footer>
+
+        <!-- Floating "Add Post" Button -->
+        @if(in_array($user->role, ['admin', 'staff']))
+        <a href="{{ route('announcements.create') }}" 
+           class="floating-add-btn bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors hover:shadow-xl">
+            <i class="fas fa-plus text-2xl"></i>
+        </a>
+        @endif
     </div>
 
     <!-- JavaScript -->
@@ -670,6 +614,13 @@
             const userMenu = document.getElementById('user-menu');
             const quickCreateButton = document.getElementById('quick-create-button');
             const quickCreateMenu = document.getElementById('quick-create-menu');
+            const searchInput = document.getElementById('search-input');
+            const announcementsGrid = document.getElementById('announcements-grid');
+            const noAnnouncementsMessage = document.getElementById('no-announcements-message');
+            
+            // State variables
+            let currentFilterCategory = 'all';
+            let currentSearchTerm = '';
             
             // Load sidebar state from localStorage
             const isSidebarExpanded = localStorage.getItem('sidebarExpanded') === 'true';
@@ -715,6 +666,15 @@
                     e.stopPropagation();
                     quickCreateMenu.classList.toggle('hidden');
                 });
+                
+                // Fix the create announcement link in dropdown
+                const createAnnouncementLink = quickCreateMenu.querySelector('a[href*="announcements.create"]');
+                if (createAnnouncementLink) {
+                    createAnnouncementLink.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        window.location.href = this.href;
+                    });
+                }
             }
             
             // Close menus when clicking outside
@@ -729,6 +689,14 @@
                     link.addEventListener('click', function() {
                         sidebar.classList.remove('mobile-open');
                     });
+                });
+            }
+            
+            // Search functionality
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function(e) {
+                    currentSearchTerm = this.value.toLowerCase();
+                    filterAnnouncements();
                 });
             }
             
@@ -758,18 +726,57 @@
                 localStorage.setItem('sidebarExpanded', 'false');
             }
             
-            // Filter announcements
+            // Category Filter
             window.filterAnnouncements = function(category) {
-                alert('Filter by: ' + category + '\n\nThis feature will be implemented with real data.');
+                currentFilterCategory = category;
+                filterAnnouncements();
             }
-
-            // Search functionality
-            document.querySelector('input[type="text"]').addEventListener('keyup', function(e) {
-                if (e.key === 'Enter') {
-                    const searchTerm = this.value.toLowerCase();
-                    alert('Search for: ' + searchTerm + '\n\nSearch functionality will be implemented with real data.');
+            
+            // Combined Filter Function
+            function filterAnnouncements() {
+                const cards = document.querySelectorAll('.announcement-card');
+                let visibleCards = 0;
+                
+                cards.forEach(card => {
+                    const category = card.getAttribute('data-category');
+                    const title = card.querySelector('h3').textContent.toLowerCase();
+                    const content = card.querySelector('p').textContent.toLowerCase();
+                    
+                    // Category filter
+                    let categoryMatch = currentFilterCategory === 'all' || category === currentFilterCategory;
+                    
+                    // Search filter
+                    let searchMatch = currentSearchTerm === '' || 
+                                     title.includes(currentSearchTerm) || 
+                                     content.includes(currentSearchTerm);
+                    
+                    if (categoryMatch && searchMatch) {
+                        card.style.display = 'block';
+                        visibleCards++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                // Show/hide no announcements message
+                if (visibleCards === 0) {
+                    noAnnouncementsMessage.style.display = 'block';
+                    
+                    // Update message based on filter
+                    if (currentSearchTerm !== '') {
+                        document.getElementById('no-announcements-title').textContent = 'No announcements found';
+                        document.getElementById('no-announcements-description').textContent = 'Try adjusting your search or filter criteria.';
+                    } else {
+                        // Keep the route-specific message
+                        const title = document.getElementById('no-announcements-title').textContent;
+                        const description = document.getElementById('no-announcements-description').textContent;
+                        document.getElementById('no-announcements-title').textContent = title;
+                        document.getElementById('no-announcements-description').textContent = description;
+                    }
+                } else {
+                    noAnnouncementsMessage.style.display = 'none';
                 }
-            });
+            }
             
             // Responsive behavior
             window.addEventListener('resize', function() {
@@ -786,6 +793,9 @@
             if (window.innerWidth < 768) {
                 sidebar.style.transform = 'translateX(-100%)';
             }
+            
+            // Initialize filter
+            filterAnnouncements();
         });
     </script>
 </body>

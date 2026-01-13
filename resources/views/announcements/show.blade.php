@@ -82,17 +82,6 @@
     <!-- Main Content -->
     <div class="min-h-screen py-8">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Demo Notice -->
-            <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <div class="flex items-start">
-                    <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
-                    <div>
-                        <h4 class="font-medium text-blue-900">Demo Mode</h4>
-                        <p class="text-blue-700 text-sm mt-1">This is a demonstration. Real announcements will show actual data from database.</p>
-                    </div>
-                </div>
-            </div>
-
             <!-- Announcement Container -->
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <!-- Announcement Header -->
@@ -114,29 +103,31 @@
                                 $category = $announcement->category ?? 'general';
                             @endphp
                             
-                            <span class="px-4 py-2 rounded-full text-sm font-medium badge-{{ $category }}">
-                                {{ ucfirst($category) }}
-                            </span>
+                            @if(!empty($category))
+                                <span class="px-4 py-2 rounded-full text-sm font-medium badge-{{ $category }}">
+                                    {{ ucfirst($category) }}
+                                </span>
+                            @endif
                         </div>
 
                         <!-- Title -->
                         <h1 class="text-3xl md:text-4xl font-bold text-gray-900">
-                            {{ $announcement->title ?? 'System Maintenance This Weekend' }}
+                            {{ $announcement->title }}
                         </h1>
 
                         <!-- Meta Information -->
                         <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                             <div class="flex items-center">
                                 <i class="fas fa-user-tie mr-2 text-gray-400"></i>
-                                <span>{{ $announcement->author->name ?? 'IT Department' }}</span>
+                                <span>{{ $announcement->author->name ?? 'Unknown author' }}</span>
                             </div>
                             <div class="flex items-center">
                                 <i class="far fa-calendar mr-2 text-gray-400"></i>
-                                <span>{{ isset($announcement->created_at) ? $announcement->created_at->format('F j, Y') : 'December 19, 2023' }}</span>
+                                <span>{{ optional($announcement->created_at)->format('F j, Y') ?? 'Date unavailable' }}</span>
                             </div>
                             <div class="flex items-center">
                                 <i class="far fa-clock mr-2 text-gray-400"></i>
-                                <span>{{ isset($announcement->created_at) ? $announcement->created_at->format('g:i A') : '10:00 AM' }}</span>
+                                <span>{{ optional($announcement->created_at)->format('g:i A') ?? '' }}</span>
                             </div>
                         </div>
                     </div>
@@ -150,60 +141,13 @@
                             <i class="fas fa-info-circle mr-2"></i>Summary
                         </h3>
                         <p class="text-blue-800">
-                            {{ $announcement->excerpt ?? 'Important system maintenance affecting all UTHM digital services this weekend.' }}
+                            {{ \Illuminate\Support\Str::limit($announcement->content, 200) }}
                         </p>
                     </div>
 
                     <!-- Main Content -->
                     <div class="prose max-w-none">
-                        @if(isset($announcement->content))
-                            {!! nl2br(e($announcement->content)) !!}
-                        @else
-                            <p class="lead"><strong>Dear UTHM Community,</strong></p>
-                            
-                            <p>We would like to inform you that there will be a scheduled system maintenance on <strong>Saturday, December 23rd, 2023</strong> from <strong>2:00 AM to 6:00 AM</strong>.</p>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mt-6 mb-3">📋 Affected Services</h3>
-                            <ul>
-                                <li><strong>UTHM Student Portal</strong> - All student services</li>
-                                <li><strong>E-Learning Platform (Moodle)</strong> - Course materials and submissions</li>
-                                <li><strong>Staff Portal</strong> - Administrative functions</li>
-                                <li><strong>Online Registration System</strong> - Course registration and scheduling</li>
-                                <li><strong>Library Management System</strong> - Book reservations and digital resources</li>
-                                <li><strong>All other UTHM digital services</strong></li>
-                            </ul>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mt-6 mb-3">⚠️ Important Notes</h3>
-                            <ol>
-                                <li>All services will be <strong>temporarily unavailable</strong> during the maintenance window</li>
-                                <li>Please <strong>save all your work</strong> and log out before 2:00 AM</li>
-                                <li>No data will be lost during this maintenance</li>
-                                <li>Services will resume automatically after maintenance completion</li>
-                            </ol>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mt-6 mb-3">🎯 Purpose of Maintenance</h3>
-                            <p>This maintenance is necessary to implement <strong>critical security updates</strong> and <strong>performance improvements</strong> to ensure system stability for the upcoming semester.</p>
-                            
-                            <div class="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <p class="text-yellow-800"><i class="fas fa-exclamation-triangle mr-2"></i> We apologize for any inconvenience caused and appreciate your understanding.</p>
-                            </div>
-                            
-                            <h3 class="text-xl font-bold text-gray-900 mt-6 mb-3">📞 Contact Information</h3>
-                            <p>For urgent matters during the maintenance period, please contact:</p>
-                            <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="p-4 bg-gray-50 rounded-lg">
-                                    <p class="font-medium text-gray-700">IT Helpdesk Email</p>
-                                    <p class="text-blue-600">it-helpdesk@uthm.edu.my</p>
-                                </div>
-                                <div class="p-4 bg-gray-50 rounded-lg">
-                                    <p class="font-medium text-gray-700">IT Helpdesk Phone</p>
-                                    <p class="text-gray-900">07-456 7890</p>
-                                </div>
-                            </div>
-                            
-                            <p class="mt-8"><strong>Thank you for your cooperation.</strong></p>
-                            <p class="mt-2"><em>Best regards,<br>UTHM IT Department</em></p>
-                        @endif
+                        {!! nl2br(e($announcement->content ?? '')) !!}
                     </div>
 
                     <!-- Attachments Section -->
@@ -236,7 +180,7 @@
                             <div class="p-4 bg-blue-50 rounded-lg">
                                 <p class="text-sm text-blue-700 font-medium mb-1">Last Updated</p>
                                 <p class="text-blue-900">
-                                    {{ isset($announcement->updated_at) ? $announcement->updated_at->format('F j, Y \a\t g:i A') : 'December 19, 2023 at 2:30 PM' }}
+                                    {{ optional($announcement->updated_at)->format('F j, Y \\a\\t g:i A') ?? 'Date unavailable' }}
                                 </p>
                             </div>
                             <div class="p-4 bg-green-50 rounded-lg">
@@ -262,7 +206,7 @@
                         <div>
                             <p class="text-sm text-gray-600">
                                 <i class="fas fa-eye mr-2"></i>
-                                Views: {{ $announcement->views ?? '125' }}
+                                Views: {{ $announcement->views ?? 0 }}
                             </p>
                         </div>
                         <div class="flex flex-wrap gap-3">
@@ -273,6 +217,11 @@
                             </a>
                             
                             @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
+                                <a href="{{ route('announcements.edit', $announcement) }}" 
+                                   class="inline-flex items-center px-5 py-3 bg-yellow-600 text-white font-medium rounded-lg hover:bg-yellow-700 transition-colors">
+                                    <i class="fas fa-edit mr-2"></i>
+                                    Edit
+                                </a>
                                 <button onclick="window.print()" 
                                         class="inline-flex items-center px-5 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors">
                                     <i class="fas fa-print mr-2"></i>
@@ -289,13 +238,6 @@
                 </div>
             </div>
 
-            <!-- Demo Note -->
-            <div class="mt-8 text-center">
-                <p class="text-sm text-gray-500">
-                    <i class="fas fa-code mr-2"></i>
-                    This is a demonstration view. Create announcements in the admin panel to populate real content.
-                </p>
-            </div>
         </div>
     </div>
 

@@ -27,10 +27,7 @@ class AdminController extends Controller
             'recent_users' => User::latest()->take(10)->get(),
         ];
 
-        return response()->json([
-            'success' => true,
-            'data' => $stats
-        ]);
+        return view('admin.admin', compact('stats'));
     }
 
     /**

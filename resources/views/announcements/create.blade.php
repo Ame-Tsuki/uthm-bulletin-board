@@ -109,10 +109,10 @@
                                     <input type="radio" 
                                            name="is_official" 
                                            value="1" 
-                                           {{ old('is_official', '1') == '1' ? 'checked' : '' }}
+                                           {{ old('is_official', isset($defaultIsOfficial) ? $defaultIsOfficial : '1') == '1' ? 'checked' : '' }}
                                            class="hidden"
                                            onchange="updateFormAction(this)">
-                                    <div class="posting-option-card p-5 rounded-xl border-2 {{ old('is_official', '1') == '1' ? 'selected border-green-500 bg-green-50' : 'border-gray-200' }}">
+                                    <div class="posting-option-card p-5 rounded-xl border-2 {{ old('is_official', isset($defaultIsOfficial) ? $defaultIsOfficial : '1') == '1' ? 'selected border-green-500 bg-green-50' : 'border-gray-200' }}">
                                         <div class="flex items-start">
                                             <div class="flex-shrink-0">
                                                 <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
@@ -164,7 +164,7 @@
                             </div>
                             
                             <!-- Hidden field to store the posting type for form submission -->
-                            <input type="hidden" name="posting_type" id="posting_type" value="{{ old('is_official', '1') == '1' ? 'official' : 'unofficial' }}">
+                            <input type="hidden" name="posting_type" id="posting_type" value="{{ old('is_official', isset($defaultIsOfficial) ? $defaultIsOfficial : '1') == '1' ? 'official' : 'unofficial' }}">
                         </div>
 
                         <!-- Title -->
@@ -294,7 +294,7 @@
                                         class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow">
                                     <i class="fas fa-paper-plane mr-2"></i>
                                     <span id="submitButtonText">
-                                        {{ old('is_official', '1') == '1' ? 'Publish to Official Board' : 'Post to Unofficial Page' }}
+                                        {{ old('is_official', isset($defaultIsOfficial) ? $defaultIsOfficial : '1') == '1' ? 'Publish to Official Board' : 'Post to Unofficial Page' }}
                                     </span>
                                 </button>
                             </div>
@@ -359,6 +359,12 @@
             
             // Initialize posting option cards based on current selection
             updatePostingOptionCards();
+            
+            // Initialize form action based on default selection
+            const defaultRadio = document.querySelector('input[name="is_official"]:checked');
+            if (defaultRadio) {
+                updateFormAction(defaultRadio);
+            }
         });
         
         function updateFormAction(radio) {

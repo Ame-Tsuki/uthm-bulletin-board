@@ -313,8 +313,7 @@
                     
                     <!-- Quick Actions -->
                     <div class="flex items-center space-x-4">
-                        <!-- Quick Create Dropdown (only for admin) -->
-                        @if(in_array($user->role, ['admin']))
+                        <!-- Quick Create Dropdown -->
                         <div class="relative hidden md:block">
                             <a href="{{ route('announcements.create') }}?type=official" 
                                class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center">
@@ -322,7 +321,6 @@
                                 Create Official
                             </a>
                         </div>
-                        @endif
                         
                         <!-- Notification Bell -->
                         <button class="relative p-2 text-gray-600 hover:text-uthm-blue">
@@ -393,7 +391,6 @@
                             <h2 class="text-2xl font-bold text-gray-900">All Official Announcements</h2>
                             <p class="mt-2 text-gray-600">These announcements are verified and published by authorized UTHM staff</p>
                         </div>
-                        @if(in_array($user->role, ['admin']))
                         <div class="mt-4 sm:mt-0">
                             <a href="{{ route('announcements.create') }}?type=official" 
                                class="inline-flex items-center px-5 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-md">
@@ -401,7 +398,6 @@
                                 Create Official Announcement
                             </a>
                         </div>
-                        @endif
                     </div>
                 </div>
 
@@ -568,7 +564,6 @@
                                 </div>
                                 <h3 class="text-xl font-medium text-gray-900 mb-2">No Official Announcements</h3>
                                 <p class="text-gray-600 mb-6">There are no official announcements from UTHM administration at the moment.</p>
-                                @if(in_array($user->role, ['admin']))
                                 <div class="mt-8">
                                     <a href="{{ route('announcements.create') }}?type=official" 
                                        class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-lg">
@@ -576,7 +571,6 @@
                                         Create First Official Announcement
                                     </a>
                                 </div>
-                                @endif
                             </div>
                         @endforelse
                     @else
@@ -622,12 +616,10 @@
         </footer>
 
         <!-- Floating "Add Official Post" Button -->
-        @if(in_array($user->role, ['admin']))
         <a href="{{ route('announcements.create') }}?type=official" 
            class="floating-add-btn bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors hover:shadow-xl">
             <i class="fas fa-shield-alt text-2xl"></i>
         </a>
-        @endif
     </div>
 
     <!-- JavaScript -->

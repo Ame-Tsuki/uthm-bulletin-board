@@ -53,6 +53,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'student';
     }
 
+    public function announcements()
+{
+    return $this->hasMany(Announcement::class, 'author_id');
+}
+
     public function getEmailForPasswordReset()
 {
     return $this->email; // This should return the correct email

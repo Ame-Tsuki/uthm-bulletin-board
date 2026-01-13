@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendar - UTHM Bulletin</title>
+
+     <meta name="csrf-token" content="{{ csrf_token() }}">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -547,468 +550,855 @@
     </div>
 
     <!-- Event Modal -->
-    <div id="event-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-xl shadow-lg w-full max-w-md mx-4">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-bold text-gray-900">Add New Event</h3>
-                    <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <form id="event-form">
-                    <div class="space-y-4">
+<div id="event-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-lg w-full max-w-md mx-4">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold text-gray-900">Add New Event</h3>
+                <button onclick="closeEventModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="event-form">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Event Title *</label>
+                        <input type="text" name="title" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent" placeholder="Enter event title" required>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Event Title</label>
-                            <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent" placeholder="Enter event title">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Start Date *</label>
+                            <input type="date" name="start_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent" required>
                         </div>
-                        
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                                <input type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-                                <input type="date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent">
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
-                                <input type="time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">End Time</label>
-                                <input type="time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent">
-                            </div>
-                        </div>
-                        
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Event Type</label>
-                            <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent">
-                                <option value="lecture">Lecture</option>
-                                <option value="deadline">Deadline</option>
-                                <option value="exam">Exam</option>
-                                <option value="social">Social Event</option>
-                                <option value="workshop">Workshop</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                            <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent" placeholder="Enter location">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                            <textarea rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent" placeholder="Enter event description"></textarea>
-                        </div>
-                        
-                        <div>
-                            <label class="flex items-center">
-                                <input type="checkbox" class="rounded border-gray-300 text-uthm-blue focus:ring-uthm-blue">
-                                <span class="ml-2 text-sm text-gray-700">Set reminder notification</span>
-                            </label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                            <input type="date" name="end_date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent">
                         </div>
                     </div>
                     
-                    <div class="flex justify-end space-x-3 mt-6">
-                        <button type="button" onclick="closeEventModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
-                            Cancel
-                        </button>
-                        <button type="submit" class="px-4 py-2 bg-uthm-blue text-white rounded-lg hover:bg-blue-700 transition">
-                            Save Event
-                        </button>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
+                            <input type="time" name="start_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">End Time</label>
+                            <input type="time" name="end_time" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent">
+                        </div>
                     </div>
-                </form>
-            </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Event Type *</label>
+                        <select name="type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent" required>
+                            <option value="">Select event type</option>
+                            <option value="lecture">Lecture</option>
+                            <option value="deadline">Deadline</option>
+                            <option value="exam">Exam</option>
+                            <option value="social">Social Event</option>
+                            <option value="workshop">Workshop</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                        <input type="text" name="location" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent" placeholder="Enter location">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea name="description" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue focus:border-transparent" placeholder="Enter event description"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="set_reminder" class="rounded border-gray-300 text-uthm-blue focus:ring-uthm-blue">
+                            <span class="ml-2 text-sm text-gray-700">Set reminder notification</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeEventModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" id="save-event-btn" class="px-4 py-2 bg-uthm-blue text-white rounded-lg hover:bg-blue-700 transition">
+                        Save Event
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
     <!-- JavaScript -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize calendar
-            const calendar = new Calendar();
-            calendar.init();
-            
-            // Initialize sidebar (same as dashboard)
-            initializeSidebar();
-        });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize calendar
+        window.calendar = new Calendar();
+        calendar.init();
+        
+        // Initialize sidebar
+        initializeSidebar();
+        
+        // Setup form submission
+        setupEventForm();
+    });
 
-        // Calendar Class
-        class Calendar {
-            constructor() {
-                this.currentDate = new Date();
-                this.events = [
-                    { id: 1, title: 'Database Systems Lecture', date: new Date(2024, 11, 15), type: 'lecture', time: '10:00 AM', location: 'Room 101' },
-                    { id: 2, title: 'FYP Submission Deadline', date: new Date(2024, 11, 20), type: 'deadline', time: '11:59 PM', location: 'Faculty Office' },
-                    { id: 3, title: 'Career Workshop', date: new Date(2024, 11, 15), type: 'workshop', time: '2:00 PM', location: 'Main Hall' },
-                    { id: 4, title: 'Software Engineering Exam', date: new Date(2024, 11, 18), type: 'exam', time: '9:00 AM', location: 'Exam Hall' },
-                    { id: 5, title: 'Christmas Celebration', date: new Date(2024, 11, 25), type: 'social', time: '6:00 PM', location: 'Student Center' },
-                    { id: 6, title: 'Web Development Lecture', date: new Date(2024, 11, 16), type: 'lecture', time: '2:00 PM', location: 'Room 203' },
-                    { id: 7, title: 'AI Assignment Due', date: new Date(2024, 11, 22), type: 'deadline', time: '11:59 PM', location: 'Online' },
-                ];
-            }
+    // Calendar Class
+    class Calendar {
+        constructor() {
+            this.currentDate = new Date();
+            this.events = [];
+            this.isLoading = false;
+        }
 
-            init() {
-                this.renderCalendar();
-                this.setupEventListeners();
-                this.renderUpcomingEvents();
-            }
+        async init() {
+            await this.loadEvents();
+            this.renderCalendar();
+            this.setupEventListeners();
+            this.loadUpcomingEvents();
+            this.loadStatistics();
+        }
 
-            renderCalendar() {
-                const monthYear = document.getElementById('current-month-year');
+        async loadEvents() {
+            try {
+                this.isLoading = true;
+                const year = this.currentDate.getFullYear();
+                const month = this.currentDate.getMonth() + 1;
+                
+                // Show loading indicator if needed
                 const calendarGrid = document.getElementById('calendar-grid');
-                
-                // Update month/year display
-                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                    'July', 'August', 'September', 'October', 'November', 'December'];
-                monthYear.textContent = `${monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
-                
-                // Clear calendar grid
-                calendarGrid.innerHTML = '';
-                
-                // Get first day of month and total days
-                const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
-                const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
-                const totalDays = lastDay.getDate();
-                const startingDay = firstDay.getDay();
-                
-                // Add empty cells for previous month
-                const prevMonthLastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 0).getDate();
-                for (let i = 0; i < startingDay; i++) {
-                    const day = prevMonthLastDay - startingDay + i + 1;
-                    const cell = this.createDayCell(day, 'other-month');
-                    calendarGrid.appendChild(cell);
+                if (calendarGrid) {
+                    calendarGrid.innerHTML = '<div class="col-span-7 p-8 text-center text-gray-500">Loading events...</div>';
                 }
                 
-                // Add current month days
-                const today = new Date();
-                for (let day = 1; day <= totalDays; day++) {
-                    const cellDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), day);
-                    const cell = this.createDayCell(day, cellDate.toDateString() === today.toDateString() ? 'today' : '');
-                    
-                    // Add events for this day
-                    const dayEvents = this.events.filter(event => 
-                        event.date.getDate() === day && 
-                        event.date.getMonth() === this.currentDate.getMonth() &&
-                        event.date.getFullYear() === this.currentDate.getFullYear()
-                    );
-                    
-                    if (dayEvents.length > 0) {
-                        const eventsContainer = document.createElement('div');
-                        eventsContainer.className = 'mt-2 space-y-1';
-                        
-                        dayEvents.forEach(event => {
-                            const eventEl = document.createElement('div');
-                            eventEl.className = `text-xs p-1 rounded truncate cursor-pointer hover:opacity-90 ${this.getEventClass(event.type)}`;
-                            eventEl.textContent = event.title;
-                            eventEl.title = `${event.title}\n${event.time} - ${event.location}`;
-                            eventsContainer.appendChild(eventEl);
-                        });
-                        
-                        cell.querySelector('.day-events').appendChild(eventsContainer);
+                const response = await fetch(`/api/events?year=${year}&month=${month}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (Array.isArray(data)) {
+                    this.events = data.map(event => ({
+                        ...event,
+                        date: new Date(event.start.split('T')[0])
+                    }));
+                } else {
+                    console.error('Invalid response format:', data);
+                    this.events = [];
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+                this.events = [];
+                // Show error message
+                const calendarGrid = document.getElementById('calendar-grid');
+                if (calendarGrid) {
+                    calendarGrid.innerHTML = '<div class="col-span-7 p-8 text-center text-red-500">Error loading events. Please try again.</div>';
+                }
+            } finally {
+                this.isLoading = false;
+            }
+        }
+
+        async loadUpcomingEvents() {
+            try {
+                const response = await fetch('/api/events/upcoming', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    this.renderUpcomingEvents(data);
+                }
+            } catch (error) {
+                console.error('Error loading upcoming events:', error);
+            }
+        }
+
+        async loadStatistics() {
+            try {
+                const response = await fetch('/api/events/statistics', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    this.updateStatistics(data);
+                }
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        renderCalendar() {
+            const monthYear = document.getElementById('current-month-year');
+            const calendarGrid = document.getElementById('calendar-grid');
+            
+            if (!calendarGrid) return;
+            
+            // Update month/year display
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            monthYear.textContent = `${monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
+            
+            // Clear calendar grid
+            calendarGrid.innerHTML = '';
+            
+            // Get first day of month and total days
+            const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
+            const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
+            const totalDays = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+            
+            // Add empty cells for previous month
+            const prevMonthLastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 0).getDate();
+            for (let i = 0; i < startingDay; i++) {
+                const day = prevMonthLastDay - startingDay + i + 1;
+                const cell = this.createDayCell(day, 'other-month');
+                calendarGrid.appendChild(cell);
+            }
+            
+            // Add current month days
+            const today = new Date();
+            for (let day = 1; day <= totalDays; day++) {
+                const cellDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), day);
+                const isToday = cellDate.toDateString() === today.toDateString();
+                const cell = this.createDayCell(day, isToday ? 'today' : '');
+                
+                // Add events for this day
+                const dayEvents = this.events.filter(event => {
+                    const eventDate = new Date(event.start);
+                    return eventDate.getDate() === day && 
+                           eventDate.getMonth() === this.currentDate.getMonth() &&
+                           eventDate.getFullYear() === this.currentDate.getFullYear();
+                });
+                
+                if (dayEvents.length > 0) {
+                    const eventsContainer = document.createElement('div');
+                    eventsContainer.className = 'mt-2 space-y-1';
                     
-                    calendarGrid.appendChild(cell);
+                    dayEvents.forEach(event => {
+                        const eventEl = document.createElement('div');
+                        eventEl.className = `text-xs p-1 rounded truncate cursor-pointer hover:opacity-90 ${this.getEventClass(event.type)}`;
+                        eventEl.textContent = event.title;
+                        eventEl.title = `${event.title}\nType: ${event.type}\n${event.extendedProps?.location ? 'Location: ' + event.extendedProps.location + '\n' : ''}${event.description || ''}`;
+                        eventEl.onclick = () => this.showEventDetails(event);
+                        eventsContainer.appendChild(eventEl);
+                    });
+                    
+                    cell.querySelector('.day-events').appendChild(eventsContainer);
                 }
                 
-                // Add empty cells for next month
-                const totalCells = 42; // 6 weeks * 7 days
-                const remainingCells = totalCells - (startingDay + totalDays);
-                for (let i = 1; i <= remainingCells; i++) {
-                    const cell = this.createDayCell(i, 'other-month');
-                    calendarGrid.appendChild(cell);
-                }
+                calendarGrid.appendChild(cell);
             }
-
-            createDayCell(dayNumber, additionalClasses = '') {
-                const cell = document.createElement('div');
-                cell.className = `calendar-day p-4 border border-gray-100 ${additionalClasses}`;
-                
-                cell.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <span class="font-medium text-gray-900">${dayNumber}</span>
-                        <button class="text-gray-400 hover:text-uthm-blue text-sm">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                    <div class="day-events mt-2"></div>
-                `;
-                
-                return cell;
+            
+            // Add empty cells for next month
+            const totalCells = 42; // 6 weeks * 7 days
+            const remainingCells = totalCells - (startingDay + totalDays);
+            for (let i = 1; i <= remainingCells; i++) {
+                const cell = this.createDayCell(i, 'other-month');
+                calendarGrid.appendChild(cell);
             }
+        }
 
-            getEventClass(type) {
-                const classes = {
-                    'lecture': 'bg-blue-100 text-blue-800',
-                    'deadline': 'bg-red-100 text-red-800',
-                    'exam': 'bg-purple-100 text-purple-800',
-                    'social': 'bg-green-100 text-green-800',
-                    'workshop': 'bg-yellow-100 text-yellow-800'
-                };
-                return classes[type] || 'bg-gray-100 text-gray-800';
-            }
+        createDayCell(dayNumber, additionalClasses = '') {
+            const cell = document.createElement('div');
+            cell.className = `calendar-day p-4 border border-gray-100 ${additionalClasses}`;
+            
+            const cellDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), dayNumber);
+            const dateString = cellDate.toISOString().split('T')[0];
+            
+            cell.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <span class="font-medium text-gray-900">${dayNumber}</span>
+                    <button onclick="calendar.openEventModal('${dateString}')" class="text-gray-400 hover:text-uthm-blue text-sm">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="day-events mt-2"></div>
+            `;
+            
+            return cell;
+        }
 
-            setupEventListeners() {
-                // Month navigation
-                document.getElementById('prev-month').addEventListener('click', () => {
+        getEventClass(type) {
+            const classes = {
+                'lecture': 'bg-blue-100 text-blue-800',
+                'deadline': 'bg-red-100 text-red-800',
+                'exam': 'bg-purple-100 text-purple-800',
+                'social': 'bg-green-100 text-green-800',
+                'workshop': 'bg-yellow-100 text-yellow-800',
+                'other': 'bg-gray-100 text-gray-800'
+            };
+            return classes[type] || 'bg-gray-100 text-gray-800';
+        }
+
+        setupEventListeners() {
+            // Month navigation
+            const prevMonthBtn = document.getElementById('prev-month');
+            const nextMonthBtn = document.getElementById('next-month');
+            const todayBtn = document.getElementById('today-btn');
+            
+            if (prevMonthBtn) {
+                prevMonthBtn.addEventListener('click', async () => {
                     this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+                    await this.loadEvents();
                     this.renderCalendar();
                 });
-                
-                document.getElementById('next-month').addEventListener('click', () => {
+            }
+            
+            if (nextMonthBtn) {
+                nextMonthBtn.addEventListener('click', async () => {
                     this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+                    await this.loadEvents();
                     this.renderCalendar();
                 });
-                
-                document.getElementById('today-btn').addEventListener('click', () => {
+            }
+            
+            if (todayBtn) {
+                todayBtn.addEventListener('click', async () => {
                     this.currentDate = new Date();
+                    await this.loadEvents();
                     this.renderCalendar();
                 });
-                
-                // View toggles
-                document.getElementById('month-view').addEventListener('click', (e) => {
+            }
+            
+            // View toggles
+            const monthViewBtn = document.getElementById('month-view');
+            const weekViewBtn = document.getElementById('week-view');
+            const dayViewBtn = document.getElementById('day-view');
+            
+            if (monthViewBtn) {
+                monthViewBtn.addEventListener('click', (e) => {
                     this.toggleView(e.target, 'month');
                 });
-                
-                document.getElementById('week-view').addEventListener('click', (e) => {
+            }
+            
+            if (weekViewBtn) {
+                weekViewBtn.addEventListener('click', (e) => {
                     this.toggleView(e.target, 'week');
                 });
-                
-                document.getElementById('day-view').addEventListener('click', (e) => {
+            }
+            
+            if (dayViewBtn) {
+                dayViewBtn.addEventListener('click', (e) => {
                     this.toggleView(e.target, 'day');
                 });
-                
-                // Event filters
-                document.querySelectorAll('.event-filter').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        document.querySelectorAll('.event-filter').forEach(btn => {
-                            btn.classList.remove('active', 'bg-uthm-blue', 'text-white');
-                            btn.classList.add('bg-gray-100', 'text-gray-700');
-                        });
-                        
-                        e.target.classList.add('active', 'bg-uthm-blue', 'text-white');
-                        e.target.classList.remove('bg-gray-100', 'text-gray-700');
-                        
-                        const type = e.target.dataset.type;
-                        this.filterEvents(type);
-                    });
-                });
             }
-
-            toggleView(button, view) {
-                // Update button states
-                document.querySelectorAll('#month-view, #week-view, #day-view').forEach(btn => {
-                    btn.classList.remove('bg-white', 'shadow', 'text-uthm-blue');
-                    btn.classList.add('text-gray-600');
-                });
-                
-                button.classList.add('bg-white', 'shadow', 'text-uthm-blue');
-                button.classList.remove('text-gray-600');
-                
-                // TODO: Implement different view renderings
-                console.log(`Switched to ${view} view`);
-            }
-
-            filterEvents(type) {
-                // TODO: Implement event filtering logic
-                console.log(`Filtering events by type: ${type}`);
-            }
-
-            renderUpcomingEvents() {
-                const upcomingEvents = document.getElementById('upcoming-events');
-                upcomingEvents.innerHTML = '';
-                
-                // Get events for the next 7 days
-                const nextWeek = new Date();
-                nextWeek.setDate(nextWeek.getDate() + 7);
-                
-                const upcoming = this.events
-                    .filter(event => event.date > new Date() && event.date <= nextWeek)
-                    .sort((a, b) => a.date - b.date)
-                    .slice(0, 5);
-                
-                if (upcoming.length === 0) {
-                    upcomingEvents.innerHTML = `
-                        <div class="text-center py-8 text-gray-500">
-                            <i class="fas fa-calendar-times text-3xl mb-2"></i>
-                            <p>No upcoming events for this week</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                upcoming.forEach(event => {
-                    const eventEl = document.createElement('div');
-                    eventEl.className = 'flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition';
-                    
-                    const dateStr = event.date.toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        month: 'short', 
-                        day: 'numeric' 
+            
+            // Event filters
+            document.querySelectorAll('.event-filter').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    document.querySelectorAll('.event-filter').forEach(btn => {
+                        btn.classList.remove('active', 'bg-uthm-blue', 'text-white');
+                        btn.classList.add('bg-gray-100', 'text-gray-700');
                     });
                     
-                    eventEl.innerHTML = `
-                        <div class="mr-4">
-                            <div class="text-center">
-                                <div class="font-bold text-lg">${event.date.getDate()}</div>
-                                <div class="text-xs uppercase text-gray-500">${event.date.toLocaleDateString('en-US', { month: 'short' })}</div>
-                            </div>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-gray-900">${event.title}</h4>
-                            <p class="text-sm text-gray-600">
-                                <i class="far fa-clock mr-1"></i> ${event.time} • 
-                                <i class="fas fa-map-marker-alt mr-1 ml-2"></i> ${event.location}
-                            </p>
-                            <div class="flex items-center mt-2">
-                                <span class="px-2 py-1 ${this.getEventClass(event.type)} text-xs rounded">${event.type.charAt(0).toUpperCase() + event.type.slice(1)}</span>
-                            </div>
-                        </div>
-                        <button class="ml-4 text-gray-400 hover:text-uthm-blue">
-                            <i class="far fa-calendar-plus"></i>
-                        </button>
-                    `;
+                    e.target.classList.add('active', 'bg-uthm-blue', 'text-white');
+                    e.target.classList.remove('bg-gray-100', 'text-gray-700');
                     
-                    upcomingEvents.appendChild(eventEl);
+                    const type = e.target.dataset.type;
+                    this.filterEvents(type);
                 });
-            }
+            });
         }
 
-        // Modal Functions
-        function openEventModal() {
-            document.getElementById('event-modal').classList.remove('hidden');
-        }
-
-        function closeEventModal() {
-            document.getElementById('event-modal').classList.add('hidden');
-        }
-
-        // Export/Print Functions
-        function exportCalendar() {
-            alert('Calendar export feature coming soon!');
-        }
-
-        function printCalendar() {
-            window.print();
-        }
-
-        // Sidebar Initialization (same as dashboard)
-        function initializeSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('main-content');
-            const sidebarToggle = document.getElementById('sidebar-toggle');
-            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-            const toggleIcon = document.getElementById('toggle-icon');
-            const userMenuButton = document.getElementById('user-menu-button');
-            const userMenu = document.getElementById('user-menu');
-            
-            // Load sidebar state
-            const isSidebarExpanded = localStorage.getItem('sidebarExpanded') === 'true';
-            if (isSidebarExpanded) {
-                expandSidebar();
-            } else {
-                collapseSidebar();
-            }
-            
-            // Desktop sidebar toggle
-            if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', function() {
-                    if (sidebar.classList.contains('sidebar-expanded')) {
-                        collapseSidebar();
-                    } else {
-                        expandSidebar();
-                    }
-                });
-            }
-            
-            // Mobile menu toggle
-            if (mobileMenuToggle) {
-                mobileMenuToggle.addEventListener('click', function() {
-                    if (sidebar.classList.contains('mobile-open')) {
-                        sidebar.classList.remove('mobile-open');
-                    } else {
-                        sidebar.classList.add('mobile-open');
-                    }
-                });
-            }
-            
-            // User menu toggle
-            if (userMenuButton && userMenu) {
-                userMenuButton.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    userMenu.classList.toggle('hidden');
-                });
-                
-                document.addEventListener('click', function() {
-                    userMenu.classList.add('hidden');
-                });
-            }
-            
-            // Close mobile sidebar when clicking on links
-            if (window.innerWidth < 768) {
-                document.querySelectorAll('#sidebar a').forEach(link => {
-                    link.addEventListener('click', function() {
-                        sidebar.classList.remove('mobile-open');
-                    });
-                });
-            }
-            
-            function expandSidebar() {
-                sidebar.classList.remove('sidebar-collapsed');
-                sidebar.classList.add('sidebar-expanded');
-                mainContent.classList.remove('content-collapsed');
-                mainContent.classList.add('content-expanded');
-                
-                if (toggleIcon) {
-                    toggleIcon.style.transform = 'rotate(180deg)';
-                }
-                
-                localStorage.setItem('sidebarExpanded', 'true');
-            }
-            
-            function collapseSidebar() {
-                sidebar.classList.remove('sidebar-expanded');
-                sidebar.classList.add('sidebar-collapsed');
-                mainContent.classList.remove('content-expanded');
-                mainContent.classList.add('content-collapsed');
-                
-                if (toggleIcon) {
-                    toggleIcon.style.transform = 'rotate(0deg)';
-                }
-                
-                localStorage.setItem('sidebarExpanded', 'false');
-            }
-            
-            // Responsive behavior
-            window.addEventListener('resize', function() {
-                if (window.innerWidth < 768) {
-                    if (!sidebar.classList.contains('mobile-open')) {
-                        sidebar.style.transform = 'translateX(-100%)';
-                    }
-                } else {
-                    sidebar.style.transform = 'translateX(0)';
-                }
+        toggleView(button, view) {
+            // Update button states
+            document.querySelectorAll('#month-view, #week-view, #day-view').forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow', 'text-uthm-blue');
+                btn.classList.add('text-gray-600');
             });
             
-            // Initialize mobile state
-            if (window.innerWidth < 768) {
-                sidebar.style.transform = 'translateX(-100%)';
+            button.classList.add('bg-white', 'shadow', 'text-uthm-blue');
+            button.classList.remove('text-gray-600');
+            
+            console.log(`Switched to ${view} view`);
+        }
+
+        filterEvents(type) {
+            const calendarDays = document.querySelectorAll('.calendar-day');
+            
+            if (type === 'all') {
+                calendarDays.forEach(day => {
+                    day.style.display = 'block';
+                });
+            } else {
+                calendarDays.forEach(day => {
+                    const events = day.querySelectorAll('.day-events > div');
+                    let hasMatchingEvent = false;
+                    
+                    events.forEach(event => {
+                        const eventType = event.className.includes('bg-blue') ? 'lecture' :
+                                        event.className.includes('bg-red') ? 'deadline' :
+                                        event.className.includes('bg-purple') ? 'exam' :
+                                        event.className.includes('bg-green') ? 'social' :
+                                        event.className.includes('bg-yellow') ? 'workshop' : 'other';
+                        
+                        if (eventType === type) {
+                            hasMatchingEvent = true;
+                        }
+                    });
+                    
+                    day.style.display = hasMatchingEvent ? 'block' : 'none';
+                });
             }
         }
 
-        // Handle form submission
-        document.getElementById('event-form')?.addEventListener('submit', function(e) {
+        renderUpcomingEvents(events) {
+            const upcomingEvents = document.getElementById('upcoming-events');
+            if (!upcomingEvents) return;
+            
+            upcomingEvents.innerHTML = '';
+            
+            if (!events || events.length === 0) {
+                upcomingEvents.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-calendar-times text-3xl mb-2"></i>
+                        <p>No upcoming events for this week</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            events.forEach(event => {
+                const eventEl = document.createElement('div');
+                eventEl.className = 'flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer';
+                eventEl.onclick = () => this.showEventDetails(event);
+                
+                const eventDate = new Date(event.start_date);
+                const dateStr = eventDate.toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                const timeStr = event.all_day ? 'All Day' : 
+                    `${event.start_time}${event.end_time ? ' - ' + event.end_time : ''}`;
+                
+                eventEl.innerHTML = `
+                    <div class="mr-4">
+                        <div class="text-center">
+                            <div class="font-bold text-lg">${eventDate.getDate()}</div>
+                            <div class="text-xs uppercase text-gray-500">${eventDate.toLocaleDateString('en-US', { month: 'short' })}</div>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-900">${event.title}</h4>
+                        <p class="text-sm text-gray-600">
+                            <i class="far fa-clock mr-1"></i> ${timeStr}
+                            ${event.location ? `• <i class="fas fa-map-marker-alt mr-1 ml-2"></i> ${event.location}` : ''}
+                        </p>
+                        <div class="flex items-center mt-2">
+                            <span class="px-2 py-1 ${this.getEventClass(event.type)} text-xs rounded">${event.type.charAt(0).toUpperCase() + event.type.slice(1)}</span>
+                        </div>
+                    </div>
+                `;
+                
+                upcomingEvents.appendChild(eventEl);
+            });
+        }
+
+        updateStatistics(data) {
+            // Update statistics display
+            const statsElements = {
+                'lectures': document.querySelector('div:has(> div > i.fa-chalkboard-teacher) + div p:nth-child(2)'),
+                'deadlines': document.querySelector('div:has(> div > i.fa-exclamation-circle) + div p:nth-child(2)'),
+                'exams': document.querySelector('div:has(> div > i.fa-file-alt) + div p:nth-child(2)')
+            };
+            
+            if (statsElements.lectures && data.lectures !== undefined) {
+                statsElements.lectures.textContent = data.lectures;
+            }
+            if (statsElements.deadlines && data.deadlines !== undefined) {
+                statsElements.deadlines.textContent = data.deadlines;
+            }
+            if (statsElements.exams && data.exams !== undefined) {
+                statsElements.exams.textContent = data.exams;
+            }
+        }
+
+        openEventModal(date = null) {
+            const modal = document.getElementById('event-modal');
+            const form = document.getElementById('event-form');
+            
+            if (!modal || !form) {
+                console.error('Event modal or form not found');
+                return;
+            }
+            
+            // Reset form
+            form.reset();
+            
+            // Set default date if provided
+            const startDateInput = form.querySelector('input[name="start_date"]');
+            const endDateInput = form.querySelector('input[name="end_date"]');
+            
+            if (date) {
+                startDateInput.value = date;
+                endDateInput.value = date;
+            } else {
+                const today = new Date().toISOString().split('T')[0];
+                startDateInput.value = today;
+                endDateInput.value = today;
+            }
+            
+            // Set default times
+            const now = new Date();
+            const timeString = now.toTimeString().substring(0, 5);
+            const startTimeInput = form.querySelector('input[name="start_time"]');
+            if (startTimeInput) startTimeInput.value = timeString;
+            
+            // Add 1 hour to end time
+            const endTime = new Date(now.getTime() + 60 * 60 * 1000);
+            const endTimeString = endTime.toTimeString().substring(0, 5);
+            const endTimeInput = form.querySelector('input[name="end_time"]');
+            if (endTimeInput) endTimeInput.value = endTimeString;
+            
+            // Set default event type
+            const typeSelect = form.querySelector('select[name="type"]');
+            if (typeSelect) typeSelect.value = 'lecture';
+            
+            modal.classList.remove('hidden');
+        }
+
+        showEventDetails(event) {
+            // Create and show event details modal
+            const detailsModal = document.createElement('div');
+            detailsModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            detailsModal.id = 'event-details-modal';
+            
+            const eventDate = new Date(event.start);
+            const formattedDate = eventDate.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            detailsModal.innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg w-full max-w-md mx-4">
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-gray-900">${event.title}</h3>
+                            <button onclick="document.getElementById('event-details-modal').remove()" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-center">
+                                <i class="far fa-calendar text-gray-500 w-5 mr-3"></i>
+                                <span>${formattedDate}</span>
+                            </div>
+                            
+                            ${event.extendedProps?.location ? `
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt text-gray-500 w-5 mr-3"></i>
+                                <span>${event.extendedProps.location}</span>
+                            </div>
+                            ` : ''}
+                            
+                            ${event.description ? `
+                            <div>
+                                <h4 class="font-medium text-gray-700 mb-2">Description</h4>
+                                <p class="text-gray-600">${event.description}</p>
+                            </div>
+                            ` : ''}
+                            
+                            <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+                                <button onclick="calendar.deleteEvent(${event.id})" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition">
+                                    Delete
+                                </button>
+                                <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition" onclick="document.getElementById('event-details-modal').remove()">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('event-details-modal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            document.body.appendChild(detailsModal);
+        }
+
+        async deleteEvent(eventId) {
+            if (!confirm('Are you sure you want to delete this event?')) return;
+            
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                
+                if (!csrfToken) {
+                    throw new Error('CSRF token not found');
+                }
+                
+                const response = await fetch(`/api/events/${eventId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Event deleted successfully!');
+                    await this.init(); // Reload calendar
+                    // Close modal
+                    const detailsModal = document.getElementById('event-details-modal');
+                    if (detailsModal) detailsModal.remove();
+                } else {
+                    alert('Error deleting event: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                alert('Error deleting event. Please try again.');
+            }
+        }
+    }
+
+    // Setup form submission
+    function setupEventForm() {
+        const eventForm = document.getElementById('event-form');
+        
+        if (!eventForm) {
+            console.error('Event form not found');
+            return;
+        }
+        
+        eventForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            alert('Event added successfully!');
-            closeEventModal();
-            // Here you would typically send the data to your backend
+            
+            const submitBtn = document.getElementById('save-event-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            }
+            
+            try {
+                // Get form data
+                const formData = new FormData(this);
+                const data = {
+                    title: formData.get('title'),
+                    description: formData.get('description'),
+                    start_date: formData.get('start_date'),
+                    end_date: formData.get('end_date') || formData.get('start_date'),
+                    start_time: formData.get('start_time'),
+                    end_time: formData.get('end_time'),
+                    location: formData.get('location'),
+                    type: formData.get('type'),
+                    all_day: !formData.get('start_time') && !formData.get('end_time'),
+                    set_reminder: formData.get('set_reminder') === 'on'
+                };
+                
+                // Validate required fields
+                if (!data.title || !data.start_date || !data.type) {
+                    throw new Error('Please fill in all required fields');
+                }
+                
+                // Get CSRF token
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                
+                if (!csrfToken) {
+                    throw new Error('CSRF token not found');
+                }
+                
+                // Send request
+                const response = await fetch('/api/events', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('Event added successfully!');
+                    closeEventModal();
+                    
+                    // Reload calendar
+                    if (window.calendar) {
+                        await window.calendar.init();
+                    }
+                } else {
+                    let errorMessage = 'Error adding event.';
+                    if (result.errors) {
+                        errorMessage = Object.values(result.errors).flat().join('\n');
+                    } else if (result.message) {
+                        errorMessage = result.message;
+                    }
+                    alert(errorMessage);
+                }
+            } catch (error) {
+                console.error('Error adding event:', error);
+                alert(error.message || 'Error adding event. Please try again.');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Save Event';
+                }
+            }
         });
-    </script>
+    }
+
+    // Modal Functions
+    function openEventModal(date = null) {
+        if (window.calendar) {
+            window.calendar.openEventModal(date);
+        } else {
+            console.error('Calendar not initialized');
+        }
+    }
+
+    function closeEventModal() {
+        const modal = document.getElementById('event-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Export/Print Functions
+    function exportCalendar() {
+        alert('Calendar export feature coming soon!');
+    }
+
+    function printCalendar() {
+        window.print();
+    }
+
+    // Sidebar Initialization
+    function initializeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userMenu = document.getElementById('user-menu');
+        
+        if (!sidebar || !mainContent) return;
+        
+        // Load sidebar state
+        const isSidebarExpanded = localStorage.getItem('sidebarExpanded') === 'true';
+        if (isSidebarExpanded) {
+            expandSidebar();
+        } else {
+            collapseSidebar();
+        }
+        
+        // Desktop sidebar toggle
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                if (sidebar.classList.contains('sidebar-expanded')) {
+                    collapseSidebar();
+                } else {
+                    expandSidebar();
+                }
+            });
+        }
+        
+        // Mobile menu toggle
+        if (mobileMenuToggle) {
+            mobileMenuToggle.addEventListener('click', function() {
+                if (sidebar.classList.contains('mobile-open')) {
+                    sidebar.classList.remove('mobile-open');
+                } else {
+                    sidebar.classList.add('mobile-open');
+                }
+            });
+        }
+        
+        // User menu toggle
+        if (userMenuButton && userMenu) {
+            userMenuButton.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userMenu.classList.toggle('hidden');
+            });
+            
+            document.addEventListener('click', function() {
+                userMenu.classList.add('hidden');
+            });
+        }
+        
+        // Close mobile sidebar when clicking on links
+        if (window.innerWidth < 768) {
+            document.querySelectorAll('#sidebar a').forEach(link => {
+                link.addEventListener('click', function() {
+                    sidebar.classList.remove('mobile-open');
+                });
+            });
+        }
+        
+        function expandSidebar() {
+            sidebar.classList.remove('sidebar-collapsed');
+            sidebar.classList.add('sidebar-expanded');
+            mainContent.classList.remove('content-collapsed');
+            mainContent.classList.add('content-expanded');
+            
+            if (toggleIcon) {
+                toggleIcon.style.transform = 'rotate(180deg)';
+            }
+            
+            localStorage.setItem('sidebarExpanded', 'true');
+        }
+        
+        function collapseSidebar() {
+            sidebar.classList.remove('sidebar-expanded');
+            sidebar.classList.add('sidebar-collapsed');
+            mainContent.classList.remove('content-expanded');
+            mainContent.classList.add('content-collapsed');
+            
+            if (toggleIcon) {
+                toggleIcon.style.transform = 'rotate(0deg)';
+            }
+            
+            localStorage.setItem('sidebarExpanded', 'false');
+        }
+        
+        // Responsive behavior
+        window.addEventListener('resize', function() {
+            if (window.innerWidth < 768) {
+                if (!sidebar.classList.contains('mobile-open')) {
+                    sidebar.style.transform = 'translateX(-100%)';
+                }
+            } else {
+                sidebar.style.transform = 'translateX(0)';
+            }
+        });
+        
+        // Initialize mobile state
+        if (window.innerWidth < 768) {
+            sidebar.style.transform = 'translateX(-100%)';
+        }
+    }
+</script>
 </body>
 </html>

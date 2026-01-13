@@ -149,7 +149,7 @@
                     </div>
                     <div class="sidebar-text">
                         <h2 class="font-bold text-gray-900">UTHM Bulletin</h2>
-                        <p class="text-xs text-gray-500">Student Dashboard</p>
+                        <p class="text-xs text-gray-500">Staff Dashboard</p>
                     </div>
                 </div>
                 
@@ -237,16 +237,6 @@
 
                 
 
-                <!-- Clubs -->
-                <li>
-                    <a href="#" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-users w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Clubs</span>
-                    </a>
-                </li>
 
                 <!-- Settings -->
                 <li>

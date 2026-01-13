@@ -166,22 +166,23 @@ Route::middleware(['auth'])->group(function () {
     })->name('calendar');
 
     // ============================================
-    // ANNOUNCEMENT ROUTES - OUTSIDE ADMIN PREFIX
+    // ANNOUNCEMENT ROUTES - UPDATED WITH NEW VERIFICATION SYSTEM
     // ============================================
     
     Route::middleware(['auth', 'verified'])->group(function () {
         // All announcement GET routes
         Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
-        Route::get('/announcements/official', [AnnouncementController::class, 'official'])->name('announcements.official');
-        Route::get('/announcements/unofficial', [AnnouncementController::class, 'unofficial'])->name('announcements.unofficial');
         Route::get('/announcements/published', [AnnouncementController::class, 'published'])->name('announcements.published');
         Route::get('/announcements/drafts', [AnnouncementController::class, 'drafts'])->name('announcements.drafts');
-        Route::get('/announcements/pending', [AnnouncementController::class, 'pending'])->name('announcements.pending');
         Route::get('/announcements/search', [AnnouncementController::class, 'search'])->name('announcements.search');
         Route::get('/announcements/category/{category}', [AnnouncementController::class, 'filterByCategory'])->name('announcements.category');
         Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
         Route::get('/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit');
         Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
+        
+        // My Announcements
+        Route::get('/my-announcements', [AnnouncementController::class, 'myAnnouncements'])
+            ->name('announcements.my-announcements');
         
         // Announcement POST/PUT/DELETE routes
         Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
@@ -191,8 +192,25 @@ Route::middleware(['auth'])->group(function () {
         // Announcement action routes
         Route::post('/announcements/{announcement}/archive', [AnnouncementController::class, 'archive'])->name('announcements.archive');
         Route::post('/announcements/{announcement}/publish', [AnnouncementController::class, 'publish'])->name('announcements.publish');
-        Route::post('/announcements/{announcement}/approve', [AnnouncementController::class, 'approve'])->name('announcements.approve');
         Route::post('/announcements/{announcement}/toggle-official', [AnnouncementController::class, 'toggleOfficialStatus'])->name('announcements.toggle-official');
+    });
+    
+    // ============================================
+    // VERIFICATION ROUTES (ADMIN/STAFF ONLY)
+    // ============================================
+    
+    Route::middleware(['auth', 'verified', 'role:admin,staff'])->group(function () {
+        // Verification queue
+        Route::get('/announcements/verification-queue', [AnnouncementController::class, 'verificationQueue'])
+            ->name('announcements.verification-queue');
+        
+        // Verify announcement
+        Route::post('/announcements/{announcement}/verify', [AnnouncementController::class, 'verify'])
+            ->name('announcements.verify');
+        
+        // Reject announcement
+        Route::post('/announcements/{announcement}/reject', [AnnouncementController::class, 'reject'])
+            ->name('announcements.reject');
     });
 
     // ============================================
@@ -214,9 +232,6 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/{id}', [AdminController::class, 'deleteUser'])->name('destroy');
             Route::patch('/{id}/toggle-verification', [AdminController::class, 'toggleUserVerification'])->name('toggle-verification');
         });
-        
-        // IMPORTANT: DO NOT add announcement routes here
-        // Announcement routes should be outside admin prefix
     });
 
     // Test Route

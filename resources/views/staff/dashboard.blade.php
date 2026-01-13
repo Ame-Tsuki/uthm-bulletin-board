@@ -202,6 +202,17 @@
                     </a>
                 </li>
 
+                <!-- My Announcements -->
+                <li>
+                    <a href="{{ route('announcements.my-announcements') }}" 
+                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0">
+                            <i class="fas fa-file-alt w-5 h-5"></i>
+                        </div>
+                        <span class="sidebar-text ml-3">My Announcements</span>
+                    </a>
+                </li>
+
                 <!-- Calendar -->
                 <li>
                     <a href="#" 
@@ -345,7 +356,7 @@
                         </div>
                     </div>
                     
-                    <!-- Student Info Cards -->
+                    <!-- Staff Info Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
                         <div class="stats-card bg-blue-50 rounded-lg p-4">
                             <div class="flex items-center">

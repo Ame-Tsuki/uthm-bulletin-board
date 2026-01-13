@@ -8,7 +8,7 @@ use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Schema; // Add this
+use Illuminate\Support\Facades\Schema;
 
 class AnnouncementController extends Controller
 {
@@ -25,7 +25,19 @@ class AnnouncementController extends Controller
         
         if ($hasOfficialColumn) {
             // Show mixed announcements (both official and unofficial)
-            $announcements = Announcement::latest()->paginate(10);
+            // For non-admin/staff, show all published announcements
+            // For admin/staff, also show pending_verification announcements
+            $query = Announcement::query();
+            
+            if (in_array($user->role, ['admin', 'staff'])) {
+                // Admin/staff can see all announcements except drafts
+                $query->where('status', '!=', 'draft');
+            } else {
+                // Regular users see only published announcements
+                $query->where('status', 'published');
+            }
+            
+            $announcements = $query->latest()->paginate(10);
         } else {
             // Show all announcements if column doesn't exist
             $announcements = Announcement::latest()->paginate(10);
@@ -56,7 +68,7 @@ class AnnouncementController extends Controller
     // Check if is_official column exists
     $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
     
-    // Create validation rules
+    // Create validation rules - ADD 'status' here
     $validationRules = [
         'title' => 'required|string|max:255',
         'content' => 'required|string',
@@ -65,12 +77,9 @@ class AnnouncementController extends Controller
         'department' => 'nullable|string|max:100',
         'publish_date' => 'nullable|date',
         'expiry_date' => 'nullable|date|after_or_equal:publish_date',
+        'announcement_type' => 'required|in:official,unofficial',
+        'status' => 'required|in:draft,published', // ADD THIS LINE
     ];
-    
-    // Add is_official validation if column exists
-    if ($hasOfficialColumn) {
-        $validationRules['is_official'] = 'required|in:0,1';
-    }
     
     // Validate all fields at once
     $validated = $request->validate($validationRules);
@@ -83,24 +92,63 @@ class AnnouncementController extends Controller
         $validated['priority'] = 'normal';
     }
     
-    // Add is_official if column exists and value is provided
-    if ($hasOfficialColumn) {
-        $validated['is_official'] = (bool) $validated['is_official'];
-    } else {
-        // Default to true if column doesn't exist yet
+    // Determine announcement type and verification status
+    $announcementType = $validated['announcement_type'];
+    $user = auth()->user();
+    $isAdminOrStaff = in_array($user->role, ['admin', 'staff']);
+    $status = $validated['status']; // Get the status from validated data
+    
+    if ($announcementType === 'official') {
+        // Official announcement
         $validated['is_official'] = true;
+        
+        if ($isAdminOrStaff) {
+            // Admin/staff can publish official announcements immediately
+            if ($status === 'published') {
+                $validated['status'] = 'published';
+                $validated['needs_verification'] = false;
+                $validated['verified_at'] = now();
+                $validated['verified_by'] = $user->id;
+            } else {
+                $validated['needs_verification'] = false;
+            }
+        } else {
+            // Regular users need verification for official announcements
+            if ($status === 'published') {
+                $validated['status'] = 'pending_verification';
+                $validated['needs_verification'] = true;
+            } else {
+                $validated['needs_verification'] = true;
+            }
+        }
+    } else {
+        // Unofficial announcement
+        $validated['is_official'] = false;
+        $validated['needs_verification'] = false;
+        
+        // Unofficial announcements can be published immediately by anyone
+        if ($status === 'published') {
+            $validated['status'] = 'published';
+        }
+        // If status is 'draft', keep it as 'draft'
     }
+    
+    // Remove announcement_type from data as it's not a database column
+    unset($validated['announcement_type']);
     
     // Create the announcement
     $announcement = Announcement::create($validated);
     
-    // Redirect based on announcement type
-    if ($announcement->is_official) {
-        return redirect()->route('announcements.official')
-            ->with('success', 'Official announcement created successfully.');
+    // Redirect with appropriate message
+    if ($validated['status'] === 'draft') {
+        return redirect()->route('announcements.my-announcements', ['status' => 'draft'])
+            ->with('success', 'Announcement saved as draft successfully.');
+    } elseif ($announcementType === 'official' && isset($validated['needs_verification']) && $validated['needs_verification']) {
+        return redirect()->route('announcements.index')
+            ->with('success', 'Official announcement submitted for verification. It will be published after admin/staff review.');
     } else {
-        return redirect()->route('announcements.unofficial')
-            ->with('success', 'Unofficial announcement created successfully.');
+        return redirect()->route('announcements.show', $announcement)
+            ->with('success', 'Announcement published successfully.');
     }
 }
 
@@ -116,8 +164,15 @@ class AnnouncementController extends Controller
             abort(404, 'Announcement not found');
         }
         
-        // Get authenticated user
+        // Check if user can view this announcement
         $user = auth()->user();
+        if ($announcement->status === 'draft' && $announcement->author_id !== $user->id) {
+            abort(403, 'Unauthorized to view this draft.');
+        }
+        
+        if ($announcement->status === 'pending_verification' && !in_array($user->role, ['admin', 'staff'])) {
+            abort(403, 'This announcement is pending verification.');
+        }
         
         // Return view with single announcement
         return view('announcements.show', compact('announcement', 'user'));
@@ -130,6 +185,11 @@ class AnnouncementController extends Controller
     {
         $user = auth()->user();
         
+        // Check authorization
+        if ($announcement->author_id !== $user->id && !in_array($user->role, ['admin', 'staff'])) {
+            abort(403, 'Unauthorized to edit this announcement.');
+        }
+        
         // Check if column exists
         $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
         
@@ -139,72 +199,227 @@ class AnnouncementController extends Controller
     /**
      * Update the specified announcement in storage.
      */
-   public function update(Request $request, Announcement $announcement): RedirectResponse
-{
-    // Check if is_official column exists
-    $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
-    
-    // Create validation rules
-    $validationRules = [
-        'title' => 'required|string|max:255',
-        'content' => 'required|string',
-        'category' => 'required|in:urgent,academic,events,general,important',
-        'priority' => 'nullable|in:urgent,important,normal',
-        'department' => 'nullable|string|max:100',
-        'publish_date' => 'nullable|date',
-        'expiry_date' => 'nullable|date|after_or_equal:publish_date',
-    ];
-    
-    // Add is_official validation if column exists
-    if ($hasOfficialColumn) {
-        $validationRules['is_official'] = 'required|in:0,1';
+    public function update(Request $request, Announcement $announcement): RedirectResponse
+    {
+        // Check authorization
+        $user = auth()->user();
+        if ($announcement->author_id !== $user->id && !in_array($user->role, ['admin', 'staff'])) {
+            abort(403, 'Unauthorized to update this announcement.');
+        }
+        
+        // Create validation rules
+        $validationRules = [
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'category' => 'required|in:urgent,academic,events,general,important',
+            'priority' => 'nullable|in:urgent,important,normal',
+            'department' => 'nullable|string|max:100',
+            'publish_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after_or_equal:publish_date',
+            'announcement_type' => 'required|in:official,unofficial',
+            'status' => 'required|in:draft,published,pending_verification',
+        ];
+        
+        // Validate all fields at once
+        $validated = $request->validate($validationRules);
+        
+        // Determine announcement type and verification status
+        $announcementType = $validated['announcement_type'];
+        $isAdminOrStaff = in_array($user->role, ['admin', 'staff']);
+        
+        if ($announcementType === 'official') {
+            // Official announcement
+            $validated['is_official'] = true;
+            
+            if ($isAdminOrStaff) {
+                // Admin/staff can publish official announcements immediately
+                if ($validated['status'] === 'published') {
+                    $validated['status'] = 'published';
+                    $validated['needs_verification'] = false;
+                    $validated['verified_at'] = now();
+                    $validated['verified_by'] = $user->id;
+                } elseif ($validated['status'] === 'pending_verification') {
+                    $validated['status'] = 'published';
+                    $validated['needs_verification'] = false;
+                    $validated['verified_at'] = now();
+                    $validated['verified_by'] = $user->id;
+                } else {
+                    $validated['needs_verification'] = false;
+                }
+            } else {
+                // Regular users need verification for official announcements
+                if ($validated['status'] === 'published') {
+                    $validated['status'] = 'pending_verification';
+                    $validated['needs_verification'] = true;
+                    $validated['verified_at'] = null;
+                    $validated['verified_by'] = null;
+                } elseif ($validated['status'] === 'pending_verification') {
+                    $validated['needs_verification'] = true;
+                } else {
+                    $validated['needs_verification'] = true;
+                }
+            }
+        } else {
+            // Unofficial announcement
+            $validated['is_official'] = false;
+            $validated['needs_verification'] = false;
+            $validated['verified_at'] = null;
+            $validated['verified_by'] = null;
+            
+            // Unofficial announcements can be published immediately by anyone
+            if ($validated['status'] === 'pending_verification') {
+                $validated['status'] = 'published';
+            }
+        }
+        
+        // Remove announcement_type from data as it's not a database column
+        unset($validated['announcement_type']);
+        
+        // Update the announcement
+        $announcement->update($validated);
+        
+        // Redirect with appropriate message
+        if ($validated['status'] === 'draft') {
+            return redirect()->route('announcements.my-announcements', ['status' => 'draft'])
+                ->with('success', 'Announcement updated as draft successfully.');
+        } elseif ($announcementType === 'official' && $validated['needs_verification']) {
+            return redirect()->route('announcements.my-announcements', ['status' => 'pending_verification'])
+                ->with('success', 'Official announcement updated and submitted for verification.');
+        } else {
+            return redirect()->route('announcements.show', $announcement)
+                ->with('success', 'Announcement updated successfully.');
+        }
     }
-    
-    // Validate all fields at once
-    $validated = $request->validate($validationRules);
-    
-    // Add is_official if column exists
-    if ($hasOfficialColumn) {
-        $validated['is_official'] = (bool) $validated['is_official'];
-    }
-    
-    // Update the announcement
-    $announcement->update($validated);
-    
-    // Redirect based on updated announcement type
-    if ($announcement->is_official) {
-        return redirect()->route('announcements.official')
-            ->with('success', 'Announcement updated successfully.');
-    } else {
-        return redirect()->route('announcements.unofficial')
-            ->with('success', 'Announcement updated successfully.');
-    }
-}
+
     /**
      * Remove the specified announcement from storage.
      */
     public function destroy(Announcement $announcement): RedirectResponse
     {
+        // Check authorization
+        $user = auth()->user();
+        if ($announcement->author_id !== $user->id && !in_array($user->role, ['admin', 'staff'])) {
+            abort(403, 'Unauthorized to delete this announcement.');
+        }
+        
         // Store type before deletion for redirect
         $wasOfficial = $announcement->is_official;
         
         // Delete the announcement
         $announcement->delete();
 
-        // Redirect based on type
-        if ($wasOfficial) {
-            return redirect()->route('announcements.official')
-                ->with('success', 'Announcement deleted successfully.');
-        } else {
-            return redirect()->route('announcements.unofficial')
-                ->with('success', 'Announcement deleted successfully.');
-        }
+        // Redirect to user's announcements
+        return redirect()->route('announcements.my-announcements')
+            ->with('success', 'Announcement deleted successfully.');
     }
 
     /**
-     * Additional CRUD methods (optional)
+     * NEW: Display user's own announcements
      */
+    public function myAnnouncements(Request $request): View
+    {
+        $user = auth()->user();
+        $status = $request->get('status', 'all');
+        
+        // Start with user's own announcements
+        $query = Announcement::where('author_id', $user->id);
+        
+        // Filter by status
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+        
+        $announcements = $query->orderBy('created_at', 'desc')->paginate(10);
+        
+        // Calculate total views
+        $totalViews = $announcements->sum('view_count');
+        
+        return view('announcements.my-announcements', compact('announcements', 'totalViews', 'user'));
+    }
 
+    /**
+     * NEW: Verify an official announcement (admin/staff only)
+     */
+    public function verify(Announcement $announcement): RedirectResponse
+    {
+        $user = auth()->user();
+        
+        // Only admin/staff can verify
+        if (!in_array($user->role, ['admin', 'staff'])) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        // Only official announcements need verification
+        if (!$announcement->is_official) {
+            return redirect()->back()
+                ->with('error', 'Only official announcements can be verified.');
+        }
+        
+        // Update announcement status
+        $announcement->update([
+            'status' => 'published',
+            'needs_verification' => false,
+            'verified_at' => now(),
+            'verified_by' => $user->id,
+        ]);
+        
+        return redirect()->route('announcements.verification-queue')
+            ->with('success', 'Announcement verified and published successfully.');
+    }
+
+    /**
+     * NEW: Reject an official announcement (admin/staff only)
+     */
+    public function reject(Announcement $announcement, Request $request): RedirectResponse
+    {
+        $user = auth()->user();
+        
+        // Only admin/staff can reject
+        if (!in_array($user->role, ['admin', 'staff'])) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $request->validate([
+            'rejection_reason' => 'required|string|max:500',
+        ]);
+        
+        // Update announcement status
+        $announcement->update([
+            'status' => 'rejected',
+            'needs_verification' => false,
+            'rejection_reason' => $request->rejection_reason,
+            'rejected_at' => now(),
+            'rejected_by' => $user->id,
+        ]);
+        
+        return redirect()->route('announcements.verification-queue')
+            ->with('success', 'Announcement rejected successfully.');
+    }
+
+    /**
+     * NEW: Show verification queue for admin/staff
+     */
+    public function verificationQueue(): View
+    {
+        $user = auth()->user();
+        
+        // Only admin/staff can see verification queue
+        if (!in_array($user->role, ['admin', 'staff'])) {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        $announcements = Announcement::where('is_official', true)
+            ->where('status', 'pending_verification')
+            ->orderBy('created_at', 'asc')
+            ->paginate(10);
+        
+        return view('announcements.verification-queue', compact('announcements', 'user'));
+    }
+
+    /**
+     * Additional methods from original controller (preserved)
+     */
+    
     /**
      * Archive the specified announcement.
      */
@@ -227,14 +442,16 @@ class AnnouncementController extends Controller
      */
     public function publish(Announcement $announcement): RedirectResponse
     {
-        $announcement->update(['status' => 'published']);
-        
-        // Redirect based on type
-        if ($announcement->is_official) {
-            return redirect()->route('announcements.official')
-                ->with('success', 'Announcement published successfully.');
+        // Check if announcement needs verification
+        if ($announcement->is_official && $announcement->needs_verification) {
+            $announcement->update(['status' => 'pending_verification']);
+            
+            return redirect()->route('announcements.my-announcements')
+                ->with('info', 'Official announcement submitted for verification.');
         } else {
-            return redirect()->route('announcements.unofficial')
+            $announcement->update(['status' => 'published']);
+            
+            return redirect()->route('announcements.my-announcements')
                 ->with('success', 'Announcement published successfully.');
         }
     }
@@ -272,7 +489,7 @@ class AnnouncementController extends Controller
     }
 
     /**
-     * NEW: Display only official announcements.
+     * Display only official announcements.
      */
     public function official(): View
     {
@@ -282,9 +499,17 @@ class AnnouncementController extends Controller
         $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
         
         if ($hasOfficialColumn) {
-            $announcements = Announcement::where('is_official', true)
-                ->latest()
-                ->paginate(10);
+            // Show only published official announcements for regular users
+            // Admin/staff can also see pending verification
+            $query = Announcement::where('is_official', true);
+            
+            if (in_array($user->role, ['admin', 'staff'])) {
+                $query->whereIn('status', ['published', 'pending_verification']);
+            } else {
+                $query->where('status', 'published');
+            }
+            
+            $announcements = $query->latest()->paginate(10);
         } else {
             // If column doesn't exist, create an empty paginator
             $announcements = new LengthAwarePaginator(
@@ -299,7 +524,7 @@ class AnnouncementController extends Controller
     }
 
     /**
-     * NEW: Display only unofficial announcements.
+     * Display only unofficial announcements.
      */
     public function unofficial(): View
     {
@@ -310,6 +535,7 @@ class AnnouncementController extends Controller
         
         if ($hasOfficialColumn) {
             $announcements = Announcement::where('is_official', false)
+                ->where('status', 'published')
                 ->latest()
                 ->paginate(10);
         } else {
@@ -326,7 +552,7 @@ class AnnouncementController extends Controller
     }
 
     /**
-     * NEW: Toggle official status of an announcement.
+     * Toggle official status of an announcement.
      */
     public function toggleOfficialStatus(Announcement $announcement): RedirectResponse
     {
@@ -343,7 +569,11 @@ class AnnouncementController extends Controller
         
         try {
             $announcement->update([
-                'is_official' => !$announcement->is_official
+                'is_official' => !$announcement->is_official,
+                // Reset verification status when toggling
+                'needs_verification' => false,
+                'verified_at' => $announcement->is_official ? null : now(),
+                'verified_by' => $announcement->is_official ? null : auth()->id(),
             ]);
             
             $action = $announcement->is_official ? 'marked as official' : 'marked as unofficial';

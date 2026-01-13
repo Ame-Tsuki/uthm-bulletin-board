@@ -7,51 +7,138 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .badge-urgent { background-color: #fee2e2; color: #dc2626; }
-        .badge-academic { background-color: #dbeafe; color: #1d4ed8; }
-        .badge-events { background-color: #f3e8ff; color: #7c3aed; }
-        .badge-general { background-color: #f0f9ff; color: #0369a1; }
-        .badge-important { background-color: #fef3c7; color: #d97706; }
-        .badge-official { background-color: #dcfce7; color: #166534; }
-        .badge-unofficial { background-color: #fef3c7; color: #92400e; }
+        /* Custom colors */
+        .uthm-blue { color: #0056a6; }
+        .bg-uthm-blue { background-color: #0056a6; }
+        .bg-uthm-blue-light { background-color: #e6f0fa; }
         
-        /* Radio card styles */
-        .posting-option-card {
-            transition: all 0.2s ease;
+        /* Form styles */
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            transition: border-color 0.15s ease-in-out;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #0056a6;
+            ring: 2px;
+            ring-color: rgba(0, 86, 166, 0.2);
+        }
+        
+        .form-error {
+            color: #dc2626;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        /* Radio button styles */
+        .radio-option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
             border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
-        .posting-option-card:hover {
-            border-color: #3b82f6;
+        
+        .radio-option:hover {
+            border-color: #9ca3af;
+            background-color: #f9fafb;
         }
-        .posting-option-card.selected {
-            border-color: #10b981;
-            background-color: #f0fdf4;
+        
+        .radio-option.selected {
+            border-color: #0056a6;
+            background-color: #e6f0fa;
         }
-        .posting-option-card input[type="radio"]:checked + div {
-            border-color: #10b981;
-            background-color: #f0fdf4;
+        
+        .radio-input {
+            margin-right: 1rem;
+            transform: scale(1.2);
+        }
+        
+        .radio-content {
+            flex: 1;
+        }
+        
+        .radio-title {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.25rem;
+        }
+        
+        .radio-description {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        
+        /* Badge styles */
+        .badge-admin {
+            background-color: #dc2626;
+            color: white;
+        }
+        .badge-staff {
+            background-color: #2563eb;
+            color: white;
+        }
+        .badge-student {
+            background-color: #059669;
+            color: white;
+        }
+        .badge-guest {
+            background-color: #6b7280;
+            color: white;
+        }
+        
+        /* Verification info styles */
+        .verification-info {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .verification-official {
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+        }
+        
+        .verification-unofficial {
+            background-color: #fefce8;
+            border: 1px solid #fef08a;
         }
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Simple Header -->
+    <!-- Simple Navigation -->
     <nav class="bg-white shadow">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="{{ route('announcements.index') }}" class="flex items-center">
+                    <a href="{{ route('announcements.index') }}" class="flex items-center mr-8">
                         <i class="fas fa-arrow-left text-gray-600 mr-2"></i>
                         <span class="text-gray-700">Back to Announcements</span>
                     </a>
+                    <h1 class="text-xl font-bold text-gray-900">Create New Announcement</h1>
                 </div>
+                
                 <div class="flex items-center">
-                    <span class="text-gray-600 mr-4">{{ auth()->user()->name }}</span>
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="text-red-600 hover:text-red-800">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </button>
-                    </form>
+                    <span class="text-sm text-gray-600 mr-4">
+                        Welcome, {{ $user?->name ?? 'User' }}
+                    </span>
+                    <div class="w-8 h-8 bg-uthm-blue-light rounded-full flex items-center justify-center">
+                        <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -62,370 +149,512 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Page Header -->
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900">Create New Announcement</h1>
-                <p class="mt-2 text-gray-600">Share updates with students and staff - choose where to post</p>
-            </div>
-
-            <!-- Success/Error Messages -->
-            @if(session('success'))
-                <div class="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+                <div class="bg-gradient-to-r from-blue-50 to-uthm-blue-light border border-blue-200 rounded-xl p-6">
                     <div class="flex items-center">
-                        <i class="fas fa-check-circle text-green-500 mr-3"></i>
-                        <span class="text-green-800">{{ session('success') }}</span>
-                    </div>
-                </div>
-            @endif
-
-            @if($errors->any())
-                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-                    <div class="flex items-center">
-                        <i class="fas fa-exclamation-circle text-red-500 mr-3"></i>
+                        <div class="bg-uthm-blue text-white p-3 rounded-lg mr-4">
+                            <i class="fas fa-bullhorn text-xl"></i>
+                        </div>
                         <div>
-                            <h4 class="font-medium text-red-900">Please fix the following errors:</h4>
-                            <ul class="mt-2 text-red-700 text-sm">
-                                @foreach($errors->all() as $error)
-                                    <li class="flex items-center mt-1">
-                                        <i class="fas fa-circle text-xs mr-2"></i>{{ $error }}
-                                    </li>
-                                @endforeach
-                            </ul>
+                            <h2 class="text-2xl font-bold text-gray-900">Create a New Announcement</h2>
+                            <p class="mt-2 text-gray-600">
+                                Share information, updates, or events with the UTHM community.
+                            </p>
+                            
+                            <!-- User role info -->
+                            @if($user)
+                                <div class="mt-3 flex items-center">
+                                    <span class="text-sm text-gray-500">Your role:</span>
+                                    <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-{{ $user->role }}">
+                                        {{ ucfirst($user->role) }}
+                                    </span>
+                                    <span class="ml-4 text-sm text-gray-500">
+                                        @if(in_array($user->role, ['admin', 'staff']))
+                                            You can create official announcements without verification.
+                                        @else
+                                            Official announcements require admin/staff verification.
+                                        @endif
+                                    </span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
-            @endif
+            </div>
 
-            <!-- Create Form -->
-            <div class="bg-white rounded-xl shadow overflow-hidden">
-                <div class="p-6">
-                    <form action="{{ route('announcements.store') }}" method="POST" id="announcementForm">
-                        @csrf
-
-                        <!-- Posting Destination -->
-                        <div class="mb-8 p-6 bg-gray-50 rounded-xl">
-                            <h3 class="text-lg font-medium text-gray-900 mb-4">Where would you like to post?</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <!-- Official Announcement Option -->
-                                <label class="cursor-pointer">
-                                    <input type="radio" 
-                                           name="is_official" 
-                                           value="1" 
-                                           {{ old('is_official', isset($defaultIsOfficial) ? $defaultIsOfficial : '1') == '1' ? 'checked' : '' }}
-                                           class="hidden"
-                                           onchange="updateFormAction(this)">
-                                    <div class="posting-option-card p-5 rounded-xl border-2 {{ old('is_official', isset($defaultIsOfficial) ? $defaultIsOfficial : '1') == '1' ? 'selected border-green-500 bg-green-50' : 'border-gray-200' }}">
-                                        <div class="flex items-start">
-                                            <div class="flex-shrink-0">
-                                                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                                                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                                                </div>
-                                            </div>
-                                            <div class="ml-4">
-                                                <h4 class="font-semibold text-gray-900">Official Announcement</h4>
-                                                <p class="mt-1 text-sm text-gray-600">
-                                                    Verified announcements from university administration. 
-                                                    Will appear on the main bulletin board.
-                                                </p>
-                                                <div class="mt-3 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    <i class="fas fa-globe mr-1"></i> Main Bulletin Board
-                                                </div>
-                                            </div>
+            <!-- Form Section -->
+            <div class="bg-white rounded-xl shadow p-6">
+                <form action="{{ route('announcements.store') }}" method="POST" enctype="multipart/form-data" id="announcement-form">
+                    @csrf
+                    
+                    <!-- Announcement Type Selection -->
+                    <div class="mb-8">
+                        <label class="form-label mb-4">
+                            Announcement Type <span class="text-red-500">*</span>
+                        </label>
+                        
+                        <!-- Official Option -->
+                        <div class="radio-option" id="official-option" onclick="selectType('official')">
+                            <input type="radio" 
+                                   id="type_official" 
+                                   name="announcement_type" 
+                                   value="official"
+                                   class="radio-input"
+                                   {{ old('announcement_type', 'unofficial') == 'official' ? 'checked' : '' }}
+                                   required>
+                            <div class="radio-content">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="radio-title flex items-center">
+                                            <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                            Official Announcement
+                                        </div>
+                                        <div class="radio-description">
+                                            For important university announcements, policy changes, or official communications
                                         </div>
                                     </div>
-                                </label>
-<!-- Announcement Type -->
-<div class="mb-6">
-    <label class="block text-sm font-medium text-gray-700 mb-2">
-        Announcement Type
-    </label>
-    <div class="flex items-center space-x-4">
-        <div class="flex items-center">
-            <input type="radio" id="official_type" name="is_official" value="1" 
-                   {{ (old('is_official', $isOfficial ?? true)) ? 'checked' : '' }} 
-                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                   {{ ($userRole !== 'admin' && $userRole !== 'staff') ? 'disabled' : '' }}>
-            <label for="official_type" class="ml-2 block text-sm text-gray-900 flex items-center">
-                <i class="fas fa-check-circle text-green-500 mr-1"></i>
-                Official Announcement
-                <span class="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Verified by Admin</span>
-            </label>
-        </div>
-        <div class="flex items-center">
-            <input type="radio" id="unofficial_type" name="is_official" value="0"
-                   {{ !(old('is_official', $isOfficial ?? true)) ? 'checked' : '' }}
-                   class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300">
-            <label for="unofficial_type" class="ml-2 block text-sm text-gray-900 flex items-center">
-                <i class="fas fa-users text-amber-500 mr-1"></i>
-                Unofficial Announcement
-                <span class="ml-2 px-2 py-1 text-xs bg-amber-100 text-amber-800 rounded">Community Post</span>
-            </label>
-        </div>
-    </div>
-    <p class="mt-2 text-sm text-gray-500">
-        @if($userRole === 'admin' || $userRole === 'staff')
-            You can create both official and unofficial announcements. Official announcements appear on the official page.
-        @else
-            As a {{ $userRole }}, you can only create unofficial community announcements.
-        @endif
-    </p>
-    @error('is_official')
-        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-    @enderror
-</div>
-                        <!-- Title -->
-                        <div class="mb-6">
-                            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
-                                Announcement Title <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" 
-                                   id="title" 
-                                   name="title" 
-                                   value="{{ old('title') }}"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="Enter announcement title"
-                                   required>
-                            <p class="mt-1 text-sm text-gray-500">Make it clear and descriptive</p>
-                        </div>
-
-                        <!-- Category and Priority -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            <!-- Category -->
-                            <div>
-                                <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Category <span class="text-red-500">*</span>
-                                </label>
-                                <select id="category" 
-                                        name="category" 
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        required>
-                                    <option value="">Select Category</option>
-                                    <option value="urgent" {{ old('category') == 'urgent' ? 'selected' : '' }}>Urgent</option>
-                                    <option value="academic" {{ old('category') == 'academic' ? 'selected' : '' }}>Academic</option>
-                                    <option value="events" {{ old('category') == 'events' ? 'selected' : '' }}>Events</option>
-                                    <option value="general" {{ old('category') == 'general' ? 'selected' : '' }}>General</option>
-                                    <option value="important" {{ old('category') == 'important' ? 'selected' : '' }}>Important</option>
-                                </select>
-                            </div>
-
-                            <!-- Priority -->
-                            <div>
-                                <label for="priority" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Priority
-                                </label>
-                                <select id="priority" 
-                                        name="priority" 
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="normal" {{ old('priority', 'normal') == 'normal' ? 'selected' : '' }}>Normal</option>
-                                    <option value="important" {{ old('priority') == 'important' ? 'selected' : '' }}>Important</option>
-                                    <option value="urgent" {{ old('priority') == 'urgent' ? 'selected' : '' }}>Urgent</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Department -->
-                        <div class="mb-6">
-                            <label for="department" class="block text-sm font-medium text-gray-700 mb-2">
-                                Department/Office
-                            </label>
-                            <input type="text" 
-                                   id="department" 
-                                   name="department" 
-                                   value="{{ old('department') }}"
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                   placeholder="e.g., IT Department, Academic Affairs Office">
-                        </div>
-
-                        <!-- Content -->
-                        <div class="mb-6">
-                            <label for="content" class="block text-sm font-medium text-gray-700 mb-2">
-                                Content <span class="text-red-500">*</span>
-                            </label>
-                            <textarea id="content" 
-                                      name="content" 
-                                      rows="10"
-                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      placeholder="Enter announcement details..."
-                                      required>{{ old('content') }}</textarea>
-                            <p class="mt-1 text-sm text-gray-500">You can use basic HTML formatting if needed</p>
-                        </div>
-
-                        <!-- Dates -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            <!-- Publish Date -->
-                            <div>
-                                <label for="publish_date" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Publish Date
-                                </label>
-                                <input type="datetime-local" 
-                                       id="publish_date" 
-                                       name="publish_date" 
-                                       value="{{ old('publish_date') }}"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <p class="mt-1 text-sm text-gray-500">Leave empty to publish immediately</p>
-                            </div>
-
-                            <!-- Expiry Date -->
-                            <div>
-                                <label for="expiry_date" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Expiry Date
-                                </label>
-                                <input type="datetime-local" 
-                                       id="expiry_date" 
-                                       name="expiry_date" 
-                                       value="{{ old('expiry_date') }}"
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <p class="mt-1 text-sm text-gray-500">Optional - when this announcement should expire</p>
-                            </div>
-                        </div>
-
-                        <!-- Form Actions -->
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-6 border-t border-gray-200">
-                            <div>
-                                <a href="{{ route('announcements.index') }}" 
-                                   class="inline-flex items-center px-5 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
-                                    <i class="fas fa-arrow-left mr-2"></i>
-                                    Cancel
-                                </a>
-                            </div>
-                            <div class="flex gap-4">
-                                <button type="button" 
-                                        onclick="resetForm()"
-                                        class="inline-flex items-center px-5 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
-                                    <i class="fas fa-redo mr-2"></i>
-                                    Reset
-                                </button>
-                                <button type="submit" 
-                                        id="submitButton"
-                                        class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow">
-                                    <i class="fas fa-paper-plane mr-2"></i>
-                                    <span id="submitButtonText">
-                                        {{ old('is_official', isset($defaultIsOfficial) ? $defaultIsOfficial : '1') == '1' ? 'Publish to Official Board' : 'Post to Unofficial Page' }}
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                                        <i class="fas fa-shield-alt mr-1"></i> Verified
                                     </span>
-                                </button>
+                                </div>
+                                
+                                <!-- Verification Requirement Info -->
+                                <div id="official-info" class="verification-info verification-official mt-3" 
+                                     style="{{ old('announcement_type', 'unofficial') == 'official' ? 'display: block;' : 'display: none;' }}">
+                                    <div class="flex items-start">
+                                        <i class="fas fa-info-circle text-blue-500 mr-2 mt-0.5"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900 mb-1">
+                                                @if(in_array($user?->role, ['admin', 'staff']))
+                                                    ✅ As {{ $user->role }}, your official announcement will be published immediately.
+                                                @else
+                                                    ⏳ Official announcements require verification from admin/staff.
+                                                    <br>
+                                                    <span class="text-sm text-gray-600">
+                                                        Your announcement will be reviewed before being published to all users.
+                                                    </span>
+                                                @endif
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </form>
+                        
+                        <!-- Unofficial Option -->
+                        <div class="radio-option" id="unofficial-option" onclick="selectType('unofficial')">
+                            <input type="radio" 
+                                   id="type_unofficial" 
+                                   name="announcement_type" 
+                                   value="unofficial"
+                                   class="radio-input"
+                                   {{ old('announcement_type', 'unofficial') == 'unofficial' ? 'checked' : 'selected' }}
+                                   required>
+                            <div class="radio-content">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="radio-title flex items-center">
+                                            <i class="fas fa-users text-blue-600 mr-2"></i>
+                                            Unofficial Announcement
+                                        </div>
+                                        <div class="radio-description">
+                                            For club activities, personal notices, informal updates, or community events
+                                        </div>
+                                    </div>
+                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                        <i class="fas fa-user-friends mr-1"></i> Community
+                                    </span>
+                                </div>
+                                
+                                <!-- Immediate Posting Info -->
+                                <div id="unofficial-info" class="verification-info verification-unofficial mt-3"
+                                     style="{{ old('announcement_type', 'unofficial') == 'unofficial' ? 'display: block;' : 'display: none;' }}">
+                                    <div class="flex items-start">
+                                        <i class="fas fa-bolt text-yellow-500 mr-2 mt-0.5"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900 mb-1">
+                                                ⚡ Unofficial announcements are published immediately.
+                                            </p>
+                                            <p class="text-sm text-gray-600">
+                                                Your announcement will be visible to all users right after publishing.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        @error('announcement_type')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Title Field -->
+                    <div class="mb-6">
+                        <label for="title" class="form-label">
+                            Announcement Title <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               id="title" 
+                               name="title" 
+                               value="{{ old('title') }}"
+                               class="form-input"
+                               placeholder="Enter a clear and descriptive title"
+                               required>
+                        @error('title')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Content Field -->
+                    <div class="mb-6">
+                        <label for="content" class="form-label">
+                            Announcement Content <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="content" 
+                                  name="content" 
+                                  rows="8"
+                                  class="form-input"
+                                  placeholder="Provide detailed information about your announcement..."
+                                  required>{{ old('content') }}</textarea>
+                        <div class="flex justify-between mt-2">
+                            <p class="text-sm text-gray-500">
+                                <i class="fas fa-lightbulb mr-1"></i>
+                                Be clear and concise. Include all necessary details.
+                            </p>
+                            <p id="char-counter" class="text-sm text-gray-500">0 characters</p>
+                        </div>
+                        @error('content')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Category Field -->
+                    <div class="mb-6">
+                        <label for="category" class="form-label">
+                            Category <span class="text-red-500">*</span>
+                        </label>
+                        <select id="category" name="category" class="form-input" required>
+                            <option value="" disabled selected>Select a category</option>
+                            <option value="academic" {{ old('category') == 'academic' ? 'selected' : '' }}>Academic</option>
+                            <option value="events" {{ old('category') == 'events' ? 'selected' : '' }}>Events</option>
+                            <option value="general" {{ old('category') == 'general' ? 'selected' : '' }}>General</option>
+                            <option value="important" {{ old('category') == 'important' ? 'selected' : '' }}>Important</option>
+                            <option value="urgent" {{ old('category') == 'urgent' ? 'selected' : '' }}>Urgent</option>
+                        </select>
+                        @error('category')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Priority Field -->
+                    <div class="mb-6">
+                        <label for="priority" class="form-label">
+                            Priority Level
+                        </label>
+                        <select id="priority" name="priority" class="form-input">
+                            <option value="normal" {{ old('priority') == 'normal' ? 'selected' : '' }} selected>Normal</option>
+                            <option value="important" {{ old('priority') == 'important' ? 'selected' : '' }}>Important</option>
+                            <option value="urgent" {{ old('priority') == 'urgent' ? 'selected' : '' }}>Urgent</option>
+                        </select>
+                        @error('priority')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Attachment Field (Optional) -->
+                    <div class="mb-6">
+                        <label for="attachment" class="form-label">
+                            Attachment (Optional)
+                        </label>
+                        <input type="file" 
+                               id="attachment" 
+                               name="attachment"
+                               class="form-input"
+                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <p class="mt-2 text-sm text-gray-500">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Supported files: PDF, DOC, DOCX, JPG, JPEG, PNG (Max: 5MB)
+                        </p>
+                        @error('attachment')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 class="font-medium text-gray-900 mb-2">
+                            <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                            Important Information
+                        </h3>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• All announcements will be visible to the UTHM community</li>
+                            <li>• Official announcements may require verification before publishing</li>
+                            <li>• Unofficial announcements are published immediately</li>
+                            <li>• Be respectful and follow community guidelines</li>
+                            <li>• Double-check information before publishing</li>
+                        </ul>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                        <a href="{{ route('announcements.index') }}" 
+                           class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </a>
+                        
+                        <!-- Save as Draft Button -->
+                        <button type="submit" 
+                                name="status" 
+                                value="draft"
+                                class="px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>
+                            Save as Draft
+                        </button>
+                        
+                        <!-- Publish Button -->
+                        <button type="submit" 
+                                name="status" 
+                                value="published"
+                                class="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+                                id="publish-button">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            <span id="publish-text">Publish Announcement</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Type Comparison Table -->
+            <div class="mt-8 bg-white rounded-xl shadow p-6">
+                <h3 class="font-bold text-gray-900 text-lg mb-4">
+                    <i class="fas fa-balance-scale text-gray-600 mr-2"></i>
+                    Official vs Unofficial Announcements
+                </h3>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Feature
+                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Official Announcement
+                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Unofficial Announcement
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    Purpose
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600">
+                                    University policy, official notices, important updates
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600">
+                                    Club activities, personal notices, informal updates
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    Verification
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600">
+                                    Requires admin/staff verification (except for admin/staff users)
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600">
+                                    Published immediately, no verification required
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    Visibility Badge
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                                        <i class="fas fa-check-circle mr-1"></i> Official
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                                        <i class="fas fa-users mr-1"></i> Unofficial
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    Best For
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600">
+                                    Admin, staff, or verified official communications
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-600">
+                                    Students, clubs, community members, informal updates
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-
-            <!-- Tips -->
-            <div class="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
-                <h3 class="font-medium text-blue-900 mb-3 flex items-center">
-                    <i class="fas fa-lightbulb mr-2"></i> Tips for Effective Announcements
-                </h3>
-                <ul class="text-blue-700 text-sm space-y-2">
-                    <li class="flex items-start">
-                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
-                        <span><strong>Official Announcements:</strong> University policies, official notices, verified information</span>
-                    </li>
-                    <li class="flex items-start">
-                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
-                        <span><strong>Unofficial Announcements:</strong> Student club activities, informal notices, department updates</span>
-                    </li>
-                    <li class="flex items-start">
-                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
-                        <span>Use clear and concise titles that summarize the announcement</span>
-                    </li>
-                    <li class="flex items-start">
-                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
-                        <span>Include all relevant details: dates, times, locations, contacts</span>
-                    </li>
-                    <li class="flex items-start">
-                        <i class="fas fa-check-circle text-blue-500 mt-1 mr-2 text-xs"></i>
-                        <span>Set expiry dates for time-sensitive announcements</span>
-                    </li>
-                </ul>
-            </div>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 py-6 mt-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-gray-500 text-sm">
+                <p>UTHM Digital Bulletin Board &copy; {{ date('Y') }}</p>
+                <p class="mt-1">Choose announcement type based on your needs. Official announcements may require verification.</p>
+            </div>
+        </div>
+    </footer>
 
     <!-- JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Set min date for publish date to today
-            const today = new Date();
-            const todayString = today.toISOString().slice(0, 16);
-            const publishDateInput = document.getElementById('publish_date');
-            const expiryDateInput = document.getElementById('expiry_date');
+            const form = document.getElementById('announcement-form');
+            const titleInput = document.getElementById('title');
+            const contentInput = document.getElementById('content');
+            const publishButton = document.getElementById('publish-button');
+            const publishText = document.getElementById('publish-text');
             
-            publishDateInput.min = todayString;
+            // Initialize type selection
+            initializeTypeSelection();
             
-            // Set min date for expiry date based on publish date
-            publishDateInput.addEventListener('change', function() {
-                if (this.value) {
-                    expiryDateInput.min = this.value;
+            // Character counter for content
+            if (contentInput) {
+                contentInput.addEventListener('input', function() {
+                    const charCount = this.value.length;
+                    const counter = document.getElementById('char-counter');
+                    counter.textContent = `${charCount} characters`;
+                    
+                    if (charCount > 5000) {
+                        counter.classList.add('text-red-500');
+                    } else {
+                        counter.classList.remove('text-red-500');
+                    }
+                });
+                
+                // Initialize counter
+                contentInput.dispatchEvent(new Event('input'));
+            }
+            
+            // Basic form validation
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+                
+                // Clear previous error styles
+                document.querySelectorAll('.form-input').forEach(input => {
+                    input.classList.remove('border-red-500');
+                });
+                
+                // Validate title
+                if (!titleInput.value.trim()) {
+                    titleInput.classList.add('border-red-500');
+                    isValid = false;
+                }
+                
+                // Validate content
+                if (!contentInput.value.trim()) {
+                    contentInput.classList.add('border-red-500');
+                    isValid = false;
+                }
+                
+                // Validate announcement type
+                const announcementType = document.querySelector('input[name="announcement_type"]:checked');
+                if (!announcementType) {
+                    alert('Please select an announcement type (Official or Unofficial).');
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Please fill in all required fields marked with *.');
+                } else {
+                    // Show confirmation for official announcements from non-admin/staff
+                    const isOfficial = announcementType.value === 'official';
+                    const userRole = "{{ $user?->role ?? 'guest' }}";
+                    const isAdminOrStaff = ['admin', 'staff'].includes(userRole);
+                    
+                    if (isOfficial && !isAdminOrStaff) {
+                        if (!confirm('Official announcements require admin/staff verification.\n\nYour announcement will be submitted for review and published after verification.\n\nDo you want to continue?')) {
+                            e.preventDefault();
+                        }
+                    }
                 }
             });
             
-            // Set expiry date min if publish date already has value
-            if (publishDateInput.value) {
-                expiryDateInput.min = publishDateInput.value;
+            // File size validation
+            const fileInput = document.getElementById('attachment');
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    const file = this.files[0];
+                    if (file) {
+                        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                        if (file.size > maxSize) {
+                            alert('File size exceeds 5MB limit. Please choose a smaller file.');
+                            this.value = ''; // Clear the file input
+                        }
+                    }
+                });
             }
             
-            // Initialize posting option cards based on current selection
-            updatePostingOptionCards();
-            
-            // Initialize form action based on default selection
-            const defaultRadio = document.querySelector('input[name="is_official"]:checked');
-            if (defaultRadio) {
-                updateFormAction(defaultRadio);
+            function initializeTypeSelection() {
+                // Set initial selection
+                const initialType = "{{ old('announcement_type', 'unofficial') }}";
+                selectType(initialType);
+                
+                // Update publish button text based on type
+                updatePublishButtonText(initialType);
             }
+            
+            window.selectType = function(type) {
+                // Update radio button
+                document.getElementById(`type_${type}`).checked = true;
+                
+                // Update visual selection
+                document.getElementById('official-option').classList.remove('selected');
+                document.getElementById('unofficial-option').classList.remove('selected');
+                document.getElementById(`${type}-option`).classList.add('selected');
+                
+                // Show/hide info sections
+                document.getElementById('official-info').style.display = type === 'official' ? 'block' : 'none';
+                document.getElementById('unofficial-info').style.display = type === 'unofficial' ? 'block' : 'none';
+                
+                // Update publish button text
+                updatePublishButtonText(type);
+            }
+            
+            function updatePublishButtonText(type) {
+                const userRole = "{{ $user?->role ?? 'guest' }}";
+                const isAdminOrStaff = ['admin', 'staff'].includes(userRole);
+                
+                if (type === 'official') {
+                    if (isAdminOrStaff) {
+                        publishText.textContent = 'Publish Official Announcement';
+                        publishButton.title = 'Publish immediately as official announcement';
+                    } else {
+                        publishText.textContent = 'Submit for Verification';
+                        publishButton.title = 'Submit for admin/staff verification';
+                    }
+                } else {
+                    publishText.textContent = 'Publish Announcement';
+                    publishButton.title = 'Publish immediately as unofficial announcement';
+                }
+            }
+            
+            // Add click handlers for radio options
+            document.querySelectorAll('.radio-input').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectType(this.value);
+                    }
+                });
+            });
         });
-        
-        function updateFormAction(radio) {
-            const postingType = radio.value === '1' ? 'official' : 'unofficial';
-            document.getElementById('posting_type').value = postingType;
-            
-            // Update button text
-            const submitButtonText = document.getElementById('submitButtonText');
-            const submitButton = document.getElementById('submitButton');
-            
-            if (radio.value === '1') {
-                submitButtonText.textContent = 'Publish to Official Board';
-                submitButton.className = 'inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow';
-            } else {
-                submitButtonText.textContent = 'Post to Unofficial Page';
-                submitButton.className = 'inline-flex items-center px-6 py-3 bg-amber-600 text-white font-medium rounded-lg hover:bg-amber-700 transition-colors shadow';
-            }
-            
-            // Update card styling
-            updatePostingOptionCards();
-        }
-        
-        function updatePostingOptionCards() {
-            // Get all radio buttons
-            const officialRadio = document.querySelector('input[name="is_official"][value="1"]');
-            const unofficialRadio = document.querySelector('input[name="is_official"][value="0"]');
-            
-            // Get card containers
-            const officialCard = officialRadio.closest('label').querySelector('.posting-option-card');
-            const unofficialCard = unofficialRadio.closest('label').querySelector('.posting-option-card');
-            
-            // Reset all cards
-            officialCard.classList.remove('selected', 'border-green-500', 'bg-green-50', 'border-amber-500', 'bg-amber-50');
-            unofficialCard.classList.remove('selected', 'border-green-500', 'bg-green-50', 'border-amber-500', 'bg-amber-50');
-            
-            // Apply appropriate styling based on selection
-            if (officialRadio.checked) {
-                officialCard.classList.add('selected', 'border-green-500', 'bg-green-50');
-                unofficialCard.classList.add('border-gray-200');
-            } else {
-                unofficialCard.classList.add('selected', 'border-amber-500', 'bg-amber-50');
-                officialCard.classList.add('border-gray-200');
-            }
-        }
-        
-        function resetForm() {
-            if (confirm('Are you sure you want to reset the form? All entered data will be lost.')) {
-                document.querySelector('form').reset();
-                
-                // Reset radio buttons to default (Official)
-                const officialRadio = document.querySelector('input[name="is_official"][value="1"]');
-                officialRadio.checked = true;
-                
-                // Update UI
-                updateFormAction(officialRadio);
-            }
-        }
     </script>
 </body>
 </html>

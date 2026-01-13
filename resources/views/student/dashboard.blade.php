@@ -205,9 +205,20 @@
                     </a>
                 </li>
 
+                <!-- My Announcements -->
+                <li>
+                    <a href="{{ route('announcements.my-announcements') }}" 
+                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0">
+                            <i class="fas fa-file-alt w-5 h-5"></i>
+                        </div>
+                        <span class="sidebar-text ml-3">My Announcements</span>
+                    </a>
+                </li>
+
                 <!-- Calendar -->
                 <li>
-                    <a href="{{ route('student.calendar') }}"
+                    <a href="{{ route('calendar') }}"
                        class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
                         <div class="shrink-0">
                             <i class="fas fa-calendar-alt w-5 h-5"></i>

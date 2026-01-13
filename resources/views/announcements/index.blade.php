@@ -1,3 +1,4 @@
+announcements/index.blade.php
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -165,6 +166,39 @@
         .tab-inactive:hover {
             background-color: #e5e7eb;
         }
+        
+        /* Role badges */
+        .badge-admin {
+            background-color: #dc2626;
+            color: white;
+        }
+        .badge-staff {
+            background-color: #2563eb;
+            color: white;
+        }
+        .badge-student {
+            background-color: #059669;
+            color: white;
+        }
+        .badge-guest {
+            background-color: #6b7280;
+            color: white;
+        }
+        
+        /* Filter button active state */
+        .filter-btn-active {
+            background-color: #0056a6 !important;
+            color: white !important;
+        }
+        
+        .filter-btn-inactive {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        .filter-btn-inactive:hover {
+            background-color: #e5e7eb;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -212,6 +246,12 @@
                     <div class="sidebar-text">
                         <h3 class="font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</h3>
                         <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
+                        <!-- Role badge in sidebar -->
+                        @if($user?->role)
+                            <span class="mt-1 inline-block px-2 py-1 text-xs rounded-full badge-{{ $user->role }}">
+                                {{ ucfirst($user->role) }}
+                            </span>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -242,9 +282,20 @@
                     </a>
                 </li>
 
+                <!-- My Announcements -->
+                <li>
+                    <a href="{{ route('announcements.my-announcements') }}" 
+                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0">
+                            <i class="fas fa-file-alt w-5 h-5"></i>
+                        </div>
+                        <span class="sidebar-text ml-3">My Announcements</span>
+                    </a>
+                </li>
+
                 <!-- Calendar -->
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('calendar') }}"
                        class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
                         <div class="shrink-0">
                             <i class="fas fa-calendar-alt w-5 h-5"></i>
@@ -307,8 +358,7 @@
                     
                     <!-- Quick Actions -->
                     <div class="flex items-center space-x-4">
-                        <!-- Quick Create Dropdown -->
-                        @if(in_array($user->role, ['admin', 'staff']))
+                        <!-- Quick Create Dropdown - Available for all users -->
                         <div class="relative hidden md:block">
                             <button id="quick-create-button" class="bg-uthm-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center">
                                 <i class="fas fa-plus mr-2"></i>
@@ -321,14 +371,9 @@
                                 <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-calendar-check mr-2"></i> New Event
                                 </a>
-                                @if($user->role === 'admin')
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-user-plus mr-2"></i> Add User
-                                </a>
-                                @endif
+                                
                             </div>
                         </div>
-                        @endif
                         
                         <!-- Notification Bell -->
                         <button class="relative p-2 text-gray-600 hover:text-uthm-blue">
@@ -345,6 +390,11 @@
                                 <div class="hidden md:block text-left">
                                     <p class="text-sm font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</p>
                                     <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
+                                    @if($user?->role)
+                                        <span class="inline-block px-2 py-1 text-xs rounded-full badge-{{ $user->role }}">
+                                            {{ ucfirst($user->role) }}
+                                        </span>
+                                    @endif
                                 </div>
                                 <i class="fas fa-chevron-down text-gray-500"></i>
                             </button>
@@ -353,6 +403,9 @@
                             <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden">
                                 <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-user mr-2"></i> My Profile
+                                </a>
+                                <a href="{{ route('announcements.my-announcements') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-file-alt mr-2"></i> My Announcements
                                 </a>
                                 <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-cog mr-2"></i> Settings
@@ -380,6 +433,10 @@
                         <div>
                             <h2 class="text-3xl font-bold text-gray-900">Announcements</h2>
                             <p class="mt-2 text-gray-600">Stay updated with the latest news and announcements from UTHM</p>
+                            <div class="mt-2 text-sm text-gray-500">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                All users can create announcements. Official announcements are verified by admin/staff.
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -393,20 +450,30 @@
                                class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.index') ? 'tab-active' : 'tab-inactive' }}">
                                 All Announcements
                             </a>
-                            <a href="{{ route('announcements.official') }}" 
-                               class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.official') ? 'tab-active' : 'tab-inactive' }}">
-                                <i class="fas fa-check-circle mr-2"></i>Official Announcements
+                            <a href="{{ route('announcements.my-announcements') }}" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.my-announcements') ? 'tab-active' : 'tab-inactive' }}">
+                                <i class="fas fa-user mr-2"></i>My Announcements
                             </a>
-                            <a href="{{ route('announcements.unofficial') }}" 
-                               class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.unofficial') ? 'tab-active' : 'tab-inactive' }}">
-                                <i class="fas fa-users mr-2"></i>Unofficial Announcements
+                            <a href="{{ route('announcements.published') }}" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.published') ? 'tab-active' : 'tab-inactive' }}">
+                                <i class="fas fa-check-circle mr-2"></i>Published
                             </a>
+                            <a href="{{ route('announcements.drafts') }}" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.drafts') ? 'tab-active' : 'tab-inactive' }}">
+                                <i class="fas fa-edit mr-2"></i>Drafts
+                            </a>
+                            @if(in_array($user->role, ['admin', 'staff']))
+                            <a href="{{ route('announcements.verification-queue') }}" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.verification-queue') ? 'tab-active' : 'tab-inactive' }}">
+                                <i class="fas fa-clock mr-2"></i>Verification Queue
+                            </a>
+                            @endif
                         </div>
                     </div>
                 </div>
 
-                <!-- Create Announcement Card (for admin/staff only) -->
-                @if(in_array($user->role, ['admin', 'staff']))
+                <!-- Create Announcement Card - Available for all authenticated users -->
+                @auth
                 <div class="mb-8 bg-gradient-to-r from-blue-50 to-uthm-blue-light border border-blue-200 rounded-xl shadow-sm p-5">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
@@ -414,8 +481,14 @@
                                 <i class="fas fa-bullhorn text-xl"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-gray-900 text-lg">Ready to share an announcement?</h3>
-                                <p class="text-gray-600 text-sm mt-1">Create a new announcement to inform students and staff about important updates.</p>
+                                <h3 class="font-bold text-gray-900 text-lg">Share your announcement!</h3>
+                                <p class="text-gray-600 text-sm mt-1">
+                                    @if(in_array($user?->role, ['admin', 'staff']))
+                                        As {{ $user->role }}, your announcements will be marked as official.
+                                    @else
+                                        Create an announcement to inform the UTHM community. Admin/staff can verify to make it official.
+                                    @endif
+                                </p>
                             </div>
                         </div>
                         <a href="{{ route('announcements.create') }}" 
@@ -425,32 +498,65 @@
                         </a>
                     </div>
                 </div>
-                @endif
+                @else
+                <!-- For guest users -->
+                <div class="mb-8 bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl shadow-sm p-5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="bg-yellow-500 text-white p-3 rounded-lg mr-4">
+                                <i class="fas fa-user-plus text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-lg">Want to create announcements?</h3>
+                                <p class="text-gray-600 text-sm mt-1">Log in to create and share announcements with the UTHM community.</p>
+                            </div>
+                        </div>
+                        <a href="{{ route('login') }}" 
+                           class="inline-flex items-center px-5 py-3 bg-yellow-500 text-white font-medium rounded-lg hover:bg-yellow-600 transition-colors shadow">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Log In
+                        </a>
+                    </div>
+                </div>
+                @endauth
 
                 <!-- Filters -->
                 <div class="mb-8 bg-white rounded-xl shadow p-4">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div class="flex flex-wrap gap-2">
-                            <button onclick="filterAnnouncements('all')" 
-                                    class="px-4 py-2 bg-uthm-blue text-white rounded-lg text-sm font-medium">
+                            <!-- Category Filters -->
+                            <button onclick="filterAnnouncements('all', 'all')" 
+                                    class="px-4 py-2 bg-uthm-blue text-white rounded-lg text-sm font-medium filter-btn-all">
                                 All Categories
                             </button>
-                            <button onclick="filterAnnouncements('urgent')" 
-                                    class="px-4 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100">
+                            <button onclick="filterAnnouncements('urgent', 'all')" 
+                                    class="px-4 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100 filter-btn-category">
                                 <i class="fas fa-exclamation-circle mr-2"></i>Urgent
                             </button>
-                            <button onclick="filterAnnouncements('academic')" 
-                                    class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100">
+                            <button onclick="filterAnnouncements('academic', 'all')" 
+                                    class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 filter-btn-category">
                                 <i class="fas fa-graduation-cap mr-2"></i>Academic
                             </button>
-                            <button onclick="filterAnnouncements('events')" 
-                                    class="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-100">
+                            <button onclick="filterAnnouncements('events', 'all')" 
+                                    class="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-100 filter-btn-category">
                                 <i class="fas fa-calendar-alt mr-2"></i>Events
                             </button>
-                            <button onclick="filterAnnouncements('general')" 
-                                    class="px-4 py-2 bg-uthm-blue-light text-uthm-blue rounded-lg text-sm font-medium hover:bg-blue-100">
+                            <button onclick="filterAnnouncements('general', 'all')" 
+                                    class="px-4 py-2 bg-uthm-blue-light text-uthm-blue rounded-lg text-sm font-medium hover:bg-blue-100 filter-btn-category">
                                 <i class="fas fa-newspaper mr-2"></i>General
                             </button>
+                            
+                            <!-- Type Filters -->
+                            <div class="border-l border-gray-300 pl-2 ml-2">
+                                <button onclick="filterAnnouncements('all', 'official')" 
+                                        class="px-4 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 filter-btn-type">
+                                    <i class="fas fa-check-circle mr-2"></i>Official
+                                </button>
+                                <button onclick="filterAnnouncements('all', 'unofficial')" 
+                                        class="px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg text-sm font-medium hover:bg-yellow-100 filter-btn-type">
+                                    <i class="fas fa-users mr-2"></i>Unofficial
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="flex items-center">
@@ -462,6 +568,11 @@
                                        class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64">
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Active Filters Display -->
+                    <div id="active-filters" class="mt-4 flex flex-wrap gap-2 hidden">
+                        <div class="text-sm text-gray-600 mr-2">Active filters:</div>
                     </div>
                 </div>
 
@@ -517,13 +628,17 @@
                                 
                                 <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                                     <div class="flex items-center text-sm text-gray-500">
-                                        <i class="fas fa-user-tie mr-2"></i>
-                                        <span>{{ $announcement->author->name ?? 'Admin' }}</span>
-                                        @if($announcement->is_official)
-                                            <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                                                <i class="fas fa-shield-alt mr-1"></i>Verified
-                                            </span>
-                                        @endif
+                                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
+                                            <span class="font-bold text-gray-600">{{ strtoupper(substr($announcement->author->name ?? 'A', 0, 1)) }}</span>
+                                        </div>
+                                        <div>
+                                            <span>{{ $announcement->author->name ?? 'Anonymous' }}</span>
+                                            @if($announcement->author)
+                                                <span class="ml-2 px-2 py-1 text-xs rounded-full badge-{{ $announcement->author->role }}">
+                                                    {{ ucfirst($announcement->author->role) }}
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
                                     <a href="{{ route('announcements.show', $announcement) }}" 
                                        class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
@@ -544,24 +659,20 @@
                         <i class="fas fa-bullhorn text-gray-400 text-4xl"></i>
                     </div>
                     <h3 class="text-xl font-medium text-gray-900 mb-2" id="no-announcements-title">
-                        @if(request()->routeIs('announcements.official'))
-                            No Official Announcements
-                        @elseif(request()->routeIs('announcements.unofficial'))
-                            No Unofficial Announcements
+                        @if(request()->routeIs('announcements.my-announcements'))
+                            You haven't created any announcements yet
                         @else
                             No announcements yet
                         @endif
                     </h3>
                     <p class="text-gray-600 mb-6" id="no-announcements-description">
-                        @if(request()->routeIs('announcements.official'))
-                            There are no official announcements at the moment.
-                        @elseif(request()->routeIs('announcements.unofficial'))
-                            There are no unofficial announcements at the moment.
+                        @if(request()->routeIs('announcements.my-announcements'))
+                            Create your first announcement to share with the community!
                         @else
                             When announcements are created, they will appear here.
                         @endif
                     </p>
-                    @if(in_array($user->role, ['admin', 'staff']))
+                    @auth
                     <div class="mt-8">
                         <a href="{{ route('announcements.create') }}" 
                            class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors shadow-lg">
@@ -569,7 +680,15 @@
                             Create Your First Announcement
                         </a>
                     </div>
-                    @endif
+                    @else
+                    <div class="mt-8">
+                        <a href="{{ route('login') }}" 
+                           class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-lg">
+                            <i class="fas fa-sign-in-alt mr-2 text-lg"></i>
+                            Log in to Create Announcement
+                        </a>
+                    </div>
+                    @endauth
                 </div>
 
                 <!-- Pagination -->
@@ -588,18 +707,19 @@
             <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center text-gray-500 text-sm">
                     <p>UTHM Digital Bulletin Board &copy; {{ date('Y') }}. All rights reserved.</p>
+                    <p class="mt-1">All authenticated users can create announcements. Official announcements are verified by admin/staff.</p>
                     <p class="mt-1">For issues or inquiries, contact: <a href="mailto:support@uthm.edu.my" class="text-blue-600 hover:text-blue-800">support@uthm.edu.my</a></p>
                 </div>
             </div>
         </footer>
 
-        <!-- Floating "Add Post" Button -->
-        @if(in_array($user->role, ['admin', 'staff']))
+        <!-- Floating "Add Post" Button - Available for all authenticated users -->
+        @auth
         <a href="{{ route('announcements.create') }}" 
            class="floating-add-btn bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors hover:shadow-xl">
             <i class="fas fa-plus text-2xl"></i>
         </a>
-        @endif
+        @endauth
     </div>
 
     <!-- JavaScript -->
@@ -617,9 +737,11 @@
             const searchInput = document.getElementById('search-input');
             const announcementsGrid = document.getElementById('announcements-grid');
             const noAnnouncementsMessage = document.getElementById('no-announcements-message');
+            const activeFiltersContainer = document.getElementById('active-filters');
             
             // State variables
             let currentFilterCategory = 'all';
+            let currentFilterType = 'all';
             let currentSearchTerm = '';
             
             // Load sidebar state from localStorage
@@ -726,10 +848,105 @@
                 localStorage.setItem('sidebarExpanded', 'false');
             }
             
-            // Category Filter
-            window.filterAnnouncements = function(category) {
+            // Category and Type Filter
+            window.filterAnnouncements = function(category, type) {
                 currentFilterCategory = category;
+                currentFilterType = type;
+                
+                // Update button styles
+                updateFilterButtonStyles(category, type);
+                
+                // Update active filters display
+                updateActiveFilters();
+                
                 filterAnnouncements();
+            }
+            
+            function updateFilterButtonStyles(category, type) {
+                // Reset all filter buttons
+                document.querySelectorAll('.filter-btn-category, .filter-btn-type, .filter-btn-all').forEach(btn => {
+                    btn.classList.remove('filter-btn-active');
+                    btn.classList.remove('bg-uthm-blue', 'text-white');
+                    
+                    // Add appropriate background based on button type
+                    if (btn.classList.contains('filter-btn-all')) {
+                        btn.classList.add('bg-uthm-blue', 'text-white');
+                    } else if (btn.classList.contains('filter-btn-category')) {
+                        // Keep category-specific colors
+                        const text = btn.textContent.toLowerCase();
+                        if (text.includes('urgent')) {
+                            btn.classList.add('bg-red-50', 'text-red-700');
+                        } else if (text.includes('academic')) {
+                            btn.classList.add('bg-blue-50', 'text-blue-700');
+                        } else if (text.includes('events')) {
+                            btn.classList.add('bg-purple-50', 'text-purple-700');
+                        } else if (text.includes('general')) {
+                            btn.classList.add('bg-uthm-blue-light', 'text-uthm-blue');
+                        }
+                    } else if (btn.classList.contains('filter-btn-type')) {
+                        const text = btn.textContent.toLowerCase();
+                        if (text.includes('official')) {
+                            btn.classList.add('bg-green-50', 'text-green-700');
+                        } else if (text.includes('unofficial')) {
+                            btn.classList.add('bg-yellow-50', 'text-yellow-700');
+                        }
+                    }
+                });
+                
+                // Activate category filter button
+                if (category !== 'all') {
+                    const categoryBtn = Array.from(document.querySelectorAll('.filter-btn-category'))
+                        .find(btn => btn.textContent.toLowerCase().includes(category));
+                    if (categoryBtn) {
+                        categoryBtn.classList.add('filter-btn-active');
+                        categoryBtn.classList.remove('bg-red-50', 'bg-blue-50', 'bg-purple-50', 'bg-uthm-blue-light');
+                        categoryBtn.classList.add('bg-uthm-blue', 'text-white');
+                    }
+                }
+                
+                // Activate type filter button
+                if (type !== 'all') {
+                    const typeBtn = Array.from(document.querySelectorAll('.filter-btn-type'))
+                        .find(btn => btn.textContent.toLowerCase().includes(type));
+                    if (typeBtn) {
+                        typeBtn.classList.add('filter-btn-active');
+                        typeBtn.classList.remove('bg-green-50', 'bg-yellow-50');
+                        typeBtn.classList.add('bg-uthm-blue', 'text-white');
+                    }
+                }
+            }
+            
+            function updateActiveFilters() {
+                activeFiltersContainer.innerHTML = '';
+                
+                if (currentFilterCategory !== 'all' || currentFilterType !== 'all') {
+                    activeFiltersContainer.classList.remove('hidden');
+                    
+                    if (currentFilterCategory !== 'all') {
+                        const categoryBadge = document.createElement('span');
+                        categoryBadge.className = 'px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full flex items-center';
+                        categoryBadge.innerHTML = `<i class="fas fa-filter mr-2"></i>Category: ${currentFilterCategory.charAt(0).toUpperCase() + currentFilterCategory.slice(1)}`;
+                        activeFiltersContainer.appendChild(categoryBadge);
+                    }
+                    
+                    if (currentFilterType !== 'all') {
+                        const typeBadge = document.createElement('span');
+                        typeBadge.className = 'px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full flex items-center';
+                        typeBadge.innerHTML = `<i class="fas fa-tag mr-2"></i>Type: ${currentFilterType.charAt(0).toUpperCase() + currentFilterType.slice(1)}`;
+                        activeFiltersContainer.appendChild(typeBadge);
+                    }
+                    
+                    // Add clear filter button
+                    const clearBtn = document.createElement('button');
+                    clearBtn.className = 'px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-full hover:bg-gray-300 transition-colors ml-2';
+                    clearBtn.innerHTML = '<i class="fas fa-times mr-1"></i>Clear Filters';
+                    clearBtn.onclick = function() {
+                        filterAnnouncements('all', 'all');
+                    };
+                    activeFiltersContainer.appendChild(clearBtn);
+                } else {
+                    activeFiltersContainer.classList.add('hidden');
+                }
             }
             
             // Combined Filter Function
@@ -739,18 +956,22 @@
                 
                 cards.forEach(card => {
                     const category = card.getAttribute('data-category');
+                    const type = card.getAttribute('data-type');
                     const title = card.querySelector('h3').textContent.toLowerCase();
                     const content = card.querySelector('p').textContent.toLowerCase();
                     
                     // Category filter
                     let categoryMatch = currentFilterCategory === 'all' || category === currentFilterCategory;
                     
+                    // Type filter
+                    let typeMatch = currentFilterType === 'all' || type === currentFilterType;
+                    
                     // Search filter
                     let searchMatch = currentSearchTerm === '' || 
                                      title.includes(currentSearchTerm) || 
                                      content.includes(currentSearchTerm);
                     
-                    if (categoryMatch && searchMatch) {
+                    if (categoryMatch && typeMatch && searchMatch) {
                         card.style.display = 'block';
                         visibleCards++;
                     } else {
@@ -766,12 +987,12 @@
                     if (currentSearchTerm !== '') {
                         document.getElementById('no-announcements-title').textContent = 'No announcements found';
                         document.getElementById('no-announcements-description').textContent = 'Try adjusting your search or filter criteria.';
+                    } else if (currentFilterCategory !== 'all' || currentFilterType !== 'all') {
+                        document.getElementById('no-announcements-title').textContent = 'No announcements match your filters';
+                        document.getElementById('no-announcements-description').textContent = 'Try changing your filter criteria or clear filters to see all announcements.';
                     } else {
-                        // Keep the route-specific message
-                        const title = document.getElementById('no-announcements-title').textContent;
-                        const description = document.getElementById('no-announcements-description').textContent;
-                        document.getElementById('no-announcements-title').textContent = title;
-                        document.getElementById('no-announcements-description').textContent = description;
+                        document.getElementById('no-announcements-title').textContent = 'No announcements yet';
+                        document.getElementById('no-announcements-description').textContent = 'When announcements are created, they will appear here.';
                     }
                 } else {
                     noAnnouncementsMessage.style.display = 'none';
@@ -794,7 +1015,9 @@
                 sidebar.style.transform = 'translateX(-100%)';
             }
             
-            // Initialize filter
+            // Initialize filter with all filters active
+            updateFilterButtonStyles('all', 'all');
+            updateActiveFilters();
             filterAnnouncements();
         });
     </script>

@@ -1,16 +1,11 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+
+@section('title', 'Events Management')
+@section('page_title', 'Events Management')
+@section('page_subtitle', 'Manage and monitor all system events')
 
 @section('content')
-<div class="bg-gray-50 min-h-screen">
-    <!-- Header -->
-    <div class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <h1 class="text-3xl font-bold text-gray-900">Events Management</h1>
-            <p class="text-gray-600 mt-2">Manage and monitor all system events</p>
-        </div>
-    </div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="grid grid-cols-1">
         <!-- Filters and Actions -->
         <div class="bg-white rounded-lg shadow p-6 mb-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -40,9 +35,11 @@
                 <p class="text-gray-500">Loading events...</p>
             </div>
         </div>
-    </div>
 </div>
 
+@endsection
+
+@section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', loadEvents);
 

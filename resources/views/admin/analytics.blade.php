@@ -1,16 +1,11 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+
+@section('title', 'Analytics Dashboard')
+@section('page_title', 'Analytics Dashboard')
+@section('page_subtitle', 'Track system performance and user engagement')
 
 @section('content')
-<div class="bg-gray-50 min-h-screen">
-    <!-- Header -->
-    <div class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <h1 class="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-            <p class="text-gray-600 mt-2">Track system performance and user engagement</p>
-        </div>
-    </div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="grid grid-cols-1">
         <!-- Time Period Selection -->
         <div class="bg-white rounded-lg shadow p-6 mb-8">
             <div class="flex flex-wrap gap-4 items-center">
@@ -133,9 +128,11 @@
                 <p class="text-gray-500 text-center py-8">Loading activity...</p>
             </div>
         </div>
-    </div>
 </div>
 
+@endsection
+
+@section('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         loadAnalytics();

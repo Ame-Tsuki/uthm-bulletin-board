@@ -1,16 +1,11 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+
+@section('title', 'System Settings')
+@section('page_title', 'System Settings')
+@section('page_subtitle', 'Configure system-wide settings and preferences')
 
 @section('content')
-<div class="bg-gray-50 min-h-screen">
-    <!-- Header -->
-    <div class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <h1 class="text-3xl font-bold text-gray-900">System Settings</h1>
-            <p class="text-gray-600 mt-2">Configure system-wide settings and preferences</p>
-        </div>
-    </div>
-
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="grid grid-cols-1">
         <!-- Settings Tabs -->
         <div class="flex gap-4 mb-8 border-b border-gray-200">
             <button onclick="showTab('general')" class="tab-btn py-3 px-4 text-gray-700 font-medium border-b-2 border-transparent hover:border-blue-600 active" data-tab="general">
@@ -142,9 +137,11 @@
                 </div>
             </div>
         </div>
-    </div>
 </div>
 
+@endsection
+
+@section('scripts')
 <script>
     function showTab(tabName) {
         // Hide all tabs

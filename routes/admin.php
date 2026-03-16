@@ -44,9 +44,24 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('api/admin')->name
         Route::post('/bulk-action', [AdminController::class, 'bulkAction'])->name('bulk-action');
     });
     
-    // Content & Announcements Management
+    // Content & Announcements Management - FIXED: Added all CRUD operations
     Route::prefix('announcements')->name('announcements.')->group(function () {
+        // List all announcements (with filters)
         Route::get('/', [AdminController::class, 'getAnnouncements'])->name('index');
+        
+        // Get single announcement for view/edit
+        Route::get('/{id}', [AdminController::class, 'getAnnouncement'])->name('show');
+        
+        // Create new announcement
+        Route::post('/', [AdminController::class, 'storeAnnouncement'])->name('store');
+        
+        // Update announcement
+        Route::patch('/{id}', [AdminController::class, 'updateAnnouncement'])->name('update');
+        
+        // Delete announcement
+        Route::delete('/{id}', [AdminController::class, 'deleteAnnouncement'])->name('destroy');
+        
+        // Approve/reject (keep these)
         Route::patch('/{id}/approve', [AdminController::class, 'approveAnnouncement'])->name('approve');
         Route::patch('/{id}/reject', [AdminController::class, 'rejectAnnouncement'])->name('reject');
     });
@@ -63,4 +78,3 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('api/admin')->name
         Route::put('/', [AdminController::class, 'updateSettings'])->name('update');
     });
 });
-

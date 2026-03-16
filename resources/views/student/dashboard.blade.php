@@ -73,6 +73,24 @@
             width: auto;
             margin-left: 0.75rem !important;
         }
+
+        /* Role badges */
+        .badge-admin {
+            background-color: #dc2626;
+            color: white;
+        }
+        .badge-staff {
+            background-color: #2563eb;
+            color: white;
+        }
+        .badge-student {
+            background-color: #059669;
+            color: white;
+        }
+        .badge-guest {
+            background-color: #6b7280;
+            color: white;
+        }
         
         /* Mobile styles */
         @media (max-width: 768px) {
@@ -166,20 +184,26 @@
 
         <!-- Dashboard Navigation - EXACT SAME ORDER AS MAIN DASHBOARD -->
 
-                     <!-- User Profile - Now Clickable -->
-<a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
-    <div class="p-4 border-b border-gray-200">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
-                <span class="font-bold uthm-blue">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+       <!-- User Profile - Now Clickable -->
+        <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
+                        <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
+                    </div>
+                    <div class="sidebar-text">
+                        <h3 class="font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</h3>
+                        <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
+                        <!-- Role badge in sidebar -->
+                        @if($user?->role)
+                            <span class="mt-1 inline-block px-2 py-1 text-xs rounded-full badge-{{ $user->role }}">
+                                {{ ucfirst($user->role) }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
             </div>
-            <div class="sidebar-text">
-                <h3 class="font-medium text-gray-900">{{ $user->name }}</h3>
-                <p class="text-xs text-gray-500">{{ $user->uthm_id ?? 'UTHM Member' }}</p>
-            </div>
-        </div>
-    </div>
-</a>
+        </a>
 
         <nav class="p-4">
             <ul class="space-y-2">

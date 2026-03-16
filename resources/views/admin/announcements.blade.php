@@ -19,7 +19,6 @@
                         <option value="">All Status</option>
                         <option value="pending">Pending</option>
                         <option value="published">Published</option>
-                        <option value="rejected">Rejected</option>
                     </select>
                 </div>
                 <div>
@@ -198,9 +197,11 @@
                 announcementsList.innerHTML = '';
 
                 if (data.success && data.data.data && data.data.data.length > 0) {
-                    document.getElementById('announcementCount').textContent = data.data.data.length;
+                    // Filter out draft posts
+                    const filteredAnnouncements = data.data.data.filter(a => a.status !== 'draft');
+                    document.getElementById('announcementCount').textContent = filteredAnnouncements.length;
                     
-                    data.data.data.forEach(announcement => {
+                    filteredAnnouncements.forEach(announcement => {
                         const statusColor = announcement.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                            announcement.status === 'published' ? 'bg-green-100 text-green-800' :
                                            'bg-red-100 text-red-800';
@@ -252,10 +253,6 @@
                     announcementsList.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500"><i class="fas fa-inbox text-3xl mb-2 text-gray-300"></i><p>No announcements found</p></td></tr>';
                 }
             })
-            .catch(error => {
-                console.error('Error loading announcements:', error);
-                document.getElementById('announcementsList').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-500">Error loading announcements</td></tr>';
-            });
     }
 
     function openCreateModal() {
@@ -310,10 +307,7 @@
                 showNotification(data.message || 'Error saving announcement', 'error');
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Error saving announcement', 'error');
-        });
+        
     }
 
     function viewAnnouncement(id) {
@@ -331,10 +325,7 @@
                     document.getElementById('viewModal').classList.remove('hidden');
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('Error loading announcement details', 'error');
-            });
+            
     }
 
     function editAnnouncement(id) {
@@ -353,10 +344,7 @@
                     document.getElementById('announcementModal').classList.remove('hidden');
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('Error loading announcement', 'error');
-            });
+        
     }
 
     function deleteAnnouncement(id) {
@@ -376,10 +364,6 @@
                     showNotification(data.message || 'Error deleting announcement', 'error');
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('Error deleting announcement', 'error');
-            });
         }
     }
 
@@ -400,10 +384,6 @@
                 showNotification(data.message || 'Error approving announcement', 'error');
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Error approving announcement', 'error');
-        });
     }
 
     function rejectAnnouncement(id) {
@@ -426,10 +406,6 @@
                     showNotification(data.message || 'Error rejecting announcement', 'error');
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('Error rejecting announcement', 'error');
-            });
         }
     }
 

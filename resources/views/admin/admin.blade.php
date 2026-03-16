@@ -72,33 +72,33 @@
                 </div>
                 
                 <nav class="space-y-1">
-                    <a href="#" class="flex items-center sidebar-link active-link p-3 rounded-lg">
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center sidebar-link active-link p-3 rounded-lg">
                         <i class="fas fa-tachometer-alt mr-3 text-gray-300"></i>
                         Dashboard
                     </a>
-                    <a href="#" class="flex items-center sidebar-link p-3 rounded-lg">
+                    <a href="{{ route('admin.users.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-users mr-3 text-gray-300"></i>
                         User Management
                         <span class="ml-auto bg-red-500 text-xs px-2 py-1 rounded-full">{{ $stats['unverified_users'] ?? 0 }}</span>
                     </a>
-                    <a href="#" class="flex items-center sidebar-link p-3 rounded-lg">
+                    <a href="{{ route('admin.announcements.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-clipboard-list mr-3 text-gray-300"></i>
                         Posts & Content
                     </a>
-                    <a href="#" class="flex items-center sidebar-link p-3 rounded-lg">
+                    <a href="{{ route('admin.announcements.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-flag mr-3 text-gray-300"></i>
                         Moderation
                         <span class="ml-auto bg-yellow-500 text-xs px-2 py-1 rounded-full">12</span>
                     </a>
-                    <a href="#" class="flex items-center sidebar-link p-3 rounded-lg">
+                    <a href="{{ route('admin.analytics') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-chart-bar mr-3 text-gray-300"></i>
                         Analytics
                     </a>
-                    <a href="#" class="flex items-center sidebar-link p-3 rounded-lg">
+                    <a href="{{ route('admin.settings.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-cog mr-3 text-gray-300"></i>
                         System Settings
                     </a>
-                    <a href="#" class="flex items-center sidebar-link p-3 rounded-lg">
+                    <a href="#" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-bell mr-3 text-gray-300"></i>
                         Notifications
                     </a>
@@ -188,14 +188,20 @@
                             </button>
                         </div>
                         <nav class="space-y-1">
-                            <a href="#" class="flex items-center p-3 rounded-lg bg-gray-800">
+                            <a href="{{ route('admin.dashboard') }}" class="flex items-center p-3 rounded-lg bg-gray-800">
                                 <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
                             </a>
-                            <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
+                            <a href="{{ route('admin.users.index') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
                                 <i class="fas fa-users mr-3"></i>User Management
                             </a>
-                            <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
+                            <a href="{{ route('admin.announcements.index') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
                                 <i class="fas fa-clipboard-list mr-3"></i>Posts & Content
+                            </a>
+                            <a href="{{ route('admin.analytics') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
+                                <i class="fas fa-chart-bar mr-3"></i>Analytics
+                            </a>
+                            <a href="{{ route('admin.settings.index') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
+                                <i class="fas fa-cog mr-3"></i>Settings
                             </a>
                         </nav>
                     </div>
@@ -262,6 +268,37 @@
                             </div>
                             <div class="bg-white bg-opacity-20 p-4 rounded-full">
                                 <i class="fas fa-user-clock text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Stats Cards -->
+                    <div class="stat-card bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-xl shadow">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-red-100">Total Announcements</p>
+                                <h3 class="text-3xl font-bold mt-2" id="total-announcements">0</h3>
+                                <p class="text-red-100 text-sm mt-2">
+                                    <i class="fas fa-megaphone mr-1"></i>Across platform
+                                </p>
+                            </div>
+                            <div class="bg-white bg-opacity-20 p-4 rounded-full">
+                                <i class="fas fa-megaphone text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-6 rounded-xl shadow">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-indigo-100">Total Events</p>
+                                <h3 class="text-3xl font-bold mt-2" id="total-events">0</h3>
+                                <p class="text-indigo-100 text-sm mt-2">
+                                    <i class="fas fa-calendar mr-1"></i>All activities
+                                </p>
+                            </div>
+                            <div class="bg-white bg-opacity-20 p-4 rounded-full">
+                                <i class="fas fa-calendar text-2xl"></i>
                             </div>
                         </div>
                     </div>
@@ -506,6 +543,24 @@
             });
         }, 5000);
 
+        // Load content statistics
+        async function loadContentStats() {
+            try {
+                const response = await fetch('{{ route("admin.content-stats") }}');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('total-announcements').textContent = data.data.total_announcements || 0;
+                    document.getElementById('total-events').textContent = data.data.total_events || 0;
+                }
+            } catch (error) {
+                console.error('Error loading content stats:', error);
+            }
+        }
+
+        // Load stats on page load
+        document.addEventListener('DOMContentLoaded', loadContentStats);
+
         // Real-time data updates (simulated)
         function updateStats() {
             const stats = ['total_users', 'students', 'staff', 'unverified_users'];
@@ -523,6 +578,9 @@
 
         // Update stats every 30 seconds
         // setInterval(updateStats, 30000);
+
+        // Refresh content stats every minute
+        setInterval(loadContentStats, 60000);
     </script>
 </body>
 </html>

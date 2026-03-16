@@ -267,4 +267,216 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Get analytics data (announcements, events, engagement)
+     */
+    public function getAnalytics()
+    {
+        $announcements = \App\Models\Announcement::count();
+        $events = \App\Models\Event::count();
+        $totalAnnouncements = \App\Models\Announcement::sum('views') ?? 0;
+        
+        $stats = [
+            'total_announcements' => $announcements,
+            'total_events' => $events,
+            'total_views' => $totalAnnouncements,
+            'avg_views_per_announcement' => $announcements > 0 ? round($totalAnnouncements / $announcements, 2) : 0,
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats
+        ]);
+    }
+
+    /**
+     * Get announcements for moderation
+     */
+    public function getAnnouncements(Request $request)
+    {
+        $perPage = $request->get('per_page', 15);
+        $status = $request->get('status', '');
+        $search = $request->get('search', '');
+
+        $query = \App\Models\Announcement::query();
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        $announcements = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $announcements
+        ]);
+    }
+
+    /**
+     * Approve an announcement
+     */
+    public function approveAnnouncement($id)
+    {
+        $announcement = \App\Models\Announcement::findOrFail($id);
+        $announcement->status = 'published';
+        $announcement->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Announcement approved successfully',
+            'data' => $announcement
+        ]);
+    }
+
+    /**
+     * Reject an announcement
+     */
+    public function rejectAnnouncement(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:500'
+        ]);
+
+        $announcement = \App\Models\Announcement::findOrFail($id);
+        $announcement->status = 'rejected';
+        $announcement->rejection_reason = $validated['reason'];
+        $announcement->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Announcement rejected successfully',
+            'data' => $announcement
+        ]);
+    }
+
+    /**
+     * Get events for management
+     */
+    public function getEvents(Request $request)
+    {
+        $perPage = $request->get('per_page', 15);
+        $search = $request->get('search', '');
+
+        $query = \App\Models\Event::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $events = $query->orderBy('event_date', 'desc')->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $events
+        ]);
+    }
+
+    /**
+     * Delete an event
+     */
+    public function deleteEvent($id)
+    {
+        $event = \App\Models\Event::findOrFail($id);
+        $event->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Event deleted successfully'
+        ]);
+    }
+
+    /**
+     * Get system settings
+     */
+    public function getSettings()
+    {
+        $settings = \App\Models\Setting::all()->keyBy('key')->map(function ($item) {
+            return $item->value;
+        })->toArray();
+
+        return response()->json([
+            'success' => true,
+            'data' => $settings
+        ]);
+    }
+
+    /**
+     * Update system settings
+     */
+    public function updateSettings(Request $request)
+    {
+        $settings = $request->all();
+
+        foreach ($settings as $key => $value) {
+            \App\Models\Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value]
+            );
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Settings updated successfully'
+        ]);
+    }
+
+    /**
+     * Get content statistics
+     */
+    public function getContentStats()
+    {
+        $stats = [
+            'total_announcements' => \App\Models\Announcement::count(),
+            'published_announcements' => \App\Models\Announcement::where('status', 'published')->count(),
+            'pending_announcements' => \App\Models\Announcement::where('status', 'pending')->count(),
+            'rejected_announcements' => \App\Models\Announcement::where('status', 'rejected')->count(),
+            'total_events' => \App\Models\Event::count(),
+            'upcoming_events' => \App\Models\Event::where('event_date', '>=', now())->count(),
+            'past_events' => \App\Models\Event::where('event_date', '<', now())->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats
+        ]);
+    }
+
+    /**
+     * Generate dashboard report
+     */
+    public function generateReport(Request $request)
+    {
+        $period = $request->get('period', 'month'); // day, week, month, year
+
+        $date = match ($period) {
+            'day' => now()->subDay(),
+            'week' => now()->subWeek(),
+            'year' => now()->subYear(),
+            default => now()->subMonth(),
+        };
+
+        $report = [
+            'period' => $period,
+            'new_users' => User::where('created_at', '>=', $date)->count(),
+            'new_announcements' => \App\Models\Announcement::where('created_at', '>=', $date)->count(),
+            'new_events' => \App\Models\Event::where('created_at', '>=', $date)->count(),
+            'verified_users' => User::where('is_verified', true)->where('created_at', '>=', $date)->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $report
+        ]);
+    }
+
 }

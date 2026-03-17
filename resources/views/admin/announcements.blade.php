@@ -186,74 +186,79 @@
     });
 
     function loadAnnouncements() {
-        const search = document.getElementById('searchInput').value;
-        const status = document.getElementById('statusFilter').value;
-        const category = document.getElementById('categoryFilter').value;
+    const search = document.getElementById('searchInput').value;
+    const status = document.getElementById('statusFilter').value;
+    const category = document.getElementById('categoryFilter').value;
 
-        fetch(`/api/admin/announcements?search=${search}&status=${status}&category=${category}`)
-            .then(response => response.json())
-            .then(data => {
-                const announcementsList = document.getElementById('announcementsList');
-                announcementsList.innerHTML = '';
+    fetch(`/admin/announcements?search=${search}&status=${status}&category=${category}`)
+        .then(response => response.json())
+        .then(data => {
+            const announcementsList = document.getElementById('announcementsList');
+            announcementsList.innerHTML = '';
 
-                if (data.success && data.data.data && data.data.data.length > 0) {
-                    // Filter out draft posts
-                    const filteredAnnouncements = data.data.data.filter(a => a.status !== 'draft');
-                    document.getElementById('announcementCount').textContent = filteredAnnouncements.length;
+            if (data.success && data.data.data && data.data.data.length > 0) {
+                document.getElementById('announcementCount').textContent = data.data.data.length;
+                
+                data.data.data.forEach(announcement => {
+                    // Make sure we have the author name
+                    const authorName = announcement.author_name || 'Unknown';
                     
-                    filteredAnnouncements.forEach(announcement => {
-                        const statusColor = announcement.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                           announcement.status === 'published' ? 'bg-green-100 text-green-800' :
-                                           'bg-red-100 text-red-800';
-                        
-                        const categoryColor = announcement.category === 'general' ? 'bg-blue-100 text-blue-800' :
-                                             announcement.category === 'academic' ? 'bg-purple-100 text-purple-800' :
-                                             announcement.category === 'event' ? 'bg-green-100 text-green-800' :
-                                             'bg-red-100 text-red-800';
+                    const statusColor = announcement.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                       announcement.status === 'published' ? 'bg-green-100 text-green-800' :
+                                       'bg-red-100 text-red-800';
+                    
+                    const categoryColor = announcement.category === 'general' ? 'bg-blue-100 text-blue-800' :
+                                         announcement.category === 'academic' ? 'bg-purple-100 text-purple-800' :
+                                         announcement.category === 'event' ? 'bg-green-100 text-green-800' :
+                                         'bg-red-100 text-red-800';
 
-                        const row = `
-                            <tr class="table-row-hover">
-                                <td class="px-6 py-4">
-                                    <p class="font-medium text-gray-900 truncate">${announcement.title}</p>
-                                    <p class="text-sm text-gray-500 truncate">${announcement.content.substring(0, 50)}...</p>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${announcement.author_name || 'Unknown'}</td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${categoryColor}">${announcement.category}</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}">${announcement.status}</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${new Date(announcement.created_at).toLocaleDateString()}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                    <button onclick="viewAnnouncement(${announcement.id})" class="text-blue-600 hover:text-blue-900 font-medium" title="View">
-                                        <i class="fas fa-eye"></i>
+                    const row = `
+                        <tr class="table-row-hover">
+                            <td class="px-6 py-4">
+                                <p class="font-medium text-gray-900 truncate">${announcement.title}</p>
+                                <p class="text-sm text-gray-500 truncate">${announcement.content.substring(0, 50)}...</p>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${authorName}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${categoryColor}">${announcement.category}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}">${announcement.status}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${new Date(announcement.created_at).toLocaleDateString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                <button onclick="viewAnnouncement(${announcement.id})" class="inline-flex items-center justify-center px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md font-medium transition" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="editAnnouncement(${announcement.id})" class="inline-flex items-center justify-center px-3 py-2 text-green-600 hover:bg-green-50 rounded-md font-medium transition" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                ${announcement.status === 'pending' ? `
+                                    <button onclick="approveAnnouncement(${announcement.id})" class="inline-flex items-center justify-center px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-md font-medium transition" title="Approve">
+                                        <i class="fas fa-check"></i>
                                     </button>
-                                    <button onclick="editAnnouncement(${announcement.id})" class="text-green-600 hover:text-green-900 font-medium" title="Edit">
-                                        <i class="fas fa-edit"></i>
+                                    <button onclick="rejectAnnouncement(${announcement.id})" class="inline-flex items-center justify-center px-3 py-2 text-orange-600 hover:bg-orange-50 rounded-md font-medium transition" title="Reject">
+                                        <i class="fas fa-ban"></i>
                                     </button>
-                                    ${announcement.status === 'pending' ? `
-                                        <button onclick="approveAnnouncement(${announcement.id})" class="text-purple-600 hover:text-purple-900 font-medium" title="Approve">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button onclick="rejectAnnouncement(${announcement.id})" class="text-orange-600 hover:text-orange-900 font-medium" title="Reject">
-                                            <i class="fas fa-ban"></i>
-                                        </button>
-                                    ` : ''}
-                                    <button onclick="deleteAnnouncement(${announcement.id})" class="text-red-600 hover:text-red-900 font-medium" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                        announcementsList.innerHTML += row;
-                    });
-                } else {
-                    document.getElementById('announcementCount').textContent = 0;
-                    announcementsList.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500"><i class="fas fa-inbox text-3xl mb-2 text-gray-300"></i><p>No announcements found</p></td></tr>';
-                }
-            })
-    }
+                                ` : ''}
+                                <button onclick="deleteAnnouncement(${announcement.id})" class="inline-flex items-center justify-center px-3 py-2 text-red-600 hover:bg-red-50 rounded-md font-medium transition" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    announcementsList.innerHTML += row;
+                });
+            } else {
+                document.getElementById('announcementCount').textContent = 0;
+                announcementsList.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500"><i class="fas fa-inbox text-3xl mb-2 text-gray-300"></i><p>No announcements found</p></td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading announcements:', error);
+            showNotification('Error loading announcements', 'error');
+        });
+}
 
     function openCreateModal() {
         document.getElementById('modalTitle').textContent = 'Create Announcement';
@@ -281,7 +286,7 @@
         const isOfficial = document.getElementById('isOfficial').checked;
 
         const method = id ? 'PATCH' : 'POST';
-        const url = id ? `/api/admin/announcements/${id}` : '/api/admin/announcements';
+        const url = id ? `/admin/announcements/${id}` : '/admin/announcements';
 
         fetch(url, {
             method: method,
@@ -307,11 +312,11 @@
                 showNotification(data.message || 'Error saving announcement', 'error');
             }
         })
-        
+        .catch(() => showNotification('Error saving announcement', 'error'));
     }
 
     function viewAnnouncement(id) {
-        fetch(`/api/admin/announcements/${id}`)
+        fetch(`/admin/announcements/${id}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -323,13 +328,15 @@
                     document.getElementById('viewDate').textContent = new Date(announcement.created_at).toLocaleDateString();
                     document.getElementById('viewContent').textContent = announcement.content;
                     document.getElementById('viewModal').classList.remove('hidden');
+                } else {
+                    showNotification('Error loading announcement', 'error');
                 }
             })
-            
+            .catch(() => showNotification('Error loading announcement', 'error'));
     }
 
     function editAnnouncement(id) {
-        fetch(`/api/admin/announcements/${id}`)
+        fetch(`/admin/announcements/${id}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -342,14 +349,16 @@
                     document.getElementById('status').value = announcement.status;
                     document.getElementById('isOfficial').checked = announcement.is_official;
                     document.getElementById('announcementModal').classList.remove('hidden');
+                } else {
+                    showNotification('Error loading announcement', 'error');
                 }
             })
-        
+            .catch(() => showNotification('Error loading announcement', 'error'));
     }
 
     function deleteAnnouncement(id) {
         if (confirm('Are you sure you want to delete this announcement?')) {
-            fetch(`/api/admin/announcements/${id}`, {
+            fetch(`/admin/announcements/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
@@ -364,32 +373,36 @@
                     showNotification(data.message || 'Error deleting announcement', 'error');
                 }
             })
+            .catch(() => showNotification('Error deleting announcement', 'error'));
         }
     }
 
     function approveAnnouncement(id) {
-        fetch(`/api/admin/announcements/${id}/approve`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                loadAnnouncements();
-                showNotification('Announcement approved successfully', 'success');
-            } else {
-                showNotification(data.message || 'Error approving announcement', 'error');
-            }
-        })
+        if (confirm('Are you sure you want to approve this announcement?')) {
+            fetch(`/admin/announcements/${id}/approve`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadAnnouncements();
+                    showNotification('Announcement approved successfully', 'success');
+                } else {
+                    showNotification(data.message || 'Error approving announcement', 'error');
+                }
+            })
+            .catch(() => showNotification('Error approving announcement', 'error'));
+        }
     }
 
     function rejectAnnouncement(id) {
         const reason = prompt('Enter rejection reason:');
         if (reason !== null && reason.trim() !== '') {
-            fetch(`/api/admin/announcements/${id}/reject`, {
+            fetch(`/admin/announcements/${id}/reject`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -406,6 +419,7 @@
                     showNotification(data.message || 'Error rejecting announcement', 'error');
                 }
             })
+            .catch(() => showNotification('Error rejecting announcement', 'error'));
         }
     }
 

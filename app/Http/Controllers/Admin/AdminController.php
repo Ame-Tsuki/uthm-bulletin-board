@@ -400,9 +400,14 @@ class AdminController extends Controller
      */
     public function getSettings()
     {
-        $settings = \App\Models\Setting::all()->keyBy('key')->map(function ($item) {
-            return $item->value;
-        })->toArray();
+        $settings = [];
+        
+        // Check if settings table exists before querying
+        if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
+            $settings = \App\Models\Setting::all()->keyBy('key')->map(function ($item) {
+                return $item->value;
+            })->toArray();
+        }
 
         return response()->json([
             'success' => true,
@@ -415,6 +420,14 @@ class AdminController extends Controller
      */
     public function updateSettings(Request $request)
     {
+        // Check if settings table exists before updating
+        if (!\Illuminate\Support\Facades\Schema::hasTable('settings')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Settings table not found. Please run migrations.'
+            ], 500);
+        }
+
         $settings = $request->all();
 
         foreach ($settings as $key => $value) {

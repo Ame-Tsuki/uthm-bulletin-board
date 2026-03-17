@@ -17,8 +17,10 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                     <select id="statusFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                         <option value="">All Status</option>
-                        <option value="pending">Pending</option>
+                        <option value="pending_verification">Pending Verification</option>
                         <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                        <option value="rejected">Rejected</option>
                     </select>
                 </div>
                 <div>
@@ -27,7 +29,7 @@
                         <option value="">All Categories</option>
                         <option value="general">General</option>
                         <option value="academic">Academic</option>
-                        <option value="event">Event</option>
+                        <option value="events">Events</option>
                         <option value="important">Important</option>
                     </select>
                 </div>
@@ -190,7 +192,7 @@
     const status = document.getElementById('statusFilter').value;
     const category = document.getElementById('categoryFilter').value;
 
-    fetch(`/admin/announcements?search=${search}&status=${status}&category=${category}`)
+    fetch(`/admin/announcements/list?search=${search}&status=${status}&category=${category}`)
         .then(response => response.json())
         .then(data => {
             const announcementsList = document.getElementById('announcementsList');
@@ -203,14 +205,17 @@
                     // Make sure we have the author name
                     const authorName = announcement.author_name || 'Unknown';
                     
-                    const statusColor = announcement.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    const statusColor = announcement.status === 'pending_verification' ? 'bg-yellow-100 text-yellow-800' :
                                        announcement.status === 'published' ? 'bg-green-100 text-green-800' :
-                                       'bg-red-100 text-red-800';
+                                       announcement.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                                       announcement.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                       'bg-gray-100 text-gray-800';
                     
                     const categoryColor = announcement.category === 'general' ? 'bg-blue-100 text-blue-800' :
                                          announcement.category === 'academic' ? 'bg-purple-100 text-purple-800' :
-                                         announcement.category === 'event' ? 'bg-green-100 text-green-800' :
-                                         'bg-red-100 text-red-800';
+                                         announcement.category === 'events' ? 'bg-green-100 text-green-800' :
+                                         announcement.category === 'important' ? 'bg-red-100 text-red-800' :
+                                         'bg-gray-100 text-gray-800';
 
                     const row = `
                         <tr class="table-row-hover">
@@ -233,7 +238,7 @@
                                 <button onclick="editAnnouncement(${announcement.id})" class="inline-flex items-center justify-center px-3 py-2 text-green-600 hover:bg-green-50 rounded-md font-medium transition" title="Edit">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                ${announcement.status === 'pending' ? `
+                                ${announcement.status === 'pending_verification' ? `
                                     <button onclick="approveAnnouncement(${announcement.id})" class="inline-flex items-center justify-center px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-md font-medium transition" title="Approve">
                                         <i class="fas fa-check"></i>
                                     </button>
@@ -316,14 +321,19 @@
     }
 
     function viewAnnouncement(id) {
-        fetch(`/admin/announcements/${id}`)
+        fetch(`/admin/announcements/data/${id}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
                     const announcement = data.data;
                     document.getElementById('viewTitle').textContent = announcement.title;
                     document.getElementById('viewCategory').innerHTML = `<span class="badge bg-blue-100 text-blue-800">${announcement.category}</span>`;
-                    document.getElementById('viewStatus').innerHTML = `<span class="badge ${announcement.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${announcement.status}</span>`;
+                    const statusClass = announcement.status === 'published' ? 'bg-green-100 text-green-800' :
+                                       announcement.status === 'pending_verification' ? 'bg-yellow-100 text-yellow-800' :
+                                       announcement.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                                       announcement.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                       'bg-gray-100 text-gray-800';
+                    document.getElementById('viewStatus').innerHTML = `<span class="badge ${statusClass}">${announcement.status}</span>`;
                     document.getElementById('viewAuthor').textContent = announcement.author_name || 'Unknown';
                     document.getElementById('viewDate').textContent = new Date(announcement.created_at).toLocaleDateString();
                     document.getElementById('viewContent').textContent = announcement.content;
@@ -336,7 +346,7 @@
     }
 
     function editAnnouncement(id) {
-        fetch(`/admin/announcements/${id}`)
+        fetch(`/admin/announcements/data/${id}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {

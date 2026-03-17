@@ -189,7 +189,7 @@
             settings.enable_two_factor = document.getElementById('enableTwoFactor').checked;
         }
 
-        fetch('/api/admin/settings', {
+        fetch('/admin/settings/update', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',

@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Announcement;
+use App\Models\User;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class AnnouncementController extends Controller
 {
@@ -64,93 +67,93 @@ class AnnouncementController extends Controller
      * Store a newly created announcement in storage.
      */
     public function store(Request $request): RedirectResponse
-{
-    // Check if is_official column exists
-    $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
-    
-    // Create validation rules - ADD 'status' here
-    $validationRules = [
-        'title' => 'required|string|max:255',
-        'content' => 'required|string',
-        'category' => 'required|in:urgent,academic,events,general,important',
-        'priority' => 'nullable|in:urgent,important,normal',
-        'department' => 'nullable|string|max:100',
-        'publish_date' => 'nullable|date',
-        'expiry_date' => 'nullable|date|after_or_equal:publish_date',
-        'announcement_type' => 'required|in:official,unofficial',
-        'status' => 'required|in:draft,published', // ADD THIS LINE
-    ];
-    
-    // Validate all fields at once
-    $validated = $request->validate($validationRules);
-    
-    // Add author_id to the validated data
-    $validated['author_id'] = auth()->id();
-    
-    // Set default priority if not provided
-    if (!isset($validated['priority'])) {
-        $validated['priority'] = 'normal';
-    }
-    
-    // Determine announcement type and verification status
-    $announcementType = $validated['announcement_type'];
-    $user = auth()->user();
-    $isAdminOrStaff = in_array($user->role, ['admin', 'staff']);
-    $status = $validated['status']; // Get the status from validated data
-    
-    if ($announcementType === 'official') {
-        // Official announcement
-        $validated['is_official'] = true;
+    {
+        // Check if is_official column exists
+        $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
         
-        if ($isAdminOrStaff) {
-            // Admin/staff can publish official announcements immediately
-            if ($status === 'published') {
-                $validated['status'] = 'published';
-                $validated['needs_verification'] = false;
-                $validated['verified_at'] = now();
-                $validated['verified_by'] = $user->id;
+        // Create validation rules - ADD 'status' here
+        $validationRules = [
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'category' => 'required|in:urgent,academic,events,general,important',
+            'priority' => 'nullable|in:urgent,important,normal',
+            'department' => 'nullable|string|max:100',
+            'publish_date' => 'nullable|date',
+            'expiry_date' => 'nullable|date|after_or_equal:publish_date',
+            'announcement_type' => 'required|in:official,unofficial',
+            'status' => 'required|in:draft,published', // ADD THIS LINE
+        ];
+        
+        // Validate all fields at once
+        $validated = $request->validate($validationRules);
+        
+        // Add author_id to the validated data
+        $validated['author_id'] = auth()->id();
+        
+        // Set default priority if not provided
+        if (!isset($validated['priority'])) {
+            $validated['priority'] = 'normal';
+        }
+        
+        // Determine announcement type and verification status
+        $announcementType = $validated['announcement_type'];
+        $user = auth()->user();
+        $isAdminOrStaff = in_array($user->role, ['admin', 'staff']);
+        $status = $validated['status']; // Get the status from validated data
+        
+        if ($announcementType === 'official') {
+            // Official announcement
+            $validated['is_official'] = true;
+            
+            if ($isAdminOrStaff) {
+                // Admin/staff can publish official announcements immediately
+                if ($status === 'published') {
+                    $validated['status'] = 'published';
+                    $validated['needs_verification'] = false;
+                    $validated['verified_at'] = now();
+                    $validated['verified_by'] = $user->id;
+                } else {
+                    $validated['needs_verification'] = false;
+                }
             } else {
-                $validated['needs_verification'] = false;
+                // Regular users need verification for official announcements
+                if ($status === 'published') {
+                    $validated['status'] = 'pending_verification';
+                    $validated['needs_verification'] = true;
+                } else {
+                    $validated['needs_verification'] = true;
+                }
             }
         } else {
-            // Regular users need verification for official announcements
+            // Unofficial announcement
+            $validated['is_official'] = false;
+            $validated['needs_verification'] = false;
+            
+            // Unofficial announcements can be published immediately by anyone
             if ($status === 'published') {
-                $validated['status'] = 'pending_verification';
-                $validated['needs_verification'] = true;
-            } else {
-                $validated['needs_verification'] = true;
+                $validated['status'] = 'published';
             }
+            // If status is 'draft', keep it as 'draft'
         }
-    } else {
-        // Unofficial announcement
-        $validated['is_official'] = false;
-        $validated['needs_verification'] = false;
         
-        // Unofficial announcements can be published immediately by anyone
-        if ($status === 'published') {
-            $validated['status'] = 'published';
+        // Remove announcement_type from data as it's not a database column
+        unset($validated['announcement_type']);
+        
+        // Create the announcement
+        $announcement = Announcement::create($validated);
+        
+        // Redirect with appropriate message
+        if ($validated['status'] === 'draft') {
+            return redirect()->route('announcements.my-announcements', ['status' => 'draft'])
+                ->with('success', 'Announcement saved as draft successfully.');
+        } elseif ($announcementType === 'official' && isset($validated['needs_verification']) && $validated['needs_verification']) {
+            return redirect()->route('announcements.index')
+                ->with('success', 'Official announcement submitted for verification. It will be published after admin/staff review.');
+        } else {
+            return redirect()->route('announcements.show', $announcement)
+                ->with('success', 'Announcement published successfully.');
         }
-        // If status is 'draft', keep it as 'draft'
     }
-    
-    // Remove announcement_type from data as it's not a database column
-    unset($validated['announcement_type']);
-    
-    // Create the announcement
-    $announcement = Announcement::create($validated);
-    
-    // Redirect with appropriate message
-    if ($validated['status'] === 'draft') {
-        return redirect()->route('announcements.my-announcements', ['status' => 'draft'])
-            ->with('success', 'Announcement saved as draft successfully.');
-    } elseif ($announcementType === 'official' && isset($validated['needs_verification']) && $validated['needs_verification']) {
-        return redirect()->route('announcements.index')
-            ->with('success', 'Official announcement submitted for verification. It will be published after admin/staff review.');
-    } else {
-        return redirect()->route('announcements.show', $announcement)
-            ->with('success', 'Announcement published successfully.');
-    }
-}
 
     /**
      * Display a single announcement.
@@ -370,7 +373,7 @@ class AnnouncementController extends Controller
     /**
      * NEW: Reject an official announcement (admin/staff only)
      */
-    public function reject(Announcement $announcement, Request $request): RedirectResponse
+    public function reject(Request $request, Announcement $announcement): RedirectResponse
     {
         $user = auth()->user();
         
@@ -416,10 +419,215 @@ class AnnouncementController extends Controller
         return view('announcements.verification-queue', compact('announcements', 'user'));
     }
 
+    // ============================================
+    // ADMIN METHODS FOR API/JSON RESPONSES
+    // ============================================
+
     /**
-     * Additional methods from original controller (preserved)
+     * Admin: Get all announcements with filters (JSON response)
      */
-    
+    public function adminIndex(Request $request)
+    {
+        $query = Announcement::with('author')
+            ->where('status', '!=', 'draft');
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('content', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        $announcements = $query->latest()->paginate(15);
+
+        // Transform the data to include author information
+        $announcements->getCollection()->transform(function ($announcement) {
+            return [
+                'id' => $announcement->id,
+                'title' => $announcement->title,
+                'content' => $announcement->content,
+                'category' => $announcement->category,
+                'status' => $announcement->status,
+                'is_official' => $announcement->is_official,
+                'author_id' => $announcement->author_id,
+                'author_name' => $announcement->author ? $announcement->author->name : 'Unknown',
+                'author_role' => $announcement->author ? $announcement->author->role : null,
+                'author_email' => $announcement->author ? $announcement->author->email : null,
+                'created_at' => $announcement->created_at,
+                'updated_at' => $announcement->updated_at
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $announcements
+        ]);
+    }
+
+    /**
+     * Admin: Create announcement (JSON response)
+     */
+    public function adminStore(Request $request)
+    {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'category' => 'required|in:general,academic,event,important',
+            'status' => 'required|in:pending,published,rejected',
+            'is_official' => 'boolean'
+        ]);
+
+        $validated['author_id'] = Auth::id();
+        $validated['is_official'] = $request->boolean('is_official');
+
+        $announcement = Announcement::create($validated);
+        
+        // Load the author relationship
+        $announcement->load('author');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $announcement->id,
+                'title' => $announcement->title,
+                'content' => $announcement->content,
+                'category' => $announcement->category,
+                'status' => $announcement->status,
+                'is_official' => $announcement->is_official,
+                'author_name' => $announcement->author ? $announcement->author->name : 'Unknown',
+                'created_at' => $announcement->created_at
+            ],
+            'message' => 'Announcement created successfully'
+        ]);
+    }
+
+    /**
+     * Admin: Get single announcement (JSON response)
+     */
+    public function adminShow($id)
+    {
+        $announcement = Announcement::with('author')->findOrFail($id);
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $announcement->id,
+                'title' => $announcement->title,
+                'content' => $announcement->content,
+                'category' => $announcement->category,
+                'status' => $announcement->status,
+                'is_official' => $announcement->is_official,
+                'author_id' => $announcement->author_id,
+                'author_name' => $announcement->author ? $announcement->author->name : 'Unknown',
+                'author_role' => $announcement->author ? $announcement->author->role : null,
+                'created_at' => $announcement->created_at,
+                'updated_at' => $announcement->updated_at
+            ]
+        ]);
+    }
+
+    /**
+     * Admin: Update announcement (JSON response)
+     */
+    public function adminUpdate(Request $request, $id)
+    {
+        $announcement = Announcement::findOrFail($id);
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'category' => 'required|in:general,academic,event,important',
+            'status' => 'required|in:pending,published,rejected',
+            'is_official' => 'boolean'
+        ]);
+
+        $validated['is_official'] = $request->boolean('is_official');
+
+        $announcement->update($validated);
+        
+        // Load the author relationship
+        $announcement->load('author');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $announcement->id,
+                'title' => $announcement->title,
+                'content' => $announcement->content,
+                'category' => $announcement->category,
+                'status' => $announcement->status,
+                'is_official' => $announcement->is_official,
+                'author_name' => $announcement->author ? $announcement->author->name : 'Unknown',
+                'created_at' => $announcement->created_at
+            ],
+            'message' => 'Announcement updated successfully'
+        ]);
+    }
+
+    /**
+     * Admin: Delete announcement (JSON response)
+     */
+    public function adminDestroy($id)
+    {
+        $announcement = Announcement::findOrFail($id);
+        $announcement->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Announcement deleted successfully'
+        ]);
+    }
+
+    /**
+     * Admin: Approve announcement (JSON response)
+     */
+    public function adminApprove($id)
+    {
+        $announcement = Announcement::findOrFail($id);
+        $announcement->update([
+            'status' => 'published',
+            'is_official' => true
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Announcement approved successfully'
+        ]);
+    }
+
+    /**
+     * Admin: Reject announcement (JSON response)
+     */
+    public function adminReject(Request $request, $id)
+    {
+        $request->validate([
+            'reason' => 'required|string'
+        ]);
+
+        $announcement = Announcement::findOrFail($id);
+        $announcement->update([
+            'status' => 'rejected'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Announcement rejected successfully'
+        ]);
+    }
+
+    // ============================================
+    // EXISTING METHODS (preserved from original)
+    // ============================================
+
     /**
      * Archive the specified announcement.
      */

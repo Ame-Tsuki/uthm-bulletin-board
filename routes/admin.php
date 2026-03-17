@@ -45,22 +45,16 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     
     // Announcements Management
     Route::prefix('announcements')->name('announcements.')->group(function () {
-        // Data endpoints for AJAX
+        // Data endpoints for AJAX (more specific routes first)
         Route::get('/list', [AdminController::class, 'getAnnouncements'])->name('list');
         Route::get('/data/{id}', [AdminController::class, 'getAnnouncement'])->name('show');
-        
-        // Create new announcement
-        Route::post('/create', [AdminController::class, 'storeAnnouncement'])->name('store');
-        
-        // Update announcement
-        Route::patch('/update/{id}', [AdminController::class, 'updateAnnouncement'])->name('update');
-        
-        // Delete announcement
-        Route::delete('/{id}', [AdminController::class, 'deleteAnnouncement'])->name('destroy');
-        
-        // Approve/reject
         Route::patch('/{id}/approve', [AdminController::class, 'approveAnnouncement'])->name('approve');
         Route::patch('/{id}/reject', [AdminController::class, 'rejectAnnouncement'])->name('reject');
+        
+        // RESTful endpoints (generic routes last)
+        Route::post('/', [AdminController::class, 'storeAnnouncement'])->name('store');
+        Route::patch('/{id}', [AdminController::class, 'updateAnnouncement'])->name('update');
+        Route::delete('/{id}', [AdminController::class, 'deleteAnnouncement'])->name('destroy');
     });
     
     // Events Management

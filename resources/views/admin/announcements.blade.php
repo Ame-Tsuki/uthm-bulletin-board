@@ -103,7 +103,8 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Status *</label>
                     <select id="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" required>
                         <option value="">Select Status</option>
-                        <option value="pending">Pending</option>
+                        <option value="draft">Draft</option>
+                        <option value="pending_verification">Pending Verification</option>
                         <option value="published">Published</option>
                         <option value="rejected">Rejected</option>
                     </select>
@@ -306,7 +307,26 @@
                 is_official: isOfficial
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            const contentType = response.headers.get('content-type');
+            
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('Response status:', response.status);
+                    console.error('Response text:', text);
+                    throw new Error(`HTTP ${response.status}: ${text.substring(0, 100)}`);
+                });
+            }
+            
+            if (contentType && contentType.includes('application/json')) {
+                return response.json();
+            } else {
+                return response.text().then(text => {
+                    console.error('Non-JSON response:', text);
+                    throw new Error('Server returned non-JSON response');
+                });
+            }
+        })
         .then(data => {
             if (data.success) {
                 closeModal();
@@ -316,7 +336,11 @@
                 showNotification(data.message || 'Error saving announcement', 'error');
             }
         })
-        .catch(() => showNotification('Error saving announcement', 'error'));
+        .catch(error => {
+            let errorMsg = error.message || 'Error saving announcement';
+            console.error('Form submission error:', error);
+            showNotification(errorMsg, 'error');
+        });
     }
 
     function viewAnnouncement(id) {
@@ -333,7 +357,7 @@
                                        announcement.status === 'rejected' ? 'bg-red-100 text-red-800' :
                                        'bg-gray-100 text-gray-800';
                     document.getElementById('viewStatus').innerHTML = `<span class="badge ${statusClass}">${announcement.status}</span>`;
-                    document.getElementById('viewAuthor').textContent = announcement.author_name || 'Unknown';
+                    document.getElementById('viewAuthor').textContent = (announcement.author && announcement.author.name) || 'Unknown';
                     document.getElementById('viewDate').textContent = new Date(announcement.created_at).toLocaleDateString();
                     document.getElementById('viewContent').textContent = announcement.content;
                     document.getElementById('viewModal').classList.remove('hidden');

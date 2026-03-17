@@ -360,6 +360,123 @@ class AdminController extends Controller
     }
 
     /**
+     * Get a single announcement
+     */
+    public function getAnnouncement($id)
+    {
+        $announcement = \App\Models\Announcement::with('author')->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $announcement
+        ]);
+    }
+
+    /**
+     * Store a new announcement
+     */
+    public function storeAnnouncement(Request $request)
+    {
+        try {
+            \Log::info('Store announcement request:', $request->all());
+            
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'content' => 'required|string',
+                'category' => 'required|string',
+                'status' => 'required|string|in:draft,pending_verification,published,rejected',
+                'is_official' => 'nullable|boolean'
+            ]);
+
+            $announcement = \App\Models\Announcement::create([
+                'title' => $validated['title'],
+                'content' => $validated['content'],
+                'category' => $validated['category'],
+                'status' => $validated['status'],
+                'is_official' => $validated['is_official'] ?? false,
+                'author_id' => auth()->id() ?? 1
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Announcement created successfully',
+                'data' => $announcement
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Store announcement error:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update an announcement
+     */
+    public function updateAnnouncement(Request $request, $id)
+    {
+        try {
+            \Log::info('Update announcement request:', ['id' => $id, 'data' => $request->all()]);
+            
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'content' => 'required|string',
+                'category' => 'required|string',
+                'status' => 'required|string|in:draft,pending_verification,published,rejected',
+                'is_official' => 'nullable|boolean'
+            ]);
+
+            $announcement = \App\Models\Announcement::findOrFail($id);
+            $announcement->update([
+                'title' => $validated['title'],
+                'content' => $validated['content'],
+                'category' => $validated['category'],
+                'status' => $validated['status'],
+                'is_official' => $validated['is_official'] ?? false
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Announcement updated successfully',
+                'data' => $announcement
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Update announcement error:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete an announcement
+     */
+    public function deleteAnnouncement($id)
+    {
+        $announcement = \App\Models\Announcement::findOrFail($id);
+        $announcement->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Announcement deleted successfully'
+        ]);
+    }
+
+    /**
      * Get events for management
      */
     public function getEvents(Request $request)

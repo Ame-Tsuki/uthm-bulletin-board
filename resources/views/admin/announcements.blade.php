@@ -19,7 +19,6 @@
                         <option value="">All Status</option>
                         <option value="pending_verification">Pending Verification</option>
                         <option value="published">Published</option>
-                        <option value="draft">Draft</option>
                         <option value="rejected">Rejected</option>
                     </select>
                 </div>
@@ -203,7 +202,7 @@
                 
                 data.data.data.forEach(announcement => {
                     // Make sure we have the author name
-                    const authorName = announcement.author_name || 'Unknown';
+                    const authorName = (announcement.author && announcement.author.name) || 'Unknown';
                     
                     const statusColor = announcement.status === 'pending_verification' ? 'bg-yellow-100 text-yellow-800' :
                                        announcement.status === 'published' ? 'bg-green-100 text-green-800' :

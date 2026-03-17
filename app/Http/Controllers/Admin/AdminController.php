@@ -298,7 +298,10 @@ class AdminController extends Controller
         $status = $request->get('status', '');
         $search = $request->get('search', '');
 
-        $query = \App\Models\Announcement::query();
+        $query = \App\Models\Announcement::query()->with('author');
+
+        // Exclude draft announcements for admin view (drafts are personal)
+        $query->whereIn('status', ['pending_verification', 'published', 'rejected']);
 
         if ($status) {
             $query->where('status', $status);

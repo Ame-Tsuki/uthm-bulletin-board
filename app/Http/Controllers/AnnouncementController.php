@@ -12,6 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class AnnouncementController extends Controller
 {
@@ -75,6 +76,7 @@ class AnnouncementController extends Controller
         $validationRules = [
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'category' => 'required|in:urgent,academic,events,general,important',
             'priority' => 'nullable|in:urgent,important,normal',
             'department' => 'nullable|string|max:100',
@@ -138,6 +140,18 @@ class AnnouncementController extends Controller
         
         // Remove announcement_type from data as it's not a database column
         unset($validated['announcement_type']);
+        
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            try {
+                $image = $request->file('image');
+                $imagePath = $image->store('announcements', 'public');
+                $validated['image'] = $imagePath;
+            } catch (\Exception $e) {
+                Log::error('Image upload failed: ' . $e->getMessage());
+                // Continue without image if upload fails
+            }
+        }
         
         // Create the announcement
         $announcement = Announcement::create($validated);
@@ -210,10 +224,11 @@ class AnnouncementController extends Controller
             abort(403, 'Unauthorized to update this announcement.');
         }
         
-        // Create validation rules
+        // Create validation rules - make image validation conditional
         $validationRules = [
             'title' => 'required|string|max:255',
             'content' => 'required|string',
+            'image' => $request->hasFile('image') ? 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120' : 'nullable',
             'category' => 'required|in:urgent,academic,events,general,important',
             'priority' => 'nullable|in:urgent,important,normal',
             'department' => 'nullable|string|max:100',
@@ -221,6 +236,7 @@ class AnnouncementController extends Controller
             'expiry_date' => 'nullable|date|after_or_equal:publish_date',
             'announcement_type' => 'required|in:official,unofficial',
             'status' => 'required|in:draft,published,pending_verification',
+            'remove_image' => 'nullable|boolean',
         ];
         
         // Validate all fields at once
@@ -277,6 +293,34 @@ class AnnouncementController extends Controller
         
         // Remove announcement_type from data as it's not a database column
         unset($validated['announcement_type']);
+        
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            try {
+                // Delete old image if it exists
+                if ($announcement->image && Storage::disk('public')->exists($announcement->image)) {
+                    Storage::disk('public')->delete($announcement->image);
+                }
+                
+                $image = $request->file('image');
+                $imagePath = $image->store('announcements', 'public');
+                $validated['image'] = $imagePath;
+            } catch (\Exception $e) {
+                Log::error('Image upload failed: ' . $e->getMessage());
+                // Continue without image if upload fails
+            }
+        }
+        
+        // Handle image removal
+        if ($request->has('remove_image') && $request->get('remove_image') == '1') {
+            if ($announcement->image && Storage::disk('public')->exists($announcement->image)) {
+                Storage::disk('public')->delete($announcement->image);
+            }
+            $validated['image'] = null;
+        }
+        
+        // Remove remove_image from validated data as it's not a database column
+        unset($validated['remove_image']);
         
         // Update the announcement
         $announcement->update($validated);

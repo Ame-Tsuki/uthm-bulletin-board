@@ -361,21 +361,63 @@
                         @enderror
                     </div>
 
-                    <!-- Attachment Field (Optional) -->
+                    <!-- Image Field (Optional) -->
                     <div class="mb-6">
-                        <label for="attachment" class="form-label">
-                            Attachment (Optional)
+                        <label for="image" class="form-label">
+                            Featured Image (Optional)
                         </label>
+                        
+                        <!-- Hidden File Input -->
                         <input type="file" 
-                               id="attachment" 
-                               name="attachment"
-                               class="form-input"
-                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                               id="image" 
+                               name="image"
+                               class="hidden"
+                               accept=".jpg,.jpeg,.png,.gif,.webp">
+                        
+                        <!-- Image Preview -->
+                        <div id="image-preview-container" class="hidden mb-4">
+                            <div class="relative rounded-lg overflow-hidden shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <img id="image-preview" src="" alt="Image preview" class="w-full h-auto max-h-96 object-cover">
+                                <div class="absolute top-3 right-3 flex gap-2">
+                                    <button type="button" 
+                                            onclick="removeImage()" 
+                                            class="bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition-colors shadow-lg">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                                    <p class="text-white text-sm font-medium">
+                                        <i class="fas fa-image mr-2"></i>
+                                        <span id="image-filename">Image selected</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Placeholder (when no image selected) -->
+                        <div id="image-placeholder-container" 
+                             onclick="document.getElementById('image').click()" 
+                             class="mb-4 rounded-lg overflow-hidden shadow-lg cursor-pointer transition-transform hover:scale-105" 
+                             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="w-full h-64 md:h-80 flex flex-col items-center justify-center text-center px-6 py-12">
+                                <div class="bg-white/20 rounded-full p-6 mb-4 backdrop-blur-sm">
+                                    <i class="fas fa-image text-white text-5xl"></i>
+                                </div>
+                                <h3 class="text-white text-xl font-bold mb-2">Add Featured Image</h3>
+                                <p class="text-white/90 text-sm mb-4">Upload an image that represents your announcement</p>
+                                <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                                    <p class="text-white text-xs font-medium">Click to upload or drag & drop</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Support Text -->
                         <p class="mt-2 text-sm text-gray-500">
                             <i class="fas fa-info-circle mr-1"></i>
-                            Supported files: PDF, DOC, DOCX, JPG, JPEG, PNG (Max: 5MB)
+                            Supported formats: JPG, JPEG, PNG, GIF, WEBP (Max: 5MB)
                         </p>
-                        @error('attachment')
+                        
+                        @error('image')
                             <p class="form-error">{{ $message }}</p>
                         @enderror
                     </div>
@@ -587,20 +629,81 @@
                 }
             });
             
-            // File size validation
-            const fileInput = document.getElementById('attachment');
-            if (fileInput) {
-                fileInput.addEventListener('change', function() {
-                    const file = this.files[0];
-                    if (file) {
-                        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-                        if (file.size > maxSize) {
-                            alert('File size exceeds 5MB limit. Please choose a smaller file.');
-                            this.value = ''; // Clear the file input
-                        }
+            // Image upload handler
+            const imageInput = document.getElementById('image');
+            const imagePlaceholder = document.getElementById('image-placeholder-container');
+            
+            if (imageInput) {
+                imageInput.addEventListener('change', function() {
+                    handleImageUpload(this.files[0]);
+                });
+                
+                // Drag and drop support
+                imagePlaceholder.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.classList.add('opacity-75');
+                });
+                
+                imagePlaceholder.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.classList.remove('opacity-75');
+                });
+                
+                imagePlaceholder.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.classList.remove('opacity-75');
+                    
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        imageInput.files = files;
+                        handleImageUpload(files[0]);
                     }
                 });
             }
+            
+            function handleImageUpload(file) {
+                if (!file) return;
+                
+                // File size validation
+                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                if (file.size > maxSize) {
+                    alert('Image size exceeds 5MB limit. Please choose a smaller image.');
+                    document.getElementById('image').value = '';
+                    document.getElementById('image-preview-container').classList.add('hidden');
+                    document.getElementById('image-placeholder-container').classList.remove('hidden');
+                    return;
+                }
+                
+                // File type validation
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Invalid image format. Please use JPG, PNG, GIF, or WEBP.');
+                    document.getElementById('image').value = '';
+                    document.getElementById('image-preview-container').classList.add('hidden');
+                    document.getElementById('image-placeholder-container').classList.remove('hidden');
+                    return;
+                }
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('image-preview').src = e.target.result;
+                    document.getElementById('image-filename').textContent = file.name;
+                    document.getElementById('image-preview-container').classList.remove('hidden');
+                    document.getElementById('image-placeholder-container').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            window.removeImage = function() {
+                document.getElementById('image').value = '';
+                document.getElementById('image-preview-container').classList.add('hidden');
+                document.getElementById('image-placeholder-container').classList.remove('hidden');
+                document.getElementById('image-preview').src = '';
+            };
             
             function initializeTypeSelection() {
                 // Set initial selection

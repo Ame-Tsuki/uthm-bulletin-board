@@ -133,6 +133,21 @@
                     </div>
                 </div>
 
+                <!-- Image Section -->
+                <div class="bg-gray-50 p-8 border-b border-gray-200">
+                    <div class="w-full max-w-4xl mx-auto bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center shadow-lg">
+                        @if(isset($announcement->image) && $announcement->image)
+                            <img src="{{ asset('storage/' . $announcement->image) }}" alt="{{ $announcement->title }}" class="w-full h-auto object-contain">
+                        @else
+                            <div class="flex flex-col items-center justify-center text-gray-400 w-full py-32 bg-gradient-to-br from-gray-100 to-gray-200">
+                                <i class="fas fa-image text-8xl mb-6 opacity-40"></i>
+                                <p class="text-2xl font-bold mb-2 opacity-50">No image available</p>
+                                <p class="text-base opacity-40">Image placeholder</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
                 <!-- Announcement Content -->
                 <div class="p-8">
                     <!-- Summary Box -->

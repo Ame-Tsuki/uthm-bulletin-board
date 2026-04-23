@@ -52,15 +52,17 @@ Route::middleware('auth')->group(function () {
 });
 
 // Authenticated Routes (Require Login)
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
 
-// Event Routes
-    Route::get('/api/events', [EventController::class, 'index']);
-    Route::post('/api/events', [EventController::class, 'store']);
-    Route::get('/api/events/upcoming', [EventController::class, 'getUpcomingEvents']);
-    Route::get('/api/events/statistics', [EventController::class, 'getStatistics']);
-    Route::delete('/api/events/{event}', [EventController::class, 'destroy']);
-
+    // API Routes for Events (for AJAX/Fetch calls)
+    Route::prefix('api')->group(function () {
+        Route::get('/events', [EventController::class, 'index']);
+        Route::post('/events', [EventController::class, 'store']);
+        Route::put('/events/{event}', [EventController::class, 'update']);
+        Route::delete('/events/{event}', [EventController::class, 'destroy']);
+        Route::get('/events/upcoming', [EventController::class, 'getUpcomingEvents']);
+        Route::get('/events/statistics', [EventController::class, 'getStatistics']);
+    });
 
     // Logout
     Route::post('/logout', [CustomLoginController::class, 'logout'])->name('logout');
@@ -91,7 +93,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     // Profile Routes
-    Route::get('/profile', function() {
+    Route::get('/profile', function () {
         $user = auth()->user();
         return view('profile', compact('user'));
     })->name('profile');
@@ -100,7 +102,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/settings', function() {
+    Route::get('/settings', function () {
         $user = auth()->user();
         return view('settings', compact('user'));
     })->name('settings');
@@ -175,52 +177,39 @@ Route::middleware(['auth'])->group(function () {
         }
     })->name('calendar');
 
-    //Event Controller Routes
-
-    Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/events', [EventController::class, 'index']);
-    Route::post('/events', [EventController::class, 'store']);
-    Route::put('/events/{event}', [EventController::class, 'update']);
-    Route::delete('/events/{event}', [EventController::class, 'destroy']);
-    Route::get('/events/upcoming', [EventController::class, 'getUpcomingEvents']);
-    Route::get('/events/statistics', [EventController::class, 'getStatistics']);
-});
-
     // ============================================
-    // ANNOUNCEMENT ROUTES - UPDATED WITH NEW VERIFICATION SYSTEM
+    // ANNOUNCEMENT ROUTES
     // ============================================
     
-    Route::middleware(['auth', 'verified'])->group(function () {
-        // All announcement GET routes
-        Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
-        Route::get('/announcements/published', [AnnouncementController::class, 'published'])->name('announcements.published');
-        Route::get('/announcements/drafts', [AnnouncementController::class, 'drafts'])->name('announcements.drafts');
-        Route::get('/announcements/search', [AnnouncementController::class, 'search'])->name('announcements.search');
-        Route::get('/announcements/category/{category}', [AnnouncementController::class, 'filterByCategory'])->name('announcements.category');
-        Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
-        Route::get('/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit');
-        Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
-        
-        // My Announcements
-        Route::get('/my-announcements', [AnnouncementController::class, 'myAnnouncements'])
-            ->name('announcements.my-announcements');
-        
-        // Announcement POST/PUT/DELETE routes
-        Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
-        Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
-        Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
-        
-        // Announcement action routes
-        Route::post('/announcements/{announcement}/archive', [AnnouncementController::class, 'archive'])->name('announcements.archive');
-        Route::post('/announcements/{announcement}/publish', [AnnouncementController::class, 'publish'])->name('announcements.publish');
-        Route::post('/announcements/{announcement}/toggle-official', [AnnouncementController::class, 'toggleOfficialStatus'])->name('announcements.toggle-official');
-    });
+    // All announcement GET routes
+    Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
+    Route::get('/announcements/published', [AnnouncementController::class, 'published'])->name('announcements.published');
+    Route::get('/announcements/drafts', [AnnouncementController::class, 'drafts'])->name('announcements.drafts');
+    Route::get('/announcements/search', [AnnouncementController::class, 'search'])->name('announcements.search');
+    Route::get('/announcements/category/{category}', [AnnouncementController::class, 'filterByCategory'])->name('announcements.category');
+    Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
+    Route::get('/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit');
+    Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
+    
+    // My Announcements
+    Route::get('/my-announcements', [AnnouncementController::class, 'myAnnouncements'])
+        ->name('announcements.my-announcements');
+    
+    // Announcement POST/PUT/DELETE routes
+    Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
+    Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
+    Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+    
+    // Announcement action routes
+    Route::post('/announcements/{announcement}/archive', [AnnouncementController::class, 'archive'])->name('announcements.archive');
+    Route::post('/announcements/{announcement}/publish', [AnnouncementController::class, 'publish'])->name('announcements.publish');
+    Route::post('/announcements/{announcement}/toggle-official', [AnnouncementController::class, 'toggleOfficialStatus'])->name('announcements.toggle-official');
     
     // ============================================
     // VERIFICATION ROUTES (ADMIN/STAFF ONLY)
     // ============================================
     
-    Route::middleware(['auth', 'verified', 'role:admin,staff'])->group(function () {
+    Route::middleware('role:admin,staff')->group(function () {
         // Verification queue
         Route::get('/announcements/verification-queue', [AnnouncementController::class, 'verificationQueue'])
             ->name('announcements.verification-queue');
@@ -235,10 +224,10 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // ============================================
-    // ADMIN ROUTES - SEPARATE GROUP WITH PREFIX
+    // ADMIN ROUTES
     // ============================================
     
-    Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         // Admin dashboard routes
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/recent-activity', [AdminController::class, 'getRecentActivity'])->name('recent-activity');
@@ -255,37 +244,31 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
-    // Test Route
-    Route::get('/test-route/{id}', function($id) {
-        return "Test route works! ID: " . $id;
+    // Debug routes (remove in production)
+    Route::get('/debug/events', function () {
+        $events = App\Models\Event::where('user_id', auth()->id())->get();
+        return response()->json([
+            'user' => auth()->user(),
+            'events_count' => $events->count(),
+            'events' => $events
+        ]);
     });
 
+    Route::get('/debug/session', function () {
+        return response()->json([
+            'session' => session()->all(),
+            'auth' => auth()->check(),
+            'user' => auth()->user()
+        ]);
+    });
 
-    // Debug routes
-Route::get('/debug/events', function() {
-    $events = App\Models\Event::where('user_id', auth()->id())->get();
-    return response()->json([
-        'user' => auth()->user(),
-        'events_count' => $events->count(),
-        'events' => $events
-    ]);
-});
-
-Route::get('/debug/session', function() {
-    return response()->json([
-        'session' => session()->all(),
-        'auth' => auth()->check(),
-        'user' => auth()->user()
-    ]);
-});
-
-Route::get('/test-csrf', function() {
-    return response()->json([
-        'csrf_token' => csrf_token(),
-        'session_token' => session()->token(),
-        'has_csrf_field' => isset($_COOKIE['XSRF-TOKEN'])
-    ]);
-});
+    Route::get('/test-csrf', function () {
+        return response()->json([
+            'csrf_token' => csrf_token(),
+            'session_token' => session()->token(),
+            'has_csrf_field' => isset($_COOKIE['XSRF-TOKEN'])
+        ]);
+    });
 
     // Health Check Route
     Route::get('/up', function () {

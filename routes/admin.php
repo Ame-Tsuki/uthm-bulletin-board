@@ -22,6 +22,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::get('/users', fn() => view('admin.users'))->name('users.index');
     Route::get('/announcements', fn() => view('admin.announcements'))->name('announcements.index');
     Route::get('/events', fn() => view('admin.events'))->name('events.index');
+    Route::get('/calendar', function () {
+        $user = auth()->user();
+        return view('admin.calendar', compact('user'));
+    })->name('calendar');
     Route::get('/analytics', fn() => view('admin.analytics'))->name('analytics');
     Route::view('/settings', 'admin.settings')->name('settings.index');
     

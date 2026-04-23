@@ -53,15 +53,21 @@ Route::middleware('auth')->group(function () {
 
 // Authenticated Routes (Require Login)
 Route::middleware(['auth', 'verified'])->group(function () {
-
-    // API Routes for Events (for AJAX/Fetch calls)
+ // API Routes for Events
     Route::prefix('api')->group(function () {
+        // Regular event endpoints (personal + public)
         Route::get('/events', [EventController::class, 'index']);
         Route::post('/events', [EventController::class, 'store']);
         Route::put('/events/{event}', [EventController::class, 'update']);
         Route::delete('/events/{event}', [EventController::class, 'destroy']);
         Route::get('/events/upcoming', [EventController::class, 'getUpcomingEvents']);
         Route::get('/events/statistics', [EventController::class, 'getStatistics']);
+        
+        // Admin-only endpoints for managing public announcements
+        Route::middleware('role:admin')->group(function () {
+            Route::post('/events/public', [EventController::class, 'createPublicAnnouncement']);
+            Route::get('/events/public/all', [EventController::class, 'getPublicEvents']);
+        });
     });
 
     // Logout

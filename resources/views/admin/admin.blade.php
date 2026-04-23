@@ -90,6 +90,10 @@
                         Moderation
                         <span class="ml-auto bg-yellow-500 text-xs px-2 py-1 rounded-full">12</span>
                     </a>
+                    <a href="{{ route('admin.calendar') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-300"></i>
+                        Calendar
+                    </a>
                     <a href="{{ route('admin.analytics') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-chart-bar mr-3 text-gray-300"></i>
                         Analytics
@@ -196,6 +200,9 @@
                             </a>
                             <a href="{{ route('admin.announcements.index') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
                                 <i class="fas fa-clipboard-list mr-3"></i>Posts & Content
+                            </a>
+                            <a href="{{ route('admin.calendar') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
+                                <i class="fas fa-calendar-alt mr-3"></i>Calendar
                             </a>
                             <a href="{{ route('admin.analytics') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
                                 <i class="fas fa-chart-bar mr-3"></i>Analytics

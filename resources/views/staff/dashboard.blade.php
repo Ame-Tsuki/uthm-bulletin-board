@@ -73,6 +73,24 @@
             width: auto;
             margin-left: 0.75rem !important;
         }
+
+        /* Role badges */
+        .badge-admin {
+            background-color: #dc2626;
+            color: white;
+        }
+        .badge-staff {
+            background-color: #2563eb;
+            color: white;
+        }
+        .badge-staff {
+            background-color: #059669;
+            color: white;
+        }
+        .badge-guest {
+            background-color: #6b7280;
+            color: white;
+        }
         
         /* Mobile styles */
         @media (max-width: 768px) {
@@ -162,22 +180,31 @@
             </div>
         </div>
 
-                           <!-- User Profile - Now Clickable -->
-<a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
-    <div class="p-4 border-b border-gray-200">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
-                <span class="font-bold uthm-blue">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
-            </div>
-            <div class="sidebar-text">
-                <h3 class="font-medium text-gray-900">{{ $user->name }}</h3>
-                <p class="text-xs text-gray-500">{{ $user->uthm_id ?? 'UTHM Member' }}</p>
-            </div>
-        </div>
-    </div>
-</a>
+       
 
         <!-- Dashboard Navigation - EXACT SAME ORDER AS MAIN DASHBOARD -->
+
+       <!-- User Profile - Now Clickable -->
+        <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
+                        <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
+                    </div>
+                    <div class="sidebar-text">
+                        <h3 class="font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</h3>
+                        <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
+                        <!-- Role badge in sidebar -->
+                        @if($user?->role)
+                            <span class="mt-1 inline-block px-2 py-1 text-xs rounded-full badge-{{ $user->role }}">
+                                {{ ucfirst($user->role) }}
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </a>
+
         <nav class="p-4">
             <ul class="space-y-2">
                 <!-- Dashboard -->
@@ -215,7 +242,7 @@
 
                 <!-- Calendar -->
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('calendar') }}"
                        class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
                         <div class="shrink-0">
                             <i class="fas fa-calendar-alt w-5 h-5"></i>
@@ -237,10 +264,11 @@
 
                 
 
+               
 
                 <!-- Settings -->
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('settings') }}" 
                        class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
                         <div class="shrink-0">
                             <i class="fas fa-cog w-5 h-5"></i>
@@ -249,19 +277,21 @@
                     </a>
                 </li>
 
-                <!-- Logout - MOVED HERE TO MATCH MAIN DASHBOARD -->
-                <li class="pt-4 border-t border-gray-200">
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" 
-                                class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
-                            <div class="shrink-0">
-                                <i class="fas fa-sign-out-alt w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Logout</span>
-                        </button>
-                    </form>
-                </li>
+                <
+                 <!-- Logout -->
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" 
+                        class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
+                    <div class="shrink-0">
+                        <i class="fas fa-sign-out-alt w-5 h-5"></i>
+                    </div>
+                    <span class="sidebar-text ml-3">Logout</span>
+                </button>
+            </form>
+        </div>
+    </div>
             </ul>
         </nav>
 
@@ -276,7 +306,7 @@
                 <div class="flex justify-between h-16">
                     <!-- Breadcrumb -->
                     <div class="flex items-center">
-                        <h1 class="text-xl font-bold text-gray-900">Student Dashboard</h1>
+                        <h1 class="text-xl font-bold text-gray-900">Staff Dashboard</h1>
                         <span class="mx-2 text-gray-400">/</span>
                         <span class="text-gray-600">Overview</span>
                     </div>
@@ -302,22 +332,25 @@
                                 <i class="fas fa-chevron-down text-gray-500"></i>
                             </button>
                             
-                            <!-- Dropdown Menu -->
                             <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden">
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-user mr-2"></i> My Profile
-                                </a>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-cog mr-2"></i> Settings
-                                </a>
-                                <div class="border-t border-gray-200 my-2"></div>
-                                <form action="{{ route('logout') }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                                    </button>
-                                </form>
-                            </div>
+    
+    <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <i class="fas fa-user mr-2"></i> My Profile
+    </a>
+    
+    <a href="{{ route('settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+        <i class="fas fa-cog mr-2"></i> Settings
+    </a>
+    
+    <div class="border-t border-gray-200 my-2"></div>
+    
+    <form action="{{ route('logout') }}" method="POST">
+        @csrf
+        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+        </button>
+    </form>
+</div>
                         </div>
                     </div>
                 </div>
@@ -332,12 +365,12 @@
                     <div class="flex flex-col md:flex-row md:items-center justify-between">
                         <div>
                             <h2 class="text-2xl font-bold text-gray-900 mb-2">Welcome back, {{ Auth::user()->name }}! 👋</h2>
-                            <p class="text-gray-600">Here's your student dashboard overview for today.</p>
+                            <p class="text-gray-600">Here's your staff dashboard overview for today.</p>
                         </div>
                         <div class="mt-4 md:mt-0">
                             <div class="flex items-center space-x-4 text-sm">
                                 <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full">
-                                    <i class="fas fa-graduation-cap mr-1"></i> Active Student
+                                    <i class="fas fa-graduation-cap mr-1"></i> Active Staff
                                 </span>
                                 <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
                                     <i class="fas fa-calendar mr-1"></i> Semester 1, 2024
@@ -528,7 +561,7 @@
                         <div class="bg-white rounded-xl shadow p-6">
                             <div class="flex justify-between items-center mb-6">
                                 <h3 class="text-lg font-bold text-gray-900">Upcoming Events</h3>
-                                <a href="#" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">
+                                <a href="{{ route('staff.calendar') }}" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">
                                     View Calendar <i class="fas fa-arrow-right ml-1"></i>
                                 </a>
                             </div>

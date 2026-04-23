@@ -215,19 +215,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // VERIFICATION ROUTES (ADMIN/STAFF ONLY)
     // ============================================
     
-    Route::middleware('role:admin,staff')->group(function () {
-        // Verification queue
-        Route::get('/announcements/verification-queue', [AnnouncementController::class, 'verificationQueue'])
-            ->name('announcements.verification-queue');
-        
-        // Verify announcement
-        Route::post('/announcements/{announcement}/verify', [AnnouncementController::class, 'verify'])
-            ->name('announcements.verify');
-        
-        // Reject announcement
-        Route::post('/announcements/{announcement}/reject', [AnnouncementController::class, 'reject'])
-            ->name('announcements.reject');
-    });
+    // Approval/Rejection routes for admin AND staff
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Make sure these routes are defined BEFORE any wildcard routes like {id}
+    Route::patch('/announcements/{id}/approve', [AnnouncementController::class, 'approve'])->name('announcements.approve');
+    Route::patch('/announcements/{id}/reject', [AnnouncementController::class, 'reject'])->name('announcements.reject');
+    Route::get('/announcements/verification-queue', [AnnouncementController::class, 'verificationQueue'])->name('announcements.verification-queue');
+});
 
     // ============================================
     // ADMIN ROUTES

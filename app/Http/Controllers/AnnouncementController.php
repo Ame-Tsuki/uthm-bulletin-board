@@ -31,7 +31,7 @@ class AnnouncementController extends Controller
             // Show mixed announcements (both official and unofficial)
             // For non-admin/staff, show all published announcements
             // For admin/staff, also show pending_verification announcements
-            $query = Announcement::query();
+            $query = Announcement::with('author');
             
             if (in_array($user->role, ['admin', 'staff'])) {
                 // Admin/staff can see all announcements except drafts
@@ -44,7 +44,7 @@ class AnnouncementController extends Controller
             $announcements = $query->latest()->paginate(10);
         } else {
             // Show all announcements if column doesn't exist
-            $announcements = Announcement::latest()->paginate(10);
+            $announcements = Announcement::with('author')->latest()->paginate(10);
         }
         
         // Return view with data
@@ -72,7 +72,7 @@ class AnnouncementController extends Controller
         // Check if is_official column exists
         $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
         
-        // Create validation rules - ADD 'status' here
+        // Create validation rules
         $validationRules = [
             'title' => 'required|string|max:255',
             'content' => 'required|string',
@@ -83,7 +83,7 @@ class AnnouncementController extends Controller
             'publish_date' => 'nullable|date',
             'expiry_date' => 'nullable|date|after_or_equal:publish_date',
             'announcement_type' => 'required|in:official,unofficial',
-            'status' => 'required|in:draft,published', // ADD THIS LINE
+            'status' => 'required|in:draft,published',
         ];
         
         // Validate all fields at once
@@ -101,7 +101,7 @@ class AnnouncementController extends Controller
         $announcementType = $validated['announcement_type'];
         $user = auth()->user();
         $isAdminOrStaff = in_array($user->role, ['admin', 'staff']);
-        $status = $validated['status']; // Get the status from validated data
+        $status = $validated['status'];
         
         if ($announcementType === 'official') {
             // Official announcement
@@ -135,7 +135,6 @@ class AnnouncementController extends Controller
             if ($status === 'published') {
                 $validated['status'] = 'published';
             }
-            // If status is 'draft', keep it as 'draft'
         }
         
         // Remove announcement_type from data as it's not a database column
@@ -149,7 +148,6 @@ class AnnouncementController extends Controller
                 $validated['image'] = $imagePath;
             } catch (\Exception $e) {
                 Log::error('Image upload failed: ' . $e->getMessage());
-                // Continue without image if upload fails
             }
         }
         
@@ -175,7 +173,7 @@ class AnnouncementController extends Controller
     public function show($id): View
     {
         // Manually resolve the announcement since route uses {id} instead of {announcement}
-        $announcement = Announcement::find($id);
+        $announcement = Announcement::with('author')->find($id);
         
         if (!$announcement) {
             abort(404, 'Announcement not found');
@@ -190,6 +188,9 @@ class AnnouncementController extends Controller
         if ($announcement->status === 'pending_verification' && !in_array($user->role, ['admin', 'staff'])) {
             abort(403, 'This announcement is pending verification.');
         }
+        
+        // Increment view count
+        $announcement->increment('view_count');
         
         // Return view with single announcement
         return view('announcements.show', compact('announcement', 'user'));
@@ -224,7 +225,7 @@ class AnnouncementController extends Controller
             abort(403, 'Unauthorized to update this announcement.');
         }
         
-        // Create validation rules - make image validation conditional
+        // Create validation rules
         $validationRules = [
             'title' => 'required|string|max:255',
             'content' => 'required|string',
@@ -307,7 +308,6 @@ class AnnouncementController extends Controller
                 $validated['image'] = $imagePath;
             } catch (\Exception $e) {
                 Log::error('Image upload failed: ' . $e->getMessage());
-                // Continue without image if upload fails
             }
         }
         
@@ -319,7 +319,7 @@ class AnnouncementController extends Controller
             $validated['image'] = null;
         }
         
-        // Remove remove_image from validated data as it's not a database column
+        // Remove remove_image from validated data
         unset($validated['remove_image']);
         
         // Update the announcement
@@ -329,7 +329,7 @@ class AnnouncementController extends Controller
         if ($validated['status'] === 'draft') {
             return redirect()->route('announcements.my-announcements', ['status' => 'draft'])
                 ->with('success', 'Announcement updated as draft successfully.');
-        } elseif ($announcementType === 'official' && $validated['needs_verification']) {
+        } elseif ($announcementType === 'official' && isset($validated['needs_verification']) && $validated['needs_verification']) {
             return redirect()->route('announcements.my-announcements', ['status' => 'pending_verification'])
                 ->with('success', 'Official announcement updated and submitted for verification.');
         } else {
@@ -349,9 +349,6 @@ class AnnouncementController extends Controller
             abort(403, 'Unauthorized to delete this announcement.');
         }
         
-        // Store type before deletion for redirect
-        $wasOfficial = $announcement->is_official;
-        
         // Delete the announcement
         $announcement->delete();
 
@@ -361,7 +358,7 @@ class AnnouncementController extends Controller
     }
 
     /**
-     * NEW: Display user's own announcements
+     * Display user's own announcements
      */
     public function myAnnouncements(Request $request): View
     {
@@ -379,74 +376,149 @@ class AnnouncementController extends Controller
         $announcements = $query->orderBy('created_at', 'desc')->paginate(10);
         
         // Calculate total views
-        $totalViews = $announcements->sum('view_count');
+        $totalViews = Announcement::where('author_id', $user->id)->sum('view_count');
         
         return view('announcements.my-announcements', compact('announcements', 'totalViews', 'user'));
     }
 
     /**
-     * NEW: Verify an official announcement (admin/staff only)
+     * APPROVE announcement (Admin & Staff)
+     * Convert from pending_verification to published
      */
-    public function verify(Announcement $announcement): RedirectResponse
-    {
+   public function approve(Request $request, $id)
+{
+    try {
+        // Add debug logging
+        \Log::info('Approve method called for ID: ' . $id);
+        \Log::info('Request method: ' . $request->method());
+        \Log::info('User: ' . auth()->user()->id . ', Role: ' . auth()->user()->role);
+        
+        $announcement = Announcement::findOrFail($id);
         $user = auth()->user();
         
-        // Only admin/staff can verify
+        // Check authorization
         if (!in_array($user->role, ['admin', 'staff'])) {
-            abort(403, 'Unauthorized action.');
+            \Log::warning('Unauthorized user tried to approve: ' . $user->role);
+            return response()->json(['success' => false, 'message' => 'Unauthorized. Only admin/staff can approve announcements.'], 403);
         }
         
-        // Only official announcements need verification
-        if (!$announcement->is_official) {
-            return redirect()->back()
-                ->with('error', 'Only official announcements can be verified.');
+        // Check if announcement is pending verification
+        if ($announcement->status !== 'pending_verification') {
+            \Log::warning('Announcement not pending: ' . $announcement->status);
+            return response()->json([
+                'success' => false, 
+                'message' => 'Only pending announcements can be approved. Current status: ' . $announcement->status
+            ], 400);
         }
         
-        // Update announcement status
+        // Update announcement
         $announcement->update([
             'status' => 'published',
+            'is_official' => true,
             'needs_verification' => false,
             'verified_at' => now(),
             'verified_by' => $user->id,
+            'rejection_reason' => null,
+            'rejected_at' => null,
+            'rejected_by' => null,
         ]);
         
-        return redirect()->route('announcements.verification-queue')
-            ->with('success', 'Announcement verified and published successfully.');
+        \Log::info('Announcement approved successfully: ' . $announcement->id);
+        
+        return response()->json([
+            'success' => true, 
+            'message' => 'Announcement "' . $announcement->title . '" has been approved and published.',
+            'data' => $announcement
+        ]);
+        
+    } catch (\Exception $e) {
+        \Log::error('Approval failed: ' . $e->getMessage());
+        \Log::error('Stack trace: ' . $e->getTraceAsString());
+        return response()->json([
+            'success' => false, 
+            'message' => 'Error approving announcement: ' . $e->getMessage()
+        ], 500);
     }
-
+}
     /**
-     * NEW: Reject an official announcement (admin/staff only)
+     * REJECT announcement (Admin & Staff)
+     * Convert from pending_verification to rejected with reason
      */
-    public function reject(Request $request, Announcement $announcement): RedirectResponse
+    public function reject(Request $request, $id)
     {
-        $user = auth()->user();
-        
-        // Only admin/staff can reject
-        if (!in_array($user->role, ['admin', 'staff'])) {
-            abort(403, 'Unauthorized action.');
+        try {
+            $announcement = Announcement::findOrFail($id);
+            $user = auth()->user();
+            
+            // Check authorization - only admin and staff can reject
+            if (!in_array($user->role, ['admin', 'staff'])) {
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => 'Unauthorized. Only admin/staff can reject announcements.'], 403);
+                }
+                abort(403, 'Unauthorized. Only admin/staff can reject announcements.');
+            }
+            
+            // Validate rejection reason
+            $validator = validator($request->all(), [
+                'reason' => 'required|string|min:3|max:500',
+            ]);
+            
+            if ($validator->fails()) {
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => 'Rejection reason is required', 'errors' => $validator->errors()], 422);
+                }
+                return redirect()->back()->with('error', 'Please provide a reason for rejection.');
+            }
+            
+            $reason = $request->input('reason');
+            
+            // Check if announcement is pending verification
+            if ($announcement->status !== 'pending_verification') {
+                $message = 'Only pending announcements can be rejected. Current status: ' . $announcement->status;
+                if ($request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $message], 400);
+                }
+                return redirect()->back()->with('error', $message);
+            }
+            
+            // Update announcement
+            $announcement->update([
+                'status' => 'rejected',
+                'needs_verification' => false,
+                'rejection_reason' => $reason,
+                'rejected_at' => now(),
+                'rejected_by' => $user->id,
+                'verified_at' => null,
+                'verified_by' => null,
+            ]);
+            
+            $message = 'Announcement "' . $announcement->title . '" has been rejected.';
+            
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true, 
+                    'message' => $message,
+                    'data' => $announcement
+                ]);
+            }
+            
+            // Redirect back to verification queue
+            return redirect()->route('announcements.verification-queue')
+                ->with('success', $message);
+                
+        } catch (\Exception $e) {
+            Log::error('Rejection failed: ' . $e->getMessage());
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error rejecting announcement: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error rejecting announcement: ' . $e->getMessage());
         }
-        
-        $request->validate([
-            'rejection_reason' => 'required|string|max:500',
-        ]);
-        
-        // Update announcement status
-        $announcement->update([
-            'status' => 'rejected',
-            'needs_verification' => false,
-            'rejection_reason' => $request->rejection_reason,
-            'rejected_at' => now(),
-            'rejected_by' => $user->id,
-        ]);
-        
-        return redirect()->route('announcements.verification-queue')
-            ->with('success', 'Announcement rejected successfully.');
     }
 
     /**
-     * NEW: Show verification queue for admin/staff
+     * Show verification queue for admin/staff
      */
-    public function verificationQueue(): View
+    public function verificationQueue(Request $request): View
     {
         $user = auth()->user();
         
@@ -455,217 +527,41 @@ class AnnouncementController extends Controller
             abort(403, 'Unauthorized action.');
         }
         
-        $announcements = Announcement::where('is_official', true)
-            ->where('status', 'pending_verification')
-            ->orderBy('created_at', 'asc')
-            ->paginate(10);
-        
-        return view('announcements.verification-queue', compact('announcements', 'user'));
-    }
-
-    // ============================================
-    // ADMIN METHODS FOR API/JSON RESPONSES
-    // ============================================
-
-    /**
-     * Admin: Get all announcements with filters (JSON response)
-     */
-    public function adminIndex(Request $request)
-    {
         $query = Announcement::with('author')
-            ->where('status', '!=', 'draft');
-
-        // Apply filters
+            ->where('status', 'pending_verification')
+            ->orderBy('created_at', 'asc');
+        
+        // Optional filtering
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
                   ->orWhere('content', 'like', '%' . $request->search . '%');
             });
         }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
+        
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
-
-        $announcements = $query->latest()->paginate(15);
-
-        // Transform the data to include author information
-        $announcements->getCollection()->transform(function ($announcement) {
-            return [
-                'id' => $announcement->id,
-                'title' => $announcement->title,
-                'content' => $announcement->content,
-                'category' => $announcement->category,
-                'status' => $announcement->status,
-                'is_official' => $announcement->is_official,
-                'author_id' => $announcement->author_id,
-                'author_name' => $announcement->author ? $announcement->author->name : 'Unknown',
-                'author_role' => $announcement->author ? $announcement->author->role : null,
-                'author_email' => $announcement->author ? $announcement->author->email : null,
-                'created_at' => $announcement->created_at,
-                'updated_at' => $announcement->updated_at
-            ];
-        });
-
-        return response()->json([
-            'success' => true,
-            'data' => $announcements
-        ]);
-    }
-
-    /**
-     * Admin: Create announcement (JSON response)
-     */
-    public function adminStore(Request $request)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'category' => 'required|in:general,academic,event,important',
-            'status' => 'required|in:pending,published,rejected',
-            'is_official' => 'boolean'
-        ]);
-
-        $validated['author_id'] = Auth::id();
-        $validated['is_official'] = $request->boolean('is_official');
-
-        $announcement = Announcement::create($validated);
         
-        // Load the author relationship
-        $announcement->load('author');
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $announcement->id,
-                'title' => $announcement->title,
-                'content' => $announcement->content,
-                'category' => $announcement->category,
-                'status' => $announcement->status,
-                'is_official' => $announcement->is_official,
-                'author_name' => $announcement->author ? $announcement->author->name : 'Unknown',
-                'created_at' => $announcement->created_at
-            ],
-            'message' => 'Announcement created successfully'
-        ]);
-    }
-
-    /**
-     * Admin: Get single announcement (JSON response)
-     */
-    public function adminShow($id)
-    {
-        $announcement = Announcement::with('author')->findOrFail($id);
+        $announcements = $query->paginate(10);
         
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $announcement->id,
-                'title' => $announcement->title,
-                'content' => $announcement->content,
-                'category' => $announcement->category,
-                'status' => $announcement->status,
-                'is_official' => $announcement->is_official,
-                'author_id' => $announcement->author_id,
-                'author_name' => $announcement->author ? $announcement->author->name : 'Unknown',
-                'author_role' => $announcement->author ? $announcement->author->role : null,
-                'created_at' => $announcement->created_at,
-                'updated_at' => $announcement->updated_at
-            ]
-        ]);
+        return view('announcements.verification-queue', compact('announcements', 'user'));
     }
 
     /**
-     * Admin: Update announcement (JSON response)
+     * Get pending count for API
      */
-    public function adminUpdate(Request $request, $id)
+    public function getPendingCount()
     {
-        $announcement = Announcement::findOrFail($id);
-
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'category' => 'required|in:general,academic,event,important',
-            'status' => 'required|in:pending,published,rejected',
-            'is_official' => 'boolean'
-        ]);
-
-        $validated['is_official'] = $request->boolean('is_official');
-
-        $announcement->update($validated);
+        $user = auth()->user();
         
-        // Load the author relationship
-        $announcement->load('author');
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $announcement->id,
-                'title' => $announcement->title,
-                'content' => $announcement->content,
-                'category' => $announcement->category,
-                'status' => $announcement->status,
-                'is_official' => $announcement->is_official,
-                'author_name' => $announcement->author ? $announcement->author->name : 'Unknown',
-                'created_at' => $announcement->created_at
-            ],
-            'message' => 'Announcement updated successfully'
-        ]);
-    }
-
-    /**
-     * Admin: Delete announcement (JSON response)
-     */
-    public function adminDestroy($id)
-    {
-        $announcement = Announcement::findOrFail($id);
-        $announcement->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Announcement deleted successfully'
-        ]);
-    }
-
-    /**
-     * Admin: Approve announcement (JSON response)
-     */
-    public function adminApprove($id)
-    {
-        $announcement = Announcement::findOrFail($id);
-        $announcement->update([
-            'status' => 'published',
-            'is_official' => true
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Announcement approved successfully'
-        ]);
-    }
-
-    /**
-     * Admin: Reject announcement (JSON response)
-     */
-    public function adminReject(Request $request, $id)
-    {
-        $request->validate([
-            'reason' => 'required|string'
-        ]);
-
-        $announcement = Announcement::findOrFail($id);
-        $announcement->update([
-            'status' => 'rejected'
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Announcement rejected successfully'
-        ]);
+        if (!in_array($user->role, ['admin', 'staff'])) {
+            return response()->json(['count' => 0]);
+        }
+        
+        $count = Announcement::where('status', 'pending_verification')->count();
+        
+        return response()->json(['count' => $count]);
     }
 
     // ============================================
@@ -679,14 +575,7 @@ class AnnouncementController extends Controller
     {
         $announcement->update(['status' => 'archived']);
         
-        // Redirect based on type
-        if ($announcement->is_official) {
-            return redirect()->route('announcements.official')
-                ->with('success', 'Announcement archived successfully.');
-        } else {
-            return redirect()->route('announcements.unofficial')
-                ->with('success', 'Announcement archived successfully.');
-        }
+        return redirect()->back()->with('success', 'Announcement archived successfully.');
     }
 
     /**
@@ -718,7 +607,6 @@ class AnnouncementController extends Controller
             ->latest()
             ->paginate(10);
             
-        // Check if column exists
         $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
         
         return view('announcements.published', compact('announcements', 'user', 'hasOfficialColumn'));
@@ -734,73 +622,9 @@ class AnnouncementController extends Controller
             ->latest()
             ->paginate(10);
             
-        // Check if column exists
         $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
         
         return view('announcements.drafts', compact('announcements', 'user', 'hasOfficialColumn'));
-    }
-
-    /**
-     * Display only official announcements.
-     */
-    public function official(): View
-    {
-        $user = auth()->user();
-        
-        // Check if the column exists
-        $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
-        
-        if ($hasOfficialColumn) {
-            // Show only published official announcements for regular users
-            // Admin/staff can also see pending verification
-            $query = Announcement::where('is_official', true);
-            
-            if (in_array($user->role, ['admin', 'staff'])) {
-                $query->whereIn('status', ['published', 'pending_verification']);
-            } else {
-                $query->where('status', 'published');
-            }
-            
-            $announcements = $query->latest()->paginate(10);
-        } else {
-            // If column doesn't exist, create an empty paginator
-            $announcements = new LengthAwarePaginator(
-                new Collection(), // Empty collection
-                0, // Total items
-                10, // Items per page
-                1 // Current page
-            );
-        }
-        
-        return view('announcements.official', compact('announcements', 'user', 'hasOfficialColumn'));
-    }
-
-    /**
-     * Display only unofficial announcements.
-     */
-    public function unofficial(): View
-    {
-        $user = auth()->user();
-        
-        // Check if the column exists
-        $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
-        
-        if ($hasOfficialColumn) {
-            $announcements = Announcement::where('is_official', false)
-                ->where('status', 'published')
-                ->latest()
-                ->paginate(10);
-        } else {
-            // If column doesn't exist, create an empty paginator
-            $announcements = new LengthAwarePaginator(
-                new Collection(), // Empty collection
-                0, // Total items
-                10, // Items per page
-                1 // Current page
-            );
-        }
-        
-        return view('announcements.unofficial', compact('announcements', 'user', 'hasOfficialColumn'));
     }
 
     /**
@@ -813,16 +637,13 @@ class AnnouncementController extends Controller
             abort(403, 'Unauthorized action.');
         }
         
-        // Check if column exists
         if (!Schema::hasColumn('announcements', 'is_official')) {
-            return redirect()->back()
-                ->with('error', 'Database column not found. Please run migration first.');
+            return redirect()->back()->with('error', 'Database column not found. Please run migration first.');
         }
         
         try {
             $announcement->update([
                 'is_official' => !$announcement->is_official,
-                // Reset verification status when toggling
                 'needs_verification' => false,
                 'verified_at' => $announcement->is_official ? null : now(),
                 'verified_by' => $announcement->is_official ? null : auth()->id(),
@@ -830,17 +651,9 @@ class AnnouncementController extends Controller
             
             $action = $announcement->is_official ? 'marked as official' : 'marked as unofficial';
             
-            // Redirect based on new status
-            if ($announcement->is_official) {
-                return redirect()->route('announcements.official')
-                    ->with('success', "Announcement {$action} successfully.");
-            } else {
-                return redirect()->route('announcements.unofficial')
-                    ->with('success', "Announcement {$action} successfully.");
-            }
+            return redirect()->back()->with('success', "Announcement {$action} successfully.");
         } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Failed to update announcement status: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to update announcement status: ' . $e->getMessage());
         }
     }
 }

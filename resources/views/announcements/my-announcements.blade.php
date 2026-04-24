@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Announcements - UTHM Bulletin Board</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -65,9 +66,13 @@
             background-color: #10b981;
             color: white;
         }
-        .status-pending {
-            background-color: #f59e0b;
-            color: white;
+        .status-pending-approval {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        .status-rejected {
+            background-color: #fee2e2;
+            color: #dc2626;
         }
         .status-draft {
             background-color: #6b7280;
@@ -156,141 +161,152 @@
             background-color: #10b981;
             color: white;
         }
+        
+        /* Dropdown animation */
+        .dropdown-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .dropdown-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .dropdown-leave {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .dropdown-leave-active {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.2s, transform 0.2s;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
     <div class="min-h-screen flex">
         <!-- Sidebar Dashboard Navigation -->
         <div id="sidebar" class="sidebar-collapsed bg-white shadow-lg h-screen fixed left-0 top-0 overflow-y-auto z-40 sidebar-transition">
-        <!-- Sidebar Header -->
-        <div class="p-4 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-                <!-- Logo -->
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <div class="bg-green-600 text-white p-2 rounded-lg shrink-0">
-                        <i class="fas fa-user-graduate text-lg"></i>
-                    </div>
-                    <div class="sidebar-text">
-                        <h2 class="font-bold uthm-blue">UTHM Bulletin</h2>
-                        <p class="text-xs text-gray-500">Announcements</p>
-                    </div>
-                </div>
-                
-                <!-- Toggle Button -->
-                <button id="sidebar-toggle" class="hidden md:block text-gray-500 hover:text-uthm-blue shrink-0">
-                    <svg id="toggle-icon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- User Profile - Now Clickable -->
-        <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
+            <!-- Sidebar Header -->
             <div class="p-4 border-b border-gray-200">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
-                        <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <div class="bg-green-600 text-white p-2 rounded-lg shrink-0">
+                            <i class="fas fa-user-graduate text-lg"></i>
+                        </div>
+                        <div class="sidebar-text">
+                            <h2 class="font-bold uthm-blue">UTHM Bulletin</h2>
+                            <p class="text-xs text-gray-500">My Announcements</p>
+                        </div>
                     </div>
-                    <div class="sidebar-text">
-                        <h3 class="font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</h3>
-                        <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
-                        <!-- Role badge in sidebar -->
-                        @if($user?->role)
-                            <span class="mt-1 inline-block px-2 py-1 text-xs rounded-full badge-{{ $user->role }}">
-                                {{ ucfirst($user->role) }}
-                            </span>
-                        @endif
-                    </div>
+                    
+                    <button id="sidebar-toggle" class="hidden md:block text-gray-500 hover:text-uthm-blue shrink-0">
+                        <svg id="toggle-icon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                        </svg>
+                    </button>
                 </div>
             </div>
-        </a>
 
-        <!-- Dashboard Navigation -->
-        <nav class="p-4">
-            <ul class="space-y-2">
-                <!-- Dashboard -->
-                <li>
-                    <a href="{{ route('dashboard') }}" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-home w-5 h-5"></i>
+            <!-- User Profile -->
+            <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
+                <div class="p-4 border-b border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
+                            <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
                         </div>
-                        <span class="sidebar-text ml-3">Dashboard</span>
-                    </a>
-                </li>
-
-                <!-- Announcements  -->
-                <li>
-                    <a href="{{ route('announcements.index') }}" 
-                          class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-bullhorn w-5 h-5"></i>
+                        <div class="sidebar-text">
+                            <h3 class="font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</h3>
+                            <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
+                            @if($user?->role)
+                                <span class="mt-1 inline-block px-2 py-1 text-xs rounded-full badge-{{ $user->role }}">
+                                    {{ ucfirst($user->role) }}
+                                </span>
+                            @endif
                         </div>
-                        <span class="sidebar-text ml-3">Announcements</span>
-                    </a>
-                </li>
-
-                <!-- My Announcements (Active)-->
-                <li>
-                    <a href="{{ route('announcements.my-announcements') }}" 
-                       class="flex items-center p-3 rounded-lg bg-uthm-blue-light text-uthm-blue">
-                        <div class="shrink-0">
-                            <i class="fas fa-file-alt w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">My Announcements</span>
-                    </a>
-                </li>
-
-                <!-- Calendar -->
-                <li>
-                    <a href="{{ route('calendar') }}"
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-calendar-alt w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Calendar</span>
-                    </a>
-                </li>
-
-                <!-- Events -->
-                <li>
-                    <a href="#" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-calendar-check w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Events</span>
-                    </a>
-                </li>
-
-                <!-- Settings -->
-                <li>
-                    <a href="{{ route('settings') }}" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-cog w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Settings</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Logout -->
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" 
-                        class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
-                    <div class="shrink-0">
-                        <i class="fas fa-sign-out-alt w-5 h-5"></i>
                     </div>
-                    <span class="sidebar-text ml-3">Logout</span>
-                </button>
-            </form>
+                </div>
+            </a>
+
+            <!-- Dashboard Navigation -->
+            <nav class="p-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="{{ route('dashboard') }}" 
+                           class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                            <div class="shrink-0">
+                                <i class="fas fa-home w-5 h-5"></i>
+                            </div>
+                            <span class="sidebar-text ml-3">Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('announcements.index') }}" 
+                              class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                            <div class="shrink-0">
+                                <i class="fas fa-bullhorn w-5 h-5"></i>
+                            </div>
+                            <span class="sidebar-text ml-3">Announcements</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('announcements.my-announcements') }}" 
+                           class="flex items-center p-3 rounded-lg bg-uthm-blue-light text-uthm-blue">
+                            <div class="shrink-0">
+                                <i class="fas fa-file-alt w-5 h-5"></i>
+                            </div>
+                            <span class="sidebar-text ml-3">My Announcements</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('calendar') }}"
+                           class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                            <div class="shrink-0">
+                                <i class="fas fa-calendar-alt w-5 h-5"></i>
+                            </div>
+                            <span class="sidebar-text ml-3">Calendar</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="#" 
+                           class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                            <div class="shrink-0">
+                                <i class="fas fa-calendar-check w-5 h-5"></i>
+                            </div>
+                            <span class="sidebar-text ml-3">Events</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('settings') }}" 
+                           class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                            <div class="shrink-0">
+                                <i class="fas fa-cog w-5 h-5"></i>
+                            </div>
+                            <span class="sidebar-text ml-3">Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Logout -->
+            <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" 
+                            class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
+                        <div class="shrink-0">
+                            <i class="fas fa-sign-out-alt w-5 h-5"></i>
+                        </div>
+                        <span class="sidebar-text ml-3">Logout</span>
+                    </button>
+                </form>
+            </div>
         </div>
-    </div>
 
         <!-- Main Content Wrapper -->
         <div class="content-collapsed min-h-screen content-transition flex-1">
@@ -313,274 +329,307 @@
                                 New Announcement
                             </a>
                             
+                            <!-- User Menu Dropdown (from student dashboard) -->
                             <div class="relative">
                                 <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100">
-                                    <div class="w-8 h-8 bg-uthm-blue-light rounded-full flex items-center justify-center">
-                                        <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
+                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                        <span class="font-bold text-green-700">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
                                     </div>
-                                    <span class="hidden md:block">{{ $user?->name ?? 'User' }}</span>
+                                    <div class="hidden md:block text-left">
+                                        <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
+                                        <p class="text-xs text-gray-500">{{ Auth::user()->uthm_id }}</p>
+                                    </div>
                                     <i class="fas fa-chevron-down text-gray-500"></i>
                                 </button>
+                                
+                                <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50">
+                                    <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-user mr-2"></i> My Profile
+                                    </a>
+                                    
+                                    <a href="{{ route('settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-cog mr-2"></i> Settings
+                                    </a>
+                                    
+                                    <div class="border-t border-gray-200 my-2"></div>
+                                    
+                                    <form action="{{ route('logout') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </nav>
 
-        <!-- Main Content -->
-        <div class="py-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <!-- Page Header -->
-                <div class="mb-8">
-                    <h2 class="text-2xl font-bold text-gray-900">Manage Your Announcements</h2>
-                    <p class="mt-2 text-gray-600">View, edit, and manage all announcements you've created</p>
-                    
-                    <!-- Stats -->
-                    <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <div class="flex items-center">
-                                <div class="bg-blue-100 p-3 rounded-lg mr-4">
-                                    <i class="fas fa-bullhorn text-blue-600 text-xl"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500">Total Announcements</p>
-                                    <p class="text-2xl font-bold text-gray-900">{{ $announcements->total() }}</p>
+            <!-- Main Content -->
+            <div class="py-8">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <!-- Page Header -->
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900">Manage Your Announcements</h2>
+                        <p class="mt-2 text-gray-600">View, edit, and manage all announcements you've created</p>
+                        
+                        <!-- Stats -->
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-white rounded-lg shadow p-4">
+                                <div class="flex items-center">
+                                    <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                                        <i class="fas fa-bullhorn text-blue-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Total Announcements</p>
+                                        <p class="text-2xl font-bold text-gray-900">{{ $announcements->total() }}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <div class="flex items-center">
-                                <div class="bg-green-100 p-3 rounded-lg mr-4">
-                                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500">Official Announcements</p>
-                                    <p class="text-2xl font-bold text-gray-900">{{ $announcements->where('is_official', true)->count() }}</p>
+                            
+                            <div class="bg-white rounded-lg shadow p-4">
+                                <div class="flex items-center">
+                                    <div class="bg-green-100 p-3 rounded-lg mr-4">
+                                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Official Announcements</p>
+                                        <p class="text-2xl font-bold text-gray-900">{{ $announcements->where('is_official', true)->count() }}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <div class="flex items-center">
-                                <div class="bg-purple-100 p-3 rounded-lg mr-4">
-                                    <i class="fas fa-eye text-purple-600 text-xl"></i>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500">Total Views</p>
-                                    <p class="text-2xl font-bold text-gray-900">{{ $totalViews ?? 0 }}</p>
+                            
+                            <div class="bg-white rounded-lg shadow p-4">
+                                <div class="flex items-center">
+                                    <div class="bg-purple-100 p-3 rounded-lg mr-4">
+                                        <i class="fas fa-eye text-purple-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-500">Total Views</p>
+                                        <p class="text-2xl font-bold text-gray-900">{{ $totalViews ?? 0 }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Filter Tabs -->
-                <div class="mb-6 bg-white rounded-lg shadow p-4">
-                    <div class="flex space-x-4">
-                        <a href="{{ route('announcements.my-announcements') }}?status=all" 
-                           class="px-4 py-2 rounded-lg {{ request('status', 'all') == 'all' ? 'bg-uthm-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            All
-                        </a>
-                        <a href="{{ route('announcements.my-announcements') }}?status=published" 
-                           class="px-4 py-2 rounded-lg {{ request('status') == 'published' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            <i class="fas fa-check-circle mr-2"></i>Published
-                        </a>
-                        <a href="{{ route('announcements.my-announcements') }}?status=draft" 
-                           class="px-4 py-2 rounded-lg {{ request('status') == 'draft' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                            <i class="fas fa-edit mr-2"></i>Drafts
-                        </a>
-                    </div>
-                </div>
+                    <!-- Filter Tabs -->
+<div class="mb-6 bg-white rounded-lg shadow p-4">
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ route('announcements.my-announcements') }}?status=all" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status', 'all') == 'all' ? 'bg-uthm-blue text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+            <i class="fas fa-list mr-2"></i>All
+            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status', 'all') == 'all' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $totalCount ?? 0 }}</span>
+        </a>
+        
+        <a href="{{ route('announcements.my-announcements') }}?status=published" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'published' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+            <i class="fas fa-check-circle mr-2"></i>Published
+            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'published' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $publishedCount ?? 0 }}</span>
+        </a>
+        
+        <a href="{{ route('announcements.my-announcements') }}?status=draft" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'draft' ? 'bg-gray-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+            <i class="fas fa-edit mr-2"></i>Drafts
+            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'draft' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $draftCount ?? 0 }}</span>
+        </a>
+        
+        <a href="{{ route('announcements.my-announcements') }}?status=pending_verification" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'pending_verification' ? 'bg-yellow-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+            <i class="fas fa-clock mr-2"></i>Pending Approval
+            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'pending_verification' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $pendingCount ?? 0 }}</span>
+        </a>
+        
+        <a href="{{ route('announcements.my-announcements') }}?status=rejected" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'rejected' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+            <i class="fas fa-times-circle mr-2"></i>Rejected
+            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'rejected' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $rejectedCount ?? 0 }}</span>
+        </a>
+    </div>
+</div>
 
-                <!-- Announcements List -->
-                <div class="bg-white rounded-lg shadow overflow-hidden">
-                    @if($announcements->count() > 0)
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Title
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Status
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Category
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Created
-                                        </th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-    @forelse($announcements as $announcement)
-        <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                    <div class="ml-4">
-                        <div class="text-sm font-medium text-gray-900">
-                            {{ $announcement->title }}
-                        </div>
-                        <div class="text-sm text-gray-500">
-                            @if($announcement->is_official)
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs badge-official">
-                                    <i class="fas fa-check-circle mr-1"></i> Official
-                                </span>
-                            @else
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs badge-unofficial">
-                                    <i class="fas fa-users mr-1"></i> Unofficial
-                                </span>
+                    <!-- Announcements List -->
+                    <div class="bg-white rounded-lg shadow overflow-hidden">
+                        @if($announcements->count() > 0)
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @forelse($announcements as $announcement)
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4">
+                                                    <div class="text-sm font-medium text-gray-900">
+                                                        {{ $announcement->title }}
+                                                    </div>
+                                                    <div class="text-sm text-gray-500">
+                                                        @if($announcement->is_official)
+                                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs badge-official">
+                                                                <i class="fas fa-check-circle mr-1"></i> Official
+                                                            </span>
+                                                        @else
+                                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs badge-unofficial">
+                                                                <i class="fas fa-users mr-1"></i> Unofficial
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    @if($announcement->status == 'published')
+                                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                            <i class="fas fa-check-circle mr-1"></i> Published
+                                                        </span>
+                                                    @elseif($announcement->status == 'draft')
+                                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                            <i class="fas fa-edit mr-1"></i> Draft
+                                                        </span>
+                                                    @elseif($announcement->status == 'pending_verification')
+                                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                            <i class="fas fa-clock mr-1"></i> Pending Approval
+                                                        </span>
+                                                    @elseif($announcement->status == 'rejected')
+                                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                            <i class="fas fa-times-circle mr-1"></i> Rejected
+                                                        </span>
+                                                    @else
+                                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                                            <i class="fas fa-question-circle mr-1"></i> {{ ucfirst($announcement->status) }}
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full badge-{{ $announcement->category }}">
+                                                        {{ ucfirst($announcement->category) }}
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                    {{ $announcement->created_at->format('M d, Y') }}
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <div class="flex space-x-2">
+                                                        <a href="{{ route('announcements.show', $announcement) }}" 
+                                                           class="inline-flex items-center px-3 py-1 border border-transparent text-xs rounded btn-view hover:bg-green-700">
+                                                            <i class="fas fa-eye mr-1"></i> View
+                                                        </a>
+                                                        <a href="{{ route('announcements.edit', $announcement) }}" 
+                                                           class="inline-flex items-center px-3 py-1 border border-transparent text-xs rounded btn-edit hover:bg-blue-700">
+                                                            <i class="fas fa-edit mr-1"></i> Edit
+                                                        </a>
+                                                        <form action="{{ route('announcements.destroy', $announcement) }}" 
+                                                              method="POST" 
+                                                              class="inline"
+                                                              onsubmit="return confirm('Are you sure you want to delete this announcement?')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" 
+                                                                    class="inline-flex items-center px-3 py-1 border border-transparent text-xs rounded btn-delete hover:bg-red-700">
+                                                                <i class="fas fa-trash mr-1"></i> Delete
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="5" class="px-6 py-12">
+                                                    <div class="text-center">
+                                                        <div class="inline-block p-6 bg-gray-100 rounded-full mb-4">
+                                                            <i class="fas fa-file-alt text-gray-400 text-4xl"></i>
+                                                        </div>
+                                                        <h3 class="text-xl font-medium text-gray-900 mb-2">No announcements yet</h3>
+                                                        <p class="text-gray-600 mb-6">
+                                                            @if(request('status') == 'published')
+                                                                You haven't published any announcements yet.
+                                                            @elseif(request('status') == 'draft')
+                                                                You don't have any draft announcements.
+                                                            @else
+                                                                You haven't created any announcements yet.
+                                                            @endif
+                                                        </p>
+                                                        <a href="{{ route('announcements.create') }}" 
+                                                           class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+                                                            <i class="fas fa-plus-circle mr-2 text-lg"></i>
+                                                            Create Your First Announcement
+                                                        </a>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            @if($announcements->hasPages())
+                                <div class="px-6 py-4 border-t border-gray-200">
+                                    {{ $announcements->appends(request()->query())->links() }}
+                                </div>
                             @endif
-                        </div>
-                    </div>
-                </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                @if($announcement->status == 'published')
-                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full status-published">
-                        <i class="fas fa-check mr-1"></i> Published
-                    </span>
-                @elseif($announcement->status == 'draft')
-                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full status-draft">
-                        <i class="fas fa-edit mr-1"></i> Draft
-                    </span>
-                @else
-                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full status-pending">
-                        <i class="fas fa-clock mr-1"></i> Pending
-                    </span>
-                @endif
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full badge-{{ $announcement->category }}">
-                    {{ ucfirst($announcement->category) }}
-                </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ $announcement->created_at->format('M d, Y') }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div class="flex space-x-2">
-                    <a href="{{ route('announcements.show', $announcement) }}" 
-                       class="inline-flex items-center px-3 py-1 border border-transparent text-xs rounded btn-view hover:bg-green-700">
-                        <i class="fas fa-eye mr-1"></i> View
-                    </a>
-                    <a href="{{ route('announcements.edit', $announcement) }}" 
-                       class="inline-flex items-center px-3 py-1 border border-transparent text-xs rounded btn-edit hover:bg-blue-700">
-                        <i class="fas fa-edit mr-1"></i> Edit
-                    </a>
-                    <form action="{{ route('announcements.destroy', $announcement) }}" 
-                          method="POST" 
-                          class="inline"
-                          onsubmit="return confirm('Are you sure you want to delete this announcement?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" 
-                                class="inline-flex items-center px-3 py-1 border border-transparent text-xs rounded btn-delete hover:bg-red-700">
-                            <i class="fas fa-trash mr-1"></i> Delete
-                        </button>
-                    </form>
-                </div>
-            </td>
-        </tr>
-    @empty
-        <!-- Empty State -->
-        <tr>
-            <td colspan="5" class="px-6 py-12">
-                <div class="text-center">
-                    <div class="inline-block p-6 bg-gray-100 rounded-full mb-4">
-                        <i class="fas fa-file-alt text-gray-400 text-4xl"></i>
-                    </div>
-                    <h3 class="text-xl font-medium text-gray-900 mb-2">No announcements yet</h3>
-                    <p class="text-gray-600 mb-6">
-                        @if(request('status') == 'published')
-                            You haven't published any announcements yet.
-                        @elseif(request('status') == 'draft')
-                            You don't have any draft announcements.
                         @else
-                            You haven't created any announcements yet.
-                        @endif
-                    </p>
-                    <a href="{{ route('announcements.create') }}" 
-                       class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
-                        <i class="fas fa-plus-circle mr-2 text-lg"></i>
-                        Create Your First Announcement
-                    </a>
-                </div>
-            </td>
-        </tr>
-    @endforelse
-</tbody>
-                            </table>
-                        </div>
-                        
-                        <!-- Pagination -->
-                        @if($announcements->hasPages())
-                            <div class="px-6 py-4 border-t border-gray-200">
-                                {{ $announcements->appends(request()->query())->links() }}
+                            <!-- Empty State -->
+                            <div class="text-center py-12">
+                                <div class="inline-block p-6 bg-gray-100 rounded-full mb-4">
+                                    <i class="fas fa-file-alt text-gray-400 text-4xl"></i>
+                                </div>
+                                <h3 class="text-xl font-medium text-gray-900 mb-2">No announcements yet</h3>
+                                <p class="text-gray-600 mb-6">
+                                    @if(request('status') == 'published')
+                                        You haven't published any announcements yet.
+                                    @elseif(request('status') == 'draft')
+                                        You don't have any draft announcements.
+                                    @else
+                                        You haven't created any announcements yet.
+                                    @endif
+                                </p>
+                                <a href="{{ route('announcements.create') }}" 
+                                   class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+                                    <i class="fas fa-plus-circle mr-2 text-lg"></i>
+                                    Create Your First Announcement
+                                </a>
                             </div>
                         @endif
-                    @else
-                        <!-- Empty State -->
-                        <div class="text-center py-12">
-                            <div class="inline-block p-6 bg-gray-100 rounded-full mb-4">
-                                <i class="fas fa-file-alt text-gray-400 text-4xl"></i>
-                            </div>
-                            <h3 class="text-xl font-medium text-gray-900 mb-2">No announcements yet</h3>
-                            <p class="text-gray-600 mb-6">
-                                @if(request('status') == 'published')
-                                    You haven't published any announcements yet.
-                                @elseif(request('status') == 'draft')
-                                    You don't have any draft announcements.
-                                @else
-                                    You haven't created any announcements yet.
-                                @endif
-                            </p>
-                            <a href="{{ route('announcements.create') }}" 
-                               class="inline-flex items-center px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
-                                <i class="fas fa-plus-circle mr-2 text-lg"></i>
-                                Create Your First Announcement
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                            <h3 class="font-bold text-gray-900 text-lg mb-2">Need help?</h3>
+                            <p class="text-gray-600 text-sm mb-4">Learn how to create effective announcements that reach your audience.</p>
+                            <a href="#" class="inline-flex items-center text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-book mr-2"></i>
+                                View Guidelines
                             </a>
                         </div>
-                    @endif
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                        <h3 class="font-bold text-gray-900 text-lg mb-2">Need help?</h3>
-                        <p class="text-gray-600 text-sm mb-4">Learn how to create effective announcements that reach your audience.</p>
-                        <a href="#" class="inline-flex items-center text-blue-600 hover:text-blue-800">
-                            <i class="fas fa-book mr-2"></i>
-                            View Guidelines
-                        </a>
-                    </div>
-                    
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-6">
-                        <h3 class="font-bold text-gray-900 text-lg mb-2">Make it official</h3>
-                        <p class="text-gray-600 text-sm mb-4">Contact admin/staff to verify your announcement and make it official.</p>
-                        <a href="mailto:admin@uthm.edu.my" class="inline-flex items-center text-green-600 hover:text-green-800">
-                            <i class="fas fa-envelope mr-2"></i>
-                            Request Verification
-                        </a>
+                        
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                            <h3 class="font-bold text-gray-900 text-lg mb-2">Make it official</h3>
+                            <p class="text-gray-600 text-sm mb-4">Contact admin/staff to verify your announcement and make it official.</p>
+                            <a href="mailto:admin@uthm.edu.my" class="inline-flex items-center text-green-600 hover:text-green-800">
+                                <i class="fas fa-envelope mr-2"></i>
+                                Request Verification
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Footer -->
-        <footer class="bg-white border-t border-gray-200 py-6 mt-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center text-gray-500 text-sm">
-                    <p>UTHM Digital Bulletin Board &copy; {{ date('Y') }}</p>
-                    <p class="mt-1">Manage your announcements and stay connected with the community</p>
+            <!-- Footer -->
+            <footer class="bg-white border-t border-gray-200 py-6 mt-8">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center text-gray-500 text-sm">
+                        <p>UTHM Digital Bulletin Board &copy; {{ date('Y') }}</p>
+                        <p class="mt-1">Manage your announcements and stay connected with the community</p>
+                    </div>
                 </div>
-            </div>
-        </footer>
+            </footer>
         </div>
     </div>
 
@@ -590,6 +639,8 @@
             const sidebar = document.getElementById('sidebar');
             const sidebarToggle = document.getElementById('sidebar-toggle');
             const toggleIcon = document.getElementById('toggle-icon');
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
             
             // Load sidebar state from localStorage
             const isSidebarExpanded = localStorage.getItem('sidebarExpanded') === 'true';
@@ -606,6 +657,21 @@
                         collapseSidebar();
                     } else {
                         expandSidebar();
+                    }
+                });
+            }
+            
+            // User Menu Dropdown Toggle
+            if (userMenuButton && userMenu) {
+                userMenuButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userMenu.classList.toggle('hidden');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
+                        userMenu.classList.add('hidden');
                     }
                 });
             }
@@ -632,40 +698,59 @@
                 localStorage.setItem('sidebarExpanded', 'false');
             }
             
-            // Simple confirmation for delete actions
-            document.querySelectorAll('form[onsubmit]').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    if (!confirm('Are you sure you want to delete this announcement?')) {
-                        e.preventDefault();
-                    }
-                });
-            });
+           // Status filter tab styling - Updated for all 5 tabs
+const statusTabs = document.querySelectorAll('a[href*="status="]');
+statusTabs.forEach(tab => {
+    tab.addEventListener('click', function(e) {
+        statusTabs.forEach(t => {
+            t.classList.remove('bg-uthm-blue', 'text-white', 'bg-green-600', 'bg-gray-600', 'bg-yellow-600', 'bg-red-600');
+            t.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+        });
+        
+        const href = this.getAttribute('href');
+        if (href.includes('status=published')) {
+            this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+            this.classList.add('bg-green-600', 'text-white');
+        } else if (href.includes('status=draft')) {
+            this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+            this.classList.add('bg-gray-600', 'text-white');
+        } else if (href.includes('status=pending_verification')) {
+            this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+            this.classList.add('bg-yellow-600', 'text-white');
+        } else if (href.includes('status=rejected')) {
+            this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+            this.classList.add('bg-red-600', 'text-white');
+        } else {
+            this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+            this.classList.add('bg-uthm-blue', 'text-white');
+        }
+    });
+});
             
-            // Status filter functionality
-            const statusTabs = document.querySelectorAll('a[href*="status="]');
-            statusTabs.forEach(tab => {
-                tab.addEventListener('click', function(e) {
-                    // Remove active class from all tabs
-                    statusTabs.forEach(t => {
-                        t.classList.remove('bg-uthm-blue', 'text-white', 'bg-green-600', 'bg-gray-600');
-                        t.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
-                    });
-                    
-                    // Add appropriate active class
-                    const status = this.getAttribute('href').includes('status=published') ? 'published' :
-                                  this.getAttribute('href').includes('status=draft') ? 'draft' : 'all';
-                    
-                    if (status === 'published') {
-                        this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
-                        this.classList.add('bg-green-600', 'text-white');
-                    } else if (status === 'draft') {
-                        this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
-                        this.classList.add('bg-gray-600', 'text-white');
+            // Mobile sidebar handling
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    if (sidebar.classList.contains('mobile-open')) {
+                        sidebar.classList.remove('mobile-open');
                     } else {
-                        this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
-                        this.classList.add('bg-uthm-blue', 'text-white');
+                        sidebar.classList.add('mobile-open');
                     }
                 });
+            }
+            
+            if (window.innerWidth < 768) {
+                sidebar.style.transform = 'translateX(-100%)';
+            }
+            
+            window.addEventListener('resize', function() {
+                if (window.innerWidth < 768) {
+                    if (!sidebar.classList.contains('mobile-open')) {
+                        sidebar.style.transform = 'translateX(-100%)';
+                    }
+                } else {
+                    sidebar.style.transform = 'translateX(0)';
+                }
             });
         });
     </script>

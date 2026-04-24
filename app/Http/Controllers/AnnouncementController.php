@@ -357,30 +357,47 @@ class AnnouncementController extends Controller
             ->with('success', 'Announcement deleted successfully.');
     }
 
-    /**
-     * Display user's own announcements
-     */
-    public function myAnnouncements(Request $request): View
-    {
-        $user = auth()->user();
-        $status = $request->get('status', 'all');
-        
-        // Start with user's own announcements
-        $query = Announcement::where('author_id', $user->id);
-        
-        // Filter by status
-        if ($status !== 'all') {
-            $query->where('status', $status);
-        }
-        
-        $announcements = $query->orderBy('created_at', 'desc')->paginate(10);
-        
-        // Calculate total views
-        $totalViews = Announcement::where('author_id', $user->id)->sum('view_count');
-        
-        return view('announcements.my-announcements', compact('announcements', 'totalViews', 'user'));
+   /**
+ * Display user's own announcements
+ */
+public function myAnnouncements(Request $request): View
+{
+    $user = auth()->user();
+    $status = $request->get('status', 'all');
+    
+    // Get counts from database BEFORE applying status filter
+    $totalCount = Announcement::where('author_id', $user->id)->count();
+    $publishedCount = Announcement::where('author_id', $user->id)->where('status', 'published')->count();
+    $draftCount = Announcement::where('author_id', $user->id)->where('status', 'draft')->count();
+    $pendingCount = Announcement::where('author_id', $user->id)->where('status', 'pending_verification')->count();
+    $rejectedCount = Announcement::where('author_id', $user->id)->where('status', 'rejected')->count();
+    
+    // Then apply status filter for the paginated results
+    $query = Announcement::where('author_id', $user->id);
+    
+    if ($status !== 'all') {
+        $query->where('status', $status);
     }
-
+    
+    $announcements = $query->orderBy('created_at', 'desc')->paginate(10);
+    
+    // Calculate total views
+    $totalViews = 0;
+    if (Schema::hasColumn('announcements', 'view_count')) {
+        $totalViews = Announcement::where('author_id', $user->id)->sum('view_count');
+    }
+    
+    return view('announcements.my-announcements', compact(
+        'announcements', 
+        'totalViews', 
+        'user',
+        'totalCount',
+        'publishedCount',
+        'draftCount',
+        'pendingCount',
+        'rejectedCount'
+    ));
+}
     /**
      * APPROVE announcement (Admin & Staff)
      * Convert from pending_verification to published

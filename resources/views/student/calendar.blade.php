@@ -240,6 +240,16 @@
                 </li>
 
                 <li>
+                    <a href="{{ route('announcements.my-announcements') }}" 
+                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0">
+                            <i class="fas fa-file-alt w-5 h-5"></i>
+                        </div>
+                        <span class="sidebar-text ml-3">My Announcements</span>
+                    </a>
+                </li>
+
+                <li>
                     <a href="#" 
                        class="flex items-center p-3 rounded-lg bg-uthm-blue-light text-uthm-blue transition-colors">
                         <div class="shrink-0">

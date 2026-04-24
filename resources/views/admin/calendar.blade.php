@@ -288,45 +288,65 @@
         });
         
         // Load events from API
-        async function loadEvents() {
-            try {
-                const year = currentDate.getFullYear();
-                const month = currentDate.getMonth() + 1;
-                
-                console.log('Loading events for:', year, month);
-                
-                const response = await fetch(`/api/events?year=${year}&month=${month}`, {
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('API Response:', data);
-                    
-                    // Filter to only show public events
-                    if (Array.isArray(data)) {
-                        allEvents = data.filter(event => event.visibility === 'public');
-                    } else if (data.data && Array.isArray(data.data)) {
-                        allEvents = data.data.filter(event => event.visibility === 'public');
-                    } else {
-                        allEvents = [];
-                    }
-                    
-                    console.log('Public events:', allEvents);
-                    renderCalendar();
-                    loadUpcomingEvents();
-                } else {
-                    console.error('Failed to load events:', response.status);
+async function loadEvents() {
+    try {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth() + 1;
+        
+        console.log('Loading events for:', year, month);
+        
+        // Use the public events endpoint for admin
+        const response = await fetch(`/api/events/public/all?year=${year}&month=${month}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('API Response:', data);
+            
+            // The response should already be public events
+            if (Array.isArray(data)) {
+                allEvents = data;
+            } else if (data.data && Array.isArray(data.data)) {
+                allEvents = data.data;
+            } else {
+                allEvents = [];
+            }
+            
+            console.log('Public events:', allEvents);
+            renderCalendar();
+            loadUpcomingEvents();
+        } else {
+            console.error('Failed to load events:', response.status);
+            // Fallback to regular events endpoint
+            const fallbackResponse = await fetch(`/api/events?year=${year}&month=${month}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
-            } catch (error) {
-                console.error('Error loading events:', error);
-                showToast('Error loading events', true);
+            });
+            
+            if (fallbackResponse.ok) {
+                const fallbackData = await fallbackResponse.json();
+                if (Array.isArray(fallbackData)) {
+                    allEvents = fallbackData.filter(event => event.visibility === 'public');
+                } else if (fallbackData.data && Array.isArray(fallbackData.data)) {
+                    allEvents = fallbackData.data.filter(event => event.visibility === 'public');
+                } else {
+                    allEvents = [];
+                }
+                renderCalendar();
+                loadUpcomingEvents();
             }
         }
-        
+    } catch (error) {
+        console.error('Error loading events:', error);
+        showToast('Error loading events', true);
+    }
+}
         // Render calendar grid
         function renderCalendar() {
             const calendarGrid = document.getElementById('calendarGrid');
@@ -590,35 +610,73 @@
             }
         }
         
-        // Form submission
-        function setupFormSubmit() {
-            document.getElementById('eventForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const eventId = document.getElementById('eventId').value;
-                const isEdit = eventId && eventId !== '';
-                
-                const eventData = {
-                    title: document.getElementById('title').value,
-                    start_date: document.getElementById('startDate').value,
-                    end_date: document.getElementById('startDate').value,
-                    type: document.getElementById('type').value,
-                    location: document.getElementById('location').value,
-                    description: document.getElementById('description').value,
-                    all_day: true,
-                    visibility: 'public'
-                };
-                
-                try {
-                    await saveEvent(eventData, isEdit, eventId);
-                    closeModal();
-                    showToast(isEdit ? 'Event updated!' : 'Event created!');
-                    await loadEvents();
-                } catch (error) {
-                    showToast(error.message, true);
-                }
-            });
+       // Form submission - SIMPLIFIED
+function setupFormSubmit() {
+    const form = document.getElementById('eventForm');
+    if (!form) return;
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const eventId = document.getElementById('eventId').value;
+        const isEdit = eventId && eventId !== '';
+        
+        // Get form data manually
+        const formData = {
+            title: document.getElementById('title').value,
+            start_date: document.getElementById('startDate').value,
+            end_date: document.getElementById('startDate').value,
+            type: document.getElementById('type').value,
+            location: document.getElementById('location').value,
+            description: document.getElementById('description').value,
+            all_day: true
+            // DO NOT send visibility from frontend - let backend handle it
+        };
+        
+        console.log('Sending data:', formData);
+        
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="loading"></div> Saving...';
         }
+        
+        try {
+            const url = isEdit ? `/api/events/${eventId}` : '/api/events';
+            const method = isEdit ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            console.log('Server response:', result);
+            
+            if (!response.ok) {
+                throw new Error(result.message || 'Error saving event');
+            }
+            
+            closeModal();
+            showToast(isEdit ? 'Event updated!' : 'Event created!');
+            await loadEvents();
+            
+        } catch (error) {
+            console.error('Error:', error);
+            showToast(error.message, true);
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Save';
+            }
+        }
+    });
+}
         
         // Navigation
         function prevMonth() {

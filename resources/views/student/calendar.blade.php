@@ -696,6 +696,7 @@
             this.events = [];
             this.isLoading = false;
             this.currentView = 'month';
+            this.isSaving = false; // Add this line
         }
 
         async init() {
@@ -1253,54 +1254,66 @@
         }
 
         async saveEvent(formData) {
-            const eventId = formData.get('event_id');
-            const isEdit = eventId && eventId !== '';
-            
-            const data = {
-                title: formData.get('title'),
-                description: formData.get('description'),
-                start_date: formData.get('start_date'),
-                end_date: formData.get('end_date') || formData.get('start_date'),
-                start_time: formData.get('start_time'),
-                end_time: formData.get('end_time'),
-                location: formData.get('location'),
-                type: formData.get('type'),
-                all_day: !formData.get('start_time') && !formData.get('end_time'),
-                set_reminder: formData.get('set_reminder') === 'on'
-            };
-            
-            if (!data.title || !data.start_date || !data.type) {
-                throw new Error('Please fill in all required fields');
-            }
-            
-            const url = isEdit ? `/api/events/${eventId}` : '/api/events';
-            const method = isEdit ? 'PUT' : 'POST';
-            
-            console.log(`Saving event with ${method} to ${url}`, data);
-            
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-            
-            const result = await response.json();
-            
-            if (!response.ok) {
-                console.error('API Error:', result);
-                if (result.errors) {
-                    throw new Error(Object.values(result.errors).flat().join('\n'));
-                }
-                throw new Error(result.message || 'Error saving event');
-            }
-            
-            console.log('Event saved successfully:', result);
-            return result;
+    const eventId = formData.get('event_id');
+    const isEdit = eventId && eventId !== '';
+    
+    // Prevent double submission
+    if (this.isSaving) {
+        console.log('Already saving an event, please wait...');
+        throw new Error('Already saving, please wait');
+    }
+    
+    this.isSaving = true;
+    
+    try {
+        const data = {
+            title: formData.get('title'),
+            description: formData.get('description'),
+            start_date: formData.get('start_date'),
+            end_date: formData.get('end_date') || formData.get('start_date'),
+            start_time: formData.get('start_time'),
+            end_time: formData.get('end_time'),
+            location: formData.get('location'),
+            type: formData.get('type'),
+            all_day: !formData.get('start_time') && !formData.get('end_time'),
+            set_reminder: formData.get('set_reminder') === 'on'
+        };
+        
+        if (!data.title || !data.start_date || !data.type) {
+            throw new Error('Please fill in all required fields');
         }
+        
+        const url = isEdit ? `/api/events/${eventId}` : '/api/events';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        console.log(`Saving event with ${method} to ${url}`, data);
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            console.error('API Error:', result);
+            if (result.errors) {
+                throw new Error(Object.values(result.errors).flat().join('\n'));
+            }
+            throw new Error(result.message || 'Error saving event');
+        }
+        
+        console.log('Event saved successfully:', result);
+        return result;
+    } finally {
+        this.isSaving = false;
+    }
+}
 
         async deleteEvent(eventId) {
             const response = await fetch(`/api/events/${eventId}`, {
@@ -1526,49 +1539,51 @@
 
     // Global Functions
     function setupEventForm() {
-        const eventForm = document.getElementById('event-form');
-        
-        if (!eventForm) return;
-        
-        eventForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('save-event-btn');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
-            }
-            // In setupEventForm, after save:
-try {
-    const formData = new FormData(this);
-    await currentCalendar.saveEvent(formData);
+    const eventForm = document.getElementById('event-form');
     
-    closeEventModal();
-    await currentCalendar.init(); // This reloads everything including upcoming events
-    currentCalendar.showToast('Event saved successfully!');
-} catch (error) {
-    // handle error
-}
+    if (!eventForm) return;
+    
+    // Remove any existing listener to prevent duplicates
+    eventForm.removeEventListener('submit', formSubmitHandler);
+    
+    // Define the handler function
+    async function formSubmitHandler(e) {
+        e.preventDefault();
+        e.stopPropagation(); // Stop event propagation
+        
+        // Check if already submitting to prevent double submission
+        const submitBtn = document.getElementById('save-event-btn');
+        if (submitBtn && submitBtn.disabled) {
+            console.log('Already submitting, please wait...');
+            return;
+        }
+        
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+        }
+        
+        try {
+            const formData = new FormData(this);
+            await currentCalendar.saveEvent(formData);
             
-            try {
-                const formData = new FormData(this);
-                await currentCalendar.saveEvent(formData);
-                
-                closeEventModal();
-                await currentCalendar.init();
-                currentCalendar.showToast('Event saved successfully!');
-            } catch (error) {
-                console.error('Error saving event:', error);
-                currentCalendar.showToast(error.message || 'Error saving event. Please try again.', true);
-            } finally {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Save Event';
-                }
+            closeEventModal();
+            await currentCalendar.init();
+            currentCalendar.showToast('Event saved successfully!');
+        } catch (error) {
+            console.error('Error saving event:', error);
+            currentCalendar.showToast(error.message || 'Error saving event. Please try again.', true);
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Event';
             }
-        });
+        }
     }
-
+    
+    // Add the event listener
+    eventForm.addEventListener('submit', formSubmitHandler);
+}
     function openEventModal() {
         if (currentCalendar) {
             currentCalendar.openEventModal();

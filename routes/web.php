@@ -11,12 +11,13 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventController;
-use App\Http\Controllers\CommunityHubController; // Add this line
+use App\Http\Controllers\CommunityHubController;
 
 // Public Routes (No Auth Required)
 Route::get('/', function () {
     return view('welcome');
 });
+
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -311,6 +312,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'name' => auth()->user()->name
         ]);
     });
+    
 
     // ============================================
     // DEBUG ROUTES (Remove in production)

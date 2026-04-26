@@ -28,10 +28,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
-    'localmod' => [
-    'url' => env('LOCALMOD_URL', 'http://127.0.0.1:8000'),
-    'timeout' => (int) env('LOCALMOD_TIMEOUT', 10),
-],
+   'localmod' => [
+        'url' => env('LOCALMOD_URL', 'http://127.0.0.1:8000'),
+        'timeout' => (int) env('LOCALMOD_TIMEOUT', 10),
+    ],
 
     'slack' => [
         'notifications' => [

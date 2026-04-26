@@ -251,16 +251,14 @@
                     </a>
                 </li>
 
-                <!-- Events -->
-                <li>
-                    <a href="#" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                <!-- Community -->
+                <a href="{{ route('student.community-hub') }}" 
+                    class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
                         <div class="shrink-0">
-                            <i class="fas fa-calendar-check w-5 h-5"></i>
+                            <i class="fas fa-users w-5 h-5"></i>
                         </div>
-                        <span class="sidebar-text ml-3">Events</span>
-                    </a>
-                </li>
+                        <span class="sidebar-text ml-3">Community Hub</span>
+                </a>
 
                 
 

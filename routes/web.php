@@ -11,6 +11,7 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\CommunityHubController; // Add this line
 
 // Public Routes (No Auth Required)
 Route::get('/', function () {
@@ -108,20 +109,42 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('settings', compact('user'));
     })->name('settings');
 
-    // Student Dashboard & Calendar
+    // ============================================
+    // STUDENT ROUTES
+    // ============================================
+    
     Route::middleware('role:student')->group(function () {
+        // Student Dashboard
         Route::get('/student/dashboard', function () {
             $user = auth()->user();
             return view('student.dashboard', compact('user'));
         })->name('student.dashboard');
         
+        // Student Calendar
         Route::get('/student/calendar', function () {
             $user = auth()->user();
             return view('student.calendar', compact('user'));
         })->name('student.calendar');
+        
+        // Student Community Hub - Using Controller
+        Route::get('/student/community-hub', [CommunityHubController::class, 'index'])->name('student.community-hub');
+        Route::get('/student/community-hub/create', [CommunityHubController::class, 'create'])->name('student.community-hub.create');
+        Route::post('/student/community-hub/store', [CommunityHubController::class, 'store'])->name('student.community-hub.store');
+        Route::get('/student/community-hub/{id}', [CommunityHubController::class, 'show'])->name('student.community-hub.show');
+        Route::post('/student/community-hub/{id}/join', [CommunityHubController::class, 'join'])->name('student.community-hub.join');
+        Route::post('/student/community-hub/{id}/leave', [CommunityHubController::class, 'leave'])->name('student.community-hub.leave');
+        Route::put('/student/community-hub/{id}/settings', [CommunityHubController::class, 'updateSettings'])->name('student.community-hub.settings.update');
+        Route::delete('/student/community-hub/{groupId}/member/{userId}', [CommunityHubController::class, 'removeMember'])->name('student.community-hub.member.remove');
+        Route::post('/student/community-hub/{groupId}/join-request/{requestId}/approve', [CommunityHubController::class, 'approveJoinRequest'])->name('student.community-hub.join-request.approve');
+        Route::post('/student/community-hub/{groupId}/join-request/{requestId}/reject', [CommunityHubController::class, 'rejectJoinRequest'])->name('student.community-hub.join-request.reject');
+        Route::post('/student/community-hub/{groupId}/posts', [CommunityHubController::class, 'createPost'])->name('student.community-hub.post.create');
+        Route::delete('/student/community-hub/{groupId}/posts/{postId}', [CommunityHubController::class, 'deletePost'])->name('student.community-hub.post.delete');
     });
 
-    // Staff Dashboard & Calendar
+    // ============================================
+    // STAFF ROUTES
+    // ============================================
+    
     Route::middleware('role:staff')->group(function () {
         Route::get('/staff/dashboard', function () {
             $user = auth()->user();
@@ -132,9 +155,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $user = auth()->user();
             return view('staff.calendar', compact('user'));
         })->name('staff.calendar');
+        
+        // Staff Community Hub (optional - staff can also access community)
+        Route::get('/staff/community-hub', [CommunityHubController::class, 'index'])->name('staff.community-hub');
+        Route::get('/staff/community-hub/{id}', [CommunityHubController::class, 'show'])->name('staff.community-hub.show');
     });
 
-    // Club Dashboard & Calendar
+    // ============================================
+    // CLUB ADMIN ROUTES
+    // ============================================
+    
     Route::middleware('role:club_admin')->group(function () {
         Route::get('/club/dashboard', function () {
             $user = auth()->user();
@@ -145,9 +175,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $user = auth()->user();
             return view('club.calendar', compact('user'));
         })->name('club.calendar');
+        
+        // Club Community Hub
+        Route::get('/club/community-hub', [CommunityHubController::class, 'index'])->name('club.community-hub');
+        Route::get('/club/community-hub/{id}', [CommunityHubController::class, 'show'])->name('club.community-hub.show');
     });
 
-    // General Calendar Route
+    // ============================================
+    // GENERAL CALENDAR ROUTE (Role-based redirect)
+    // ============================================
+    
     Route::get('/calendar', function () {
         $user = auth()->user();
         
@@ -165,7 +202,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
     })->name('calendar');
 
+    // ============================================
+    // GENERAL COMMUNITY HUB ROUTE (Auto-detect role)
+    // ============================================
     
+    Route::get('/community-hub', function () {
+        $user = auth()->user();
+        
+        switch ($user->role) {
+            case 'admin':
+                return redirect()->route('admin.community-hub');
+            case 'staff':
+                return redirect()->route('staff.community-hub');
+            case 'club_admin':
+                return redirect()->route('club.community-hub');
+            case 'student':
+                return redirect()->route('student.community-hub');
+            default:
+                return redirect()->route('student.community-hub');
+        }
+    })->name('community-hub');
 
     // ============================================
     // ANNOUNCEMENT ROUTES
@@ -200,7 +256,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // ============================================
-    // ADMIN ROUTES (SINGLE DEFINITION)
+    // ADMIN ROUTES
     // ============================================
 
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
@@ -215,6 +271,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $user = auth()->user();
             return view('admin.calendar', compact('user'));
         })->name('calendar');
+        
+        // Admin Community Hub
+        Route::get('/community-hub', [CommunityHubController::class, 'index'])->name('community-hub');
+        Route::get('/community-hub/{id}', [CommunityHubController::class, 'show'])->name('community-hub.show');
         
         // Admin Moderation
         Route::get('/moderation', [AdminController::class, 'moderation'])->name('moderation');

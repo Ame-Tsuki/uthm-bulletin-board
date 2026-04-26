@@ -76,7 +76,7 @@
                         <i class="fas fa-tachometer-alt mr-3 text-gray-300"></i>
                         Dashboard
                     </a>
-                    <a href="{{ route('admin.users') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
+                    <a href="/admin/users" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-users mr-3 text-gray-300"></i>
                         User Management
                     </a>

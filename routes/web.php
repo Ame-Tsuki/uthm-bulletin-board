@@ -19,11 +19,9 @@ Route::get('/', function () {
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
-    // Login Routes
     Route::get('login', [CustomLoginController::class, 'showLoginForm'])->name('login');
     Route::post('login', [CustomLoginController::class, 'login']);
     
-    // Registration Routes
     Route::get('register', [CustomRegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('register', [CustomRegisterController::class, 'register']);
 });
@@ -53,9 +51,9 @@ Route::middleware('auth')->group(function () {
 
 // Authenticated Routes (Require Login)
 Route::middleware(['auth', 'verified'])->group(function () {
- // API Routes for Events
+    
+    // API Routes for Events
     Route::prefix('api')->group(function () {
-        // Regular event endpoints (personal + public)
         Route::get('/events', [EventController::class, 'index']);
         Route::post('/events', [EventController::class, 'store']);
         Route::put('/events/{event}', [EventController::class, 'update']);
@@ -63,7 +61,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/events/upcoming', [EventController::class, 'getUpcomingEvents']);
         Route::get('/events/statistics', [EventController::class, 'getStatistics']);
         
-        // Admin-only endpoints for managing public announcements
         Route::middleware('role:admin')->group(function () {
             Route::post('/events/public', [EventController::class, 'createPublicAnnouncement']);
             Route::get('/events/public/all', [EventController::class, 'getPublicEvents']);
@@ -77,12 +74,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         $user = auth()->user();
         
-        // Check if user is verified
         if (!$user->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
         }
         
-        // Redirect based on role
         switch ($user->role) {
             case 'admin':
                 return redirect()->route('admin.dashboard');
@@ -122,12 +117,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         Route::get('/student/calendar', function () {
             $user = auth()->user();
-            $events = [];
-            $academicYear = date('Y');
-            $currentMonth = date('n');
-            $currentYear = date('Y');
-            
-            return view('student.calendar', compact('user', 'events', 'academicYear', 'currentMonth', 'currentYear'));
+            return view('student.calendar', compact('user'));
         })->name('student.calendar');
     });
 
@@ -157,15 +147,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('club.calendar');
     });
 
-    // Admin Dashboard & Calendar
-    Route::middleware('role:admin')->group(function () {
-        Route::get('/admin/calendar', function () {
-            $user = auth()->user();
-            return view('admin.calendar', compact('user'));
-        })->name('admin.calendar');
-    });
-
-    // General Calendar Route (for all authenticated users)
+    // General Calendar Route
     Route::get('/calendar', function () {
         $user = auth()->user();
         
@@ -183,68 +165,97 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
     })->name('calendar');
 
+    
+
     // ============================================
     // ANNOUNCEMENT ROUTES
     // ============================================
     
-    // All announcement GET routes
+    Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
     Route::get('/announcements/published', [AnnouncementController::class, 'published'])->name('announcements.published');
     Route::get('/announcements/drafts', [AnnouncementController::class, 'drafts'])->name('announcements.drafts');
-    Route::get('/announcements/search', [AnnouncementController::class, 'search'])->name('announcements.search');
-    Route::get('/announcements/category/{category}', [AnnouncementController::class, 'filterByCategory'])->name('announcements.category');
-    Route::get('/announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
-    Route::get('/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit');
     Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
+    Route::get('/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit');
+    Route::get('/my-announcements', [AnnouncementController::class, 'myAnnouncements'])->name('announcements.my-announcements');
     
-    // My Announcements
-    Route::get('/my-announcements', [AnnouncementController::class, 'myAnnouncements'])
-        ->name('announcements.my-announcements');
-    
-    // Announcement POST/PUT/DELETE routes
     Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
     Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
     Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
     
-    // Announcement action routes
     Route::post('/announcements/{announcement}/archive', [AnnouncementController::class, 'archive'])->name('announcements.archive');
     Route::post('/announcements/{announcement}/publish', [AnnouncementController::class, 'publish'])->name('announcements.publish');
     Route::post('/announcements/{announcement}/toggle-official', [AnnouncementController::class, 'toggleOfficialStatus'])->name('announcements.toggle-official');
-    
-    // ============================================
-    // VERIFICATION ROUTES (ADMIN/STAFF ONLY)
-    // ============================================
-    
-    // Approval/Rejection routes for admin AND staff
-Route::middleware(['auth', 'verified'])->group(function () {
-    // Make sure these routes are defined BEFORE any wildcard routes like {id}
-    Route::patch('/announcements/{id}/approve', [AnnouncementController::class, 'approve'])->name('announcements.approve');
-    Route::patch('/announcements/{id}/reject', [AnnouncementController::class, 'reject'])->name('announcements.reject');
-    Route::get('/announcements/verification-queue', [AnnouncementController::class, 'verificationQueue'])->name('announcements.verification-queue');
-});
 
     // ============================================
-    // ADMIN ROUTES
+    // APPROVAL ROUTES (ADMIN/STAFF)
     // ============================================
     
+    Route::middleware('role:admin,staff')->group(function () {
+        Route::patch('/announcements/{id}/approve', [AnnouncementController::class, 'approve'])->name('announcements.approve');
+        Route::patch('/announcements/{id}/reject', [AnnouncementController::class, 'reject'])->name('announcements.reject');
+        Route::get('/announcements/verification-queue', [AnnouncementController::class, 'verificationQueue'])->name('announcements.verification-queue');
+        Route::get('/announcements/rejected', [AnnouncementController::class, 'rejected'])->name('announcements.rejected');
+        Route::post('/announcements/{id}/resubmit', [AnnouncementController::class, 'resubmit'])->name('announcements.resubmit');
+    });
+
+    // ============================================
+    // ADMIN ROUTES (SINGLE DEFINITION)
+    // ============================================
+
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
-        // Admin dashboard routes
+        // Admin Dashboard
         Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/recent-activity', [AdminController::class, 'getRecentActivity'])->name('recent-activity');
         Route::get('/statistics', [AdminController::class, 'getStatistics'])->name('statistics');
+        Route::get('/content-stats', [AdminController::class, 'getContentStats'])->name('content-stats');
         
-        // Admin user management routes
+        // Admin Calendar
+        Route::get('/calendar', function () {
+            $user = auth()->user();
+            return view('admin.calendar', compact('user'));
+        })->name('calendar');
+        
+        // Admin Moderation
+        Route::get('/moderation', [AdminController::class, 'moderation'])->name('moderation');
+        
+        // Admin Settings
+        Route::get('/settings', function () {
+            return view('admin.settings');
+        })->name('settings.index');
+        
+        // User Management Page View
+        Route::view('/users', 'admin.users')->name('users');
+        
+        // Admin User Management API Routes
         Route::prefix('users')->name('users.')->group(function () {
-            Route::get('/', [AdminController::class, 'getUsers'])->name('index');
-            Route::post('/', [AdminController::class, 'bulkAction'])->name('bulk-action');
+            Route::get('/list', [AdminController::class, 'getUsers'])->name('index');
+            Route::post('/bulk-action', [AdminController::class, 'bulkAction'])->name('bulk-action');
+            Route::post('/create', [AdminController::class, 'createUser'])->name('create');
             Route::get('/{id}', [AdminController::class, 'getUser'])->name('show');
             Route::put('/{id}', [AdminController::class, 'updateUser'])->name('update');
             Route::delete('/{id}', [AdminController::class, 'deleteUser'])->name('destroy');
             Route::patch('/{id}/toggle-verification', [AdminController::class, 'toggleUserVerification'])->name('toggle-verification');
+            Route::get('/statistics', [AdminController::class, 'getUserStatistics'])->name('statistics');
         });
     });
 
-    // Debug routes (remove in production)
+    // ============================================
+    // API ROUTES
+    // ============================================
+    
+    Route::get('/api/user/role', function () {
+        return response()->json([
+            'role' => auth()->user()->role,
+            'id' => auth()->id(),
+            'name' => auth()->user()->name
+        ]);
+    });
+
+    // ============================================
+    // DEBUG ROUTES (Remove in production)
+    // ============================================
+    
     Route::get('/debug/events', function () {
         $events = App\Models\Event::where('user_id', auth()->id())->get();
         return response()->json([
@@ -270,8 +281,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     });
 
-    // Health Check Route
     Route::get('/up', function () {
         return response()->json(['status' => 'ok']);
     });
-});
+    
+}); // End of authenticated routes group

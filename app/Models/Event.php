@@ -21,6 +21,7 @@ class Event extends Model
         'type',
         'all_day',
         'is_recurring',
+        'visibility',
         'recurrence_pattern',
         'color',
         'user_id'
@@ -35,11 +36,26 @@ class Event extends Model
         'is_recurring' => 'boolean',
     ];
 
+    /**
+     * Relationship to get the user who owns/created this event
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Alias for user() - for better readability
+     * Shows who created the event
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Get the CSS class for the event based on its type
+     */
     public function getEventClassAttribute()
     {
         $classes = [
@@ -48,12 +64,16 @@ class Event extends Model
             'exam' => 'bg-purple-100 text-purple-800',
             'social' => 'bg-green-100 text-green-800',
             'workshop' => 'bg-yellow-100 text-yellow-800',
+            'important' => 'bg-purple-100 text-purple-800',
             'other' => 'bg-gray-100 text-gray-800'
         ];
 
         return $classes[$this->type] ?? $classes['other'];
     }
 
+    /**
+     * Get the dot class for the event based on its type
+     */
     public function getDotClassAttribute()
     {
         $classes = [
@@ -62,9 +82,42 @@ class Event extends Model
             'exam' => 'event-exam',
             'social' => 'event-social',
             'workshop' => 'event-workshop',
+            'important' => 'event-important',
             'other' => 'bg-gray-400'
         ];
 
         return $classes[$this->type] ?? $classes['other'];
+    }
+
+    /**
+     * Check if the event was created by admin
+     */
+    public function isCreatedByAdmin(): bool
+    {
+        return $this->user && $this->user->role === 'admin';
+    }
+
+    /**
+     * Check if the event is public (visible to all users)
+     */
+    public function isPublic(): bool
+    {
+        return $this->visibility === 'public';
+    }
+
+    /**
+     * Get creator's name with role
+     */
+    public function getCreatorInfoAttribute(): string
+    {
+        if (!$this->user) {
+            return 'Unknown User';
+        }
+        
+        if ($this->user->role === 'admin') {
+            return 'Admin: ' . $this->user->name;
+        }
+        
+        return $this->user->name . ' (' . ucfirst($this->user->role) . ')';
     }
 }

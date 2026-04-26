@@ -231,6 +231,8 @@
                         <option value="lecture">Lecture</option>
                         <option value="deadline">Deadline</option>
                         <option value="exam">Exam</option>
+                        <option value="social">Social Event</option>
+                        <option value="workshop">Workshop</option>
                     </select>
                 </div>
                 
@@ -279,7 +281,7 @@
         
         // Load everything on page load
         document.addEventListener('DOMContentLoaded', function() {
-            loadEvents();
+            loadAllData();
             setupFormSubmit();
             
             // Set default date for modal
@@ -287,66 +289,52 @@
             document.getElementById('startDate').value = today;
         });
         
+        // Load all data
+        async function loadAllData() {
+            await loadEvents();
+            await loadUpcomingEvents();
+        }
+        
         // Load events from API
-async function loadEvents() {
-    try {
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth() + 1;
-        
-        console.log('Loading events for:', year, month);
-        
-        // Use the public events endpoint for admin
-        const response = await fetch(`/api/events/public/all?year=${year}&month=${month}`, {
-            headers: {
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            console.log('API Response:', data);
-            
-            // The response should already be public events
-            if (Array.isArray(data)) {
-                allEvents = data;
-            } else if (data.data && Array.isArray(data.data)) {
-                allEvents = data.data;
-            } else {
-                allEvents = [];
-            }
-            
-            console.log('Public events:', allEvents);
-            renderCalendar();
-            loadUpcomingEvents();
-        } else {
-            console.error('Failed to load events:', response.status);
-            // Fallback to regular events endpoint
-            const fallbackResponse = await fetch(`/api/events?year=${year}&month=${month}`, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            });
-            
-            if (fallbackResponse.ok) {
-                const fallbackData = await fallbackResponse.json();
-                if (Array.isArray(fallbackData)) {
-                    allEvents = fallbackData.filter(event => event.visibility === 'public');
-                } else if (fallbackData.data && Array.isArray(fallbackData.data)) {
-                    allEvents = fallbackData.data.filter(event => event.visibility === 'public');
+        async function loadEvents() {
+            try {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth() + 1;
+                
+                console.log('Loading events for:', year, month);
+                
+                // Use the regular events endpoint and filter for public events
+                const response = await fetch(`/api/events?year=${year}&month=${month}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('API Response for calendar:', data);
+                    
+                    // Filter to only show public events
+                    if (Array.isArray(data)) {
+                        allEvents = data.filter(event => event.visibility === 'public');
+                    } else if (data.data && Array.isArray(data.data)) {
+                        allEvents = data.data.filter(event => event.visibility === 'public');
+                    } else {
+                        allEvents = [];
+                    }
+                    
+                    console.log('Public events for calendar:', allEvents.length);
+                    renderCalendar();
                 } else {
-                    allEvents = [];
+                    console.error('Failed to load events:', response.status);
                 }
-                renderCalendar();
-                loadUpcomingEvents();
+            } catch (error) {
+                console.error('Error loading events:', error);
+                showToast('Error loading events', true);
             }
         }
-    } catch (error) {
-        console.error('Error loading events:', error);
-        showToast('Error loading events', true);
-    }
-}
+        
         // Render calendar grid
         function renderCalendar() {
             const calendarGrid = document.getElementById('calendarGrid');
@@ -421,9 +409,11 @@ async function loadEvents() {
             return cell;
         }
         
-        // Load upcoming events
+        // Load upcoming events - FIXED to properly refresh
         async function loadUpcomingEvents() {
             try {
+                console.log('Loading upcoming events...');
+                
                 const response = await fetch('/api/events/upcoming', {
                     headers: {
                         'Accept': 'application/json',
@@ -435,6 +425,8 @@ async function loadEvents() {
                 
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Upcoming events API response:', data);
+                    
                     let eventsArray = [];
                     
                     if (Array.isArray(data)) {
@@ -445,6 +437,8 @@ async function loadEvents() {
                     
                     // Filter to only public events
                     const publicEvents = eventsArray.filter(e => e.visibility === 'public');
+                    
+                    console.log('Public upcoming events count:', publicEvents.length);
                     
                     if (publicEvents.length === 0) {
                         container.innerHTML = '<div class="p-8 text-center text-gray-500">No upcoming important dates</div>';
@@ -463,6 +457,7 @@ async function loadEvents() {
                                     <h4 class="font-semibold">${escapeHtml(event.title)}</h4>
                                     <p class="text-sm text-gray-600">${eventDate.toLocaleDateString()}</p>
                                     ${event.location ? `<p class="text-xs text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i>${escapeHtml(event.location)}</p>` : ''}
+                                    <span class="inline-block mt-1 text-xs text-purple-600"><i class="fas fa-globe mr-1"></i> Visible to all users</span>
                                 </div>
                                 <div class="flex space-x-2">
                                     <button onclick="event.stopPropagation(); editEvent(${event.id})" class="text-blue-500 hover:text-blue-700">
@@ -476,6 +471,8 @@ async function loadEvents() {
                         `;
                         container.appendChild(div);
                     });
+                } else {
+                    console.error('Failed to load upcoming events:', response.status);
                 }
             } catch (error) {
                 console.error('Error loading upcoming events:', error);
@@ -486,6 +483,8 @@ async function loadEvents() {
         async function saveEvent(eventData, isEdit = false, eventId = null) {
             const url = isEdit ? `/api/events/${eventId}` : '/api/events';
             const method = isEdit ? 'PUT' : 'POST';
+            
+            console.log('Saving event:', { url, method, eventData });
             
             const response = await fetch(url, {
                 method: method,
@@ -500,9 +499,10 @@ async function loadEvents() {
             const result = await response.json();
             
             if (!response.ok) {
-                throw new Error(result.message || 'Error saving event');
+                throw new Error(result.message || result.error || 'Error saving event');
             }
             
+            console.log('Save response:', result);
             return result;
         }
         
@@ -524,33 +524,44 @@ async function loadEvents() {
             return true;
         }
         
-        // Show event details
         function showEventDetails(event) {
-            const modal = document.createElement('div');
-            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            modal.innerHTML = `
-                <div class="bg-white rounded-lg max-w-md w-full mx-4 p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-bold">${escapeHtml(event.title)}</h3>
-                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="space-y-2">
-                        <p><i class="far fa-calendar mr-2"></i> ${new Date(event.start_date).toLocaleDateString()}</p>
-                        ${event.location ? `<p><i class="fas fa-map-marker-alt mr-2"></i> ${escapeHtml(event.location)}</p>` : ''}
-                        ${event.description ? `<p class="mt-4 pt-4 border-t">${escapeHtml(event.description)}</p>` : ''}
-                        <p class="mt-2 text-xs text-purple-600"><i class="fas fa-globe mr-1"></i> Visible to all users</p>
-                    </div>
-                    <div class="flex justify-end space-x-2 mt-6 pt-4 border-t">
-                        <button onclick="editEvent(${event.id}); this.closest('.fixed').remove()" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Edit</button>
-                        <button onclick="openDeleteModal(${event.id}); this.closest('.fixed').remove()" class="px-4 py-2 bg-red-500 text-white rounded-lg">Delete</button>
-                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border rounded-lg">Close</button>
-                    </div>
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg max-w-md w-full mx-4 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center">
+                    <h3 class="text-xl font-bold">${escapeHtml(event.title)}</h3>
+                    <span class="ml-2 px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">
+                        <i class="fas fa-globe mr-1"></i> Public
+                    </span>
                 </div>
-            `;
-            document.body.appendChild(modal);
-        }
+                <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-2">
+                <p><i class="far fa-calendar mr-2"></i> ${new Date(event.start_date).toLocaleDateString()}</p>
+                ${event.location ? `<p><i class="fas fa-map-marker-alt mr-2"></i> ${escapeHtml(event.location)}</p>` : ''}
+                ${event.description ? `<p class="mt-4 pt-4 border-t">${escapeHtml(event.description)}</p>` : ''}
+                <div class="mt-4 pt-4 border-t">
+                    <p class="text-sm text-gray-500">
+                        <i class="fas fa-user-circle mr-2"></i> 
+                        Created by: <span class="font-medium text-gray-700">${event.created_by?.name || 'Unknown'}</span>
+                        <span class="ml-1 text-xs">(${event.created_by?.role || 'User'})</span>
+                    </p>
+                    <p class="text-xs text-gray-400 mt-1">Created on: ${new Date(event.created_at).toLocaleString()}</p>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6 pt-4 border-t">
+                <button onclick="editEvent(${event.id}); this.closest('.fixed').remove()" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Edit</button>
+                <button onclick="openDeleteModal(${event.id}); this.closest('.fixed').remove()" class="px-4 py-2 bg-red-500 text-white rounded-lg">Delete</button>
+                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border rounded-lg">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
         
         // Open modal for new event
         function openEventModal() {
@@ -570,13 +581,17 @@ async function loadEvents() {
         // Edit existing event
         function editEvent(eventId) {
             const event = allEvents.find(e => e.id === eventId);
-            if (!event) return;
+            if (!event) {
+                console.error('Event not found:', eventId);
+                showToast('Event not found', true);
+                return;
+            }
             
             document.getElementById('modalTitle').textContent = 'Edit Important Date';
             document.getElementById('eventId').value = event.id;
             document.getElementById('title').value = event.title;
             document.getElementById('startDate').value = event.start_date;
-            document.getElementById('type').value = event.type;
+            document.getElementById('type').value = event.type || 'important';
             document.getElementById('location').value = event.location || '';
             document.getElementById('description').value = event.description || '';
             
@@ -600,98 +615,96 @@ async function loadEvents() {
         async function confirmDelete() {
             if (!deleteEventId) return;
             
+            const confirmBtn = document.querySelector('#deleteModal button:last-child');
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<div class="loading"></div> Deleting...';
+            }
+            
             try {
                 await deleteEvent(deleteEventId);
                 closeDeleteModal();
                 showToast('Event deleted successfully!');
-                await loadEvents();
+                // Refresh all data after delete
+                await loadAllData();
             } catch (error) {
+                console.error('Delete error:', error);
                 showToast(error.message, true);
+            } finally {
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = 'Delete';
+                }
             }
         }
         
-       // Form submission - SIMPLIFIED
-function setupFormSubmit() {
-    const form = document.getElementById('eventForm');
-    if (!form) return;
-    
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const eventId = document.getElementById('eventId').value;
-        const isEdit = eventId && eventId !== '';
-        
-        // Get form data manually
-        const formData = {
-            title: document.getElementById('title').value,
-            start_date: document.getElementById('startDate').value,
-            end_date: document.getElementById('startDate').value,
-            type: document.getElementById('type').value,
-            location: document.getElementById('location').value,
-            description: document.getElementById('description').value,
-            all_day: true
-            // DO NOT send visibility from frontend - let backend handle it
-        };
-        
-        console.log('Sending data:', formData);
-        
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<div class="loading"></div> Saving...';
-        }
-        
-        try {
-            const url = isEdit ? `/api/events/${eventId}` : '/api/events';
-            const method = isEdit ? 'PUT' : 'POST';
+        // Form submission - FIXED to refresh both calendar and upcoming events
+        function setupFormSubmit() {
+            const form = document.getElementById('eventForm');
+            if (!form) return;
             
-            const response = await fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify(formData)
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const eventId = document.getElementById('eventId').value;
+                const isEdit = eventId && eventId !== '';
+                
+                const formData = {
+                    title: document.getElementById('title').value,
+                    start_date: document.getElementById('startDate').value,
+                    end_date: document.getElementById('startDate').value,
+                    type: document.getElementById('type').value,
+                    location: document.getElementById('location').value,
+                    description: document.getElementById('description').value,
+                    all_day: true,
+                    visibility: 'public'  // Explicitly send public visibility
+                };
+                
+                console.log('Submitting event data:', formData);
+                
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<div class="loading"></div> Saving...';
+                }
+                
+                try {
+                    const result = await saveEvent(formData, isEdit, eventId);
+                    console.log('Save result:', result);
+                    closeModal();
+                    
+                    const successMessage = isEdit ? 'Event updated successfully! Visible to all users.' : 'Event posted to all users successfully!';
+                    showToast(successMessage);
+                    
+                    // IMPORTANT: Refresh both calendar and upcoming events
+                    await loadAllData();
+                    
+                } catch (error) {
+                    console.error('Save error:', error);
+                    showToast(error.message, true);
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Save';
+                    }
+                }
             });
-            
-            const result = await response.json();
-            console.log('Server response:', result);
-            
-            if (!response.ok) {
-                throw new Error(result.message || 'Error saving event');
-            }
-            
-            closeModal();
-            showToast(isEdit ? 'Event updated!' : 'Event created!');
-            await loadEvents();
-            
-        } catch (error) {
-            console.error('Error:', error);
-            showToast(error.message, true);
-        } finally {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = 'Save';
-            }
         }
-    });
-}
         
         // Navigation
         function prevMonth() {
             currentDate.setMonth(currentDate.getMonth() - 1);
-            loadEvents();
+            loadAllData();
         }
         
         function nextMonth() {
             currentDate.setMonth(currentDate.getMonth() + 1);
-            loadEvents();
+            loadAllData();
         }
         
         function goToToday() {
             currentDate = new Date();
-            loadEvents();
+            loadAllData();
         }
         
         // UI Helpers
@@ -704,9 +717,13 @@ function setupFormSubmit() {
             if (isError) {
                 toastDiv.classList.remove('bg-green-500');
                 toastDiv.classList.add('bg-red-500');
+                toastDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i><span id="toastMessage"></span>';
+                document.getElementById('toastMessage').textContent = message;
             } else {
                 toastDiv.classList.remove('bg-red-500');
                 toastDiv.classList.add('bg-green-500');
+                toastDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i><span id="toastMessage"></span>';
+                document.getElementById('toastMessage').textContent = message;
             }
             
             toast.classList.remove('hidden');

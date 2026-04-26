@@ -10,51 +10,52 @@ use Illuminate\Support\Facades\Log;
 
 class EventController extends Controller
 {
-    /**
-     * Get events for the authenticated user (personal + public events)
-     * Public events are admin announcements visible to everyone
-     */
-    public function index(Request $request)
-    {
-        $user = Auth::user();
-        
-        $year = $request->get('year', date('Y'));
-        $month = $request->get('month', date('n'));
-        
-        if ($user->role === 'admin') {
-            // Admin sees all public events
-            $events = Event::where('visibility', 'public')
-                ->where(function($q) use ($year, $month) {
-                    $q->whereYear('start_date', $year)->whereMonth('start_date', $month)
-                      ->orWhereYear('end_date', $year)->whereMonth('end_date', $month);
-                })
-                ->orderBy('start_date')
-                ->orderBy('start_time')
-                ->get();
-        } else {
-            // Regular users: their private events + public events
-            $events = Event::where(function($query) use ($user, $year, $month) {
-                    $query->where('user_id', $user->id)
-                        ->where('visibility', 'private')
-                        ->where(function($q) use ($year, $month) {
-                            $q->whereYear('start_date', $year)->whereMonth('start_date', $month)
-                              ->orWhereYear('end_date', $year)->whereMonth('end_date', $month);
-                        });
-                })
-                ->orWhere(function($query) use ($year, $month) {
-                    $query->where('visibility', 'public')
-                        ->where(function($q) use ($year, $month) {
-                            $q->whereYear('start_date', $year)->whereMonth('start_date', $month)
-                              ->orWhereYear('end_date', $year)->whereMonth('end_date', $month);
-                        });
-                })
-                ->orderBy('start_date')
-                ->orderBy('start_time')
-                ->get();
-        }
-        
-        return response()->json($events);
+ /**
+ * Get events for the authenticated user (personal + public events)
+ */
+public function index(Request $request)
+{
+    $user = Auth::user();
+    
+    $year = $request->get('year', date('Y'));
+    $month = $request->get('month', date('n'));
+    
+    if ($user->role === 'admin') {
+        // Admin sees all public events
+        $events = Event::with('creator')
+            ->where('visibility', 'public')
+            ->where(function($q) use ($year, $month) {
+                $q->whereYear('start_date', $year)->whereMonth('start_date', $month)
+                  ->orWhereYear('end_date', $year)->whereMonth('end_date', $month);
+            })
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
+            ->get();
+    } else {
+        // Regular users: their private events + public events
+        $events = Event::with('creator')
+            ->where(function($query) use ($user, $year, $month) {
+                $query->where('user_id', $user->id)
+                    ->where('visibility', 'private')
+                    ->where(function($q) use ($year, $month) {
+                        $q->whereYear('start_date', $year)->whereMonth('start_date', $month)
+                          ->orWhereYear('end_date', $year)->whereMonth('end_date', $month);
+                    });
+            })
+            ->orWhere(function($query) use ($year, $month) {
+                $query->where('visibility', 'public')
+                    ->where(function($q) use ($year, $month) {
+                        $q->whereYear('start_date', $year)->whereMonth('start_date', $month)
+                          ->orWhereYear('end_date', $year)->whereMonth('end_date', $month);
+                    });
+            })
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
+            ->get();
     }
+    
+    return response()->json($events);
+}
 
     /**
  * Store a new event (personal for users, public for admin)
@@ -63,9 +64,9 @@ public function store(Request $request)
 {
     $user = Auth::user();
     
-    Log::info('=== STORE METHOD CALLED ===');
+    // Debug: Log the incoming request
+    Log::info('Event store request:', $request->all());
     Log::info('User role: ' . $user->role);
-    Log::info('Request data:', $request->all());
     
     $validator = Validator::make($request->all(), [
         'title' => 'required|string|max:255',
@@ -81,6 +82,7 @@ public function store(Request $request)
     ]);
 
     if ($validator->fails()) {
+        Log::error('Validation failed:', $validator->errors()->toArray());
         return response()->json([
             'success' => false,
             'errors' => $validator->errors()
@@ -88,12 +90,16 @@ public function store(Request $request)
     }
 
     try {
-        // CRITICAL: Set visibility based on user role
-        $visibility = 'private';  // Default
+        // FORCE visibility: If user is admin, ALWAYS set to 'public'
+        // This overrides anything sent from the frontend
+        $visibility = 'private';
         
-        // Admin ALWAYS gets public visibility - NO CONDITIONS
         if ($user->role === 'admin') {
             $visibility = 'public';
+            Log::info('Admin user detected - FORCING visibility to PUBLIC');
+        } else {
+            // Non-admin users always get private
+            $visibility = 'private';
         }
         
         $eventData = [
@@ -106,15 +112,15 @@ public function store(Request $request)
             'location' => $request->location,
             'type' => $request->type,
             'all_day' => $request->boolean('all_day') ?? false,
-            'visibility' => $visibility,  // 'public' for admin, 'private' for others
-            'user_id' => $user->id
+            'visibility' => $visibility,  // This will be 'public' for admin
+            'user_id' => Auth::id()
         ];
 
-        Log::info('Final event data:', $eventData);
+        Log::info('Creating event with data:', $eventData);
         
         $event = Event::create($eventData);
         
-        Log::info('Event saved with ID: ' . $event->id . ', Visibility: ' . $event->visibility);
+        Log::info('Event created successfully. ID: ' . $event->id . ', Visibility: ' . $event->visibility);
 
         $message = ($visibility === 'public') 
             ? 'Important date posted to all users successfully!' 
@@ -230,86 +236,138 @@ public function store(Request $request)
         ]);
     }
 
-    /**
-     * Get upcoming events (personal + public)
-     */
-    public function getUpcomingEvents(Request $request)
-    {
-        $user = Auth::user();
-        $limit = $request->get('limit', 10);
-        
-        // For admin, return ALL public events (including ones they posted)
-        // For regular users, return public events + their private events
-        $events = Event::where('visibility', 'public')
-            ->where('start_date', '>=', now()->toDateString())
+  /**
+ * Get upcoming events (personal + public)
+ */
+public function getUpcomingEvents(Request $request)
+{
+    $user = Auth::user();
+    $limit = $request->get('limit', 10);
+    
+    if ($user->role === 'admin') {
+        // Admin sees all public events (including today and future)
+        $events = Event::with('creator')
+            ->where('visibility', 'public')
+            ->where('start_date', '>=', now()->startOfDay()->toDateString())
             ->orderBy('start_date', 'asc')
             ->orderBy('start_time', 'asc')
             ->limit($limit)
             ->get();
-        
-        Log::info('Upcoming public events count: ' . $events->count());
-        
-        return response()->json($events);
+    } else {
+        // Regular users see their private events + public events (today and future)
+        $events = Event::with('creator')
+            ->where(function($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->where('visibility', 'private');
+            })
+            ->orWhere(function($query) {
+                $query->where('visibility', 'public');
+            })
+            ->where('start_date', '>=', now()->startOfDay()->toDateString())
+            ->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
+            ->limit($limit)
+            ->get();
     }
-
-    /**
-     * Get event statistics
-     */
-    public function getStatistics(Request $request)
-    {
-        $user = Auth::user();
-        
-        if ($user->role === 'admin') {
-            // Admin statistics for public events
-            $total = Event::where('visibility', 'public')->count();
-            
-            $currentMonth = date('n');
-            $currentYear = date('Y');
-            $thisMonth = Event::where('visibility', 'public')
-                ->whereMonth('start_date', $currentMonth)
-                ->whereYear('start_date', $currentYear)
-                ->count();
-            
-            $upcoming = Event::where('visibility', 'public')
-                ->where('start_date', '>=', now()->toDateString())
-                ->count();
-            
-            return response()->json([
-                'total' => $total,
-                'this_month' => $thisMonth,
-                'upcoming' => $upcoming
-            ]);
-        } else {
-            // Regular users see their private event statistics
-            $currentMonth = date('n');
-            $currentYear = date('Y');
-            
-            $lectures = Event::where('user_id', $user->id)
-                ->where('visibility', 'private')
-                ->where('type', 'lecture')
-                ->whereMonth('start_date', $currentMonth)
-                ->whereYear('start_date', $currentYear)
-                ->count();
-
-            $deadlines = Event::where('user_id', $user->id)
-                ->where('visibility', 'private')
-                ->where('type', 'deadline')
-                ->where('start_date', '>=', now()->toDateString())
-                ->count();
-
-            $exams = Event::where('user_id', $user->id)
-                ->where('visibility', 'private')
-                ->where('type', 'exam')
-                ->where('start_date', '>=', now()->toDateString())
-                ->count();
-
-            return response()->json([
-                'lectures' => $lectures,
-                'deadlines' => $deadlines,
-                'exams' => $exams
-            ]);
-        }
+    
+    // Log for debugging
+    \Log::info('Upcoming events count: ' . $events->count());
+    foreach ($events as $event) {
+        \Log::info('Event: ' . $event->title . ' - Date: ' . $event->start_date . ' - Visibility: ' . $event->visibility);
     }
+    
+    return response()->json($events);
+}
+
+/**
+ * Get event statistics
+ */
+public function getStatistics(Request $request)
+{
+    $user = Auth::user();
+    
+    if ($user->role === 'admin') {
+        // Admin statistics for public events
+        $total = Event::where('visibility', 'public')->count();
+        
+        $currentMonth = date('n');
+        $currentYear = date('Y');
+        $thisMonth = Event::where('visibility', 'public')
+            ->whereMonth('start_date', $currentMonth)
+            ->whereYear('start_date', $currentYear)
+            ->count();
+        
+        $upcoming = Event::where('visibility', 'public')
+            ->where('start_date', '>=', now()->toDateString())
+            ->count();
+        
+        return response()->json([
+            'total' => $total,
+            'this_month' => $thisMonth,
+            'upcoming' => $upcoming
+        ]);
+    } else {
+        // Regular users: Count BOTH their private events AND public events from admin
+        $currentMonth = date('n');
+        $currentYear = date('Y');
+        
+        // Count lectures (user's private + public events)
+        $lectures = Event::where(function($query) use ($user, $currentMonth, $currentYear) {
+                // User's own private lectures
+                $query->where('user_id', $user->id)
+                    ->where('visibility', 'private')
+                    ->where('type', 'lecture')
+                    ->whereMonth('start_date', $currentMonth)
+                    ->whereYear('start_date', $currentYear);
+            })
+            ->orWhere(function($query) use ($currentMonth, $currentYear) {
+                // Public lectures from admin
+                $query->where('visibility', 'public')
+                    ->where('type', 'lecture')
+                    ->whereMonth('start_date', $currentMonth)
+                    ->whereYear('start_date', $currentYear);
+            })
+            ->count();
+
+        // Count deadlines (user's private + public events)
+        $deadlines = Event::where(function($query) use ($user) {
+                // User's own private deadlines
+                $query->where('user_id', $user->id)
+                    ->where('visibility', 'private')
+                    ->where('type', 'deadline')
+                    ->where('start_date', '>=', now()->toDateString());
+            })
+            ->orWhere(function($query) {
+                // Public deadlines from admin
+                $query->where('visibility', 'public')
+                    ->where('type', 'deadline')
+                    ->where('start_date', '>=', now()->toDateString());
+            })
+            ->count();
+
+        // Count exams (user's private + public events)
+        $exams = Event::where(function($query) use ($user) {
+                // User's own private exams
+                $query->where('user_id', $user->id)
+                    ->where('visibility', 'private')
+                    ->where('type', 'exam')
+                    ->where('start_date', '>=', now()->toDateString());
+            })
+            ->orWhere(function($query) {
+                // Public exams from admin
+                $query->where('visibility', 'public')
+                    ->where('type', 'exam')
+                    ->where('start_date', '>=', now()->toDateString());
+            })
+            ->count();
+
+        return response()->json([
+            'lectures' => $lectures,
+            'deadlines' => $deadlines,
+            'exams' => $exams
+        ]);
+    }
+}
 
     /**
      * Admin: Create public announcement for all users

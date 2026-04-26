@@ -785,25 +785,41 @@
             if (catWorkshops) catWorkshops.textContent = counts.workshop;
         }
 
-        async loadUpcomingEvents() {
-            try {
-                const response = await fetch('/api/events/upcoming', {
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    this.renderUpcomingEvents(data);
-                }
-            } catch (error) {
-                console.error('Error loading upcoming events:', error);
+       async loadUpcomingEvents() {
+    try {
+        // Add a timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/events/upcoming?_=${timestamp}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Upcoming events API response:', data);
+            
+            let eventsArray = [];
+            if (Array.isArray(data)) {
+                eventsArray = data;
+            } else if (data.data && Array.isArray(data.data)) {
+                eventsArray = data.data;
+            }
+            
+            // Debug: Log each event's date
+            eventsArray.forEach(event => {
+                console.log(`Event: ${event.title}, Date: ${event.start_date}, Visibility: ${event.visibility}`);
+            });
+            
+            this.renderUpcomingEvents(eventsArray);
         }
-
+    } catch (error) {
+        console.error('Error loading upcoming events:', error);
+        this.renderUpcomingEvents([]);
+    }
+}
         async loadStatistics() {
             try {
                 const response = await fetch('/api/events/statistics', {
@@ -824,88 +840,106 @@
         }
 
         renderCalendar() {
-            const monthYear = document.getElementById('current-month-year');
-            const calendarGrid = document.getElementById('calendar-grid');
+    const monthYear = document.getElementById('current-month-year');
+    const calendarGrid = document.getElementById('calendar-grid');
+    
+    if (!calendarGrid) return;
+    
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+    if (monthYear) {
+        monthYear.textContent = `${monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
+    }
+    
+    calendarGrid.innerHTML = '';
+    
+    const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
+    const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
+    const totalDays = lastDay.getDate();
+    const startingDay = firstDay.getDay();
+    
+    const prevMonthLastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 0).getDate();
+    for (let i = 0; i < startingDay; i++) {
+        const day = prevMonthLastDay - startingDay + i + 1;
+        const cell = this.createDayCell(day, 'other-month');
+        calendarGrid.appendChild(cell);
+    }
+    
+    const today = new Date();
+    for (let day = 1; day <= totalDays; day++) {
+        const cellDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), day);
+        const isToday = cellDate.toDateString() === today.toDateString();
+        const cell = this.createDayCell(day, isToday ? 'today' : '');
+        
+        const dayEvents = this.events.filter(event => {
+            const eventDate = new Date(event.start_date || event.start);
+            return eventDate.getDate() === day && 
+                   eventDate.getMonth() === this.currentDate.getMonth() &&
+                   eventDate.getFullYear() === this.currentDate.getFullYear();
+        });
+        
+        if (dayEvents.length > 0) {
+            const eventsContainer = document.createElement('div');
+            eventsContainer.className = 'mt-2 space-y-1';
             
-            if (!calendarGrid) return;
-            
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December'];
-            if (monthYear) {
-                monthYear.textContent = `${monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
-            }
-            
-            calendarGrid.innerHTML = '';
-            
-            const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
-            const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
-            const totalDays = lastDay.getDate();
-            const startingDay = firstDay.getDay();
-            
-            const prevMonthLastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 0).getDate();
-            for (let i = 0; i < startingDay; i++) {
-                const day = prevMonthLastDay - startingDay + i + 1;
-                const cell = this.createDayCell(day, 'other-month');
-                calendarGrid.appendChild(cell);
-            }
-            
-            const today = new Date();
-            for (let day = 1; day <= totalDays; day++) {
-                const cellDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), day);
-                const isToday = cellDate.toDateString() === today.toDateString();
-                const cell = this.createDayCell(day, isToday ? 'today' : '');
+            dayEvents.slice(0, 3).forEach(event => {
+                const eventEl = document.createElement('div');
+                const eventType = event.type || event.event_type;
+                const isPublic = event.visibility === 'public';
+                const createdByName = event.created_by?.name || 'Unknown';
+                const createdByRole = event.created_by?.role || '';
+                const isCurrentUser = event.created_by?.id === {{ Auth::id() }};
                 
-                const dayEvents = this.events.filter(event => {
-                    const eventDate = new Date(event.start_date || event.start);
-                    return eventDate.getDate() === day && 
-                           eventDate.getMonth() === this.currentDate.getMonth() &&
-                           eventDate.getFullYear() === this.currentDate.getFullYear();
-                });
-                
-                if (dayEvents.length > 0) {
-                    const eventsContainer = document.createElement('div');
-                    eventsContainer.className = 'mt-2 space-y-1';
-                    
-                    dayEvents.slice(0, 3).forEach(event => {
-                        const eventEl = document.createElement('div');
-                        const eventType = event.type || event.event_type;
-                        eventEl.className = `text-xs p-1 rounded truncate cursor-pointer hover:opacity-90 ${this.getEventClass(eventType)}`;
-                        eventEl.textContent = event.title;
-                        eventEl.title = `${event.title}\nType: ${eventType}\n${event.location ? 'Location: ' + event.location + '\n' : ''}${event.description || ''}`;
-                        eventEl.onclick = (e) => {
-                            e.stopPropagation();
-                            this.showEventDetails(event);
-                        };
-                        eventsContainer.appendChild(eventEl);
-                    });
-                    
-                    if (dayEvents.length > 3) {
-                        const moreEl = document.createElement('div');
-                        moreEl.className = 'text-xs text-gray-500 cursor-pointer hover:text-uthm-blue';
-                        moreEl.textContent = `+${dayEvents.length - 3} more`;
-                        moreEl.onclick = (e) => {
-                            e.stopPropagation();
-                            this.showDayEvents(dayEvents);
-                        };
-                        eventsContainer.appendChild(moreEl);
-                    }
-                    
-                    const dayEventsDiv = cell.querySelector('.day-events');
-                    if (dayEventsDiv) {
-                        dayEventsDiv.appendChild(eventsContainer);
-                    }
+                // Build creator info for tooltip
+                let creatorInfo = '';
+                if (isPublic) {
+                    creatorInfo = '📢 Posted by Admin';
+                } else if (isCurrentUser) {
+                    creatorInfo = '👤 Created by You';
+                } else if (event.created_by) {
+                    creatorInfo = `👤 Created by ${createdByName} (${createdByRole})`;
+                } else {
+                    creatorInfo = '👤 Creator unknown';
                 }
                 
-                calendarGrid.appendChild(cell);
+                eventEl.className = `text-xs p-1 rounded truncate cursor-pointer hover:opacity-90 ${this.getEventClass(eventType)}`;
+                eventEl.textContent = event.title;
+                eventEl.title = `${event.title}\nType: ${eventType}\n${creatorInfo}\n${event.location ? 'Location: ' + event.location + '\n' : ''}${event.description || ''}`;
+                eventEl.onclick = (e) => {
+                    e.stopPropagation();
+                    this.showEventDetails(event);
+                };
+                eventsContainer.appendChild(eventEl);
+            });
+            
+            if (dayEvents.length > 3) {
+                const moreEl = document.createElement('div');
+                moreEl.className = 'text-xs text-gray-500 cursor-pointer hover:text-uthm-blue';
+                moreEl.textContent = `+${dayEvents.length - 3} more`;
+                moreEl.title = `Click to view all ${dayEvents.length} events on this day`;
+                moreEl.onclick = (e) => {
+                    e.stopPropagation();
+                    this.showDayEvents(dayEvents);
+                };
+                eventsContainer.appendChild(moreEl);
             }
             
-            const totalCells = 42;
-            const remainingCells = totalCells - (startingDay + totalDays);
-            for (let i = 1; i <= remainingCells; i++) {
-                const cell = this.createDayCell(i, 'other-month');
-                calendarGrid.appendChild(cell);
+            const dayEventsDiv = cell.querySelector('.day-events');
+            if (dayEventsDiv) {
+                dayEventsDiv.appendChild(eventsContainer);
             }
         }
+        
+        calendarGrid.appendChild(cell);
+    }
+    
+    const totalCells = 42;
+    const remainingCells = totalCells - (startingDay + totalDays);
+    for (let i = 1; i <= remainingCells; i++) {
+        const cell = this.createDayCell(i, 'other-month');
+        calendarGrid.appendChild(cell);
+    }
+}
 
         createDayCell(dayNumber, additionalClasses = '') {
             const cell = document.createElement('div');
@@ -1059,79 +1093,104 @@
             });
         }
 
-        renderUpcomingEvents(events) {
-            const upcomingEvents = document.getElementById('upcoming-events');
-            if (!upcomingEvents) return;
-            
-            upcomingEvents.innerHTML = '';
-            
-            const eventsArray = Array.isArray(events) ? events : (events.data || []);
-            
-            if (eventsArray.length === 0) {
-                upcomingEvents.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <i class="fas fa-calendar-times text-3xl mb-2"></i>
-                        <p>No upcoming events for this week</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            eventsArray.slice(0, 5).forEach(event => {
-                const eventEl = document.createElement('div');
-                eventEl.className = 'flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer';
-                
-                const eventDate = new Date(event.start_date || event.start);
-                const dateStr = eventDate.toLocaleDateString('en-US', { 
-                    weekday: 'short', 
-                    month: 'short', 
-                    day: 'numeric' 
-                });
-                
-                const timeStr = event.all_day ? 'All Day' : 
-                    `${event.start_time || ''}${event.end_time ? ' - ' + event.end_time : ''}`;
-                
-                eventEl.innerHTML = `
-                    <div class="mr-4">
-                        <div class="text-center">
-                            <div class="font-bold text-lg">${eventDate.getDate()}</div>
-                            <div class="text-xs uppercase text-gray-500">${eventDate.toLocaleDateString('en-US', { month: 'short' })}</div>
-                        </div>
-                    </div>
-                    <div class="flex-1" onclick="currentCalendar.showEventDetails(${JSON.stringify(event).replace(/"/g, '&quot;')})">
-                        <h4 class="font-bold text-gray-900">${this.escapeHtml(event.title)}</h4>
-                        <p class="text-sm text-gray-600">
-                            <i class="far fa-clock mr-1"></i> ${timeStr}
-                            ${event.location ? `• <i class="fas fa-map-marker-alt mr-1 ml-2"></i> ${this.escapeHtml(event.location)}` : ''}
-                        </p>
-                        <div class="flex items-center mt-2">
-                            <span class="px-2 py-1 ${this.getEventClass(event.type || event.event_type)} text-xs rounded">${(event.type || event.event_type).charAt(0).toUpperCase() + (event.type || event.event_type).slice(1)}</span>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2" onclick="event.stopPropagation()">
-                        <button onclick="editEvent(${event.id})" class="text-blue-500 hover:text-blue-700 p-1" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="confirmDelete(${event.id})" class="text-red-500 hover:text-red-700 p-1" title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                
-                upcomingEvents.appendChild(eventEl);
-            });
+       renderUpcomingEvents(events) {
+    const upcomingEvents = document.getElementById('upcoming-events');
+    if (!upcomingEvents) return;
+    
+    upcomingEvents.innerHTML = '';
+    
+    const eventsArray = Array.isArray(events) ? events : (events.data || []);
+    
+    // Sort by date (already sorted from backend, but ensure)
+    const sortedEvents = [...eventsArray].sort((a, b) => {
+        return new Date(a.start_date) - new Date(b.start_date);
+    });
+    
+    if (sortedEvents.length === 0) {
+        upcomingEvents.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-calendar-times text-3xl mb-2"></i>
+                <p>No upcoming events</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Show next 5 upcoming events
+    sortedEvents.slice(0, 5).forEach(event => {
+        const eventEl = document.createElement('div');
+        eventEl.className = 'flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer';
+        
+        const eventDate = new Date(event.start_date);
+        const today = new Date();
+        const isToday = eventDate.toDateString() === today.toDateString();
+        
+        const timeStr = event.all_day ? 'All Day' : 
+            `${event.start_time || ''}${event.end_time ? ' - ' + event.end_time : ''}`;
+        
+        const isPublic = event.visibility === 'public';
+        const isCurrentUser = event.created_by?.id === {{ Auth::id() }};
+        
+        // Creator badge
+        let creatorBadge = '';
+        if (isPublic) {
+            creatorBadge = '<span class="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full"><i class="fas fa-globe mr-1"></i>Admin</span>';
+        } else if (isCurrentUser) {
+            creatorBadge = '<span class="ml-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full"><i class="fas fa-user mr-1"></i>You</span>';
+        } else if (event.created_by) {
+            creatorBadge = `<span class="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full"><i class="fas fa-user mr-1"></i>${event.created_by.name}</span>`;
         }
+        
+        // Add "Today" badge for today's events
+        const todayBadge = isToday ? '<span class="ml-2 text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full"><i class="fas fa-calendar-day mr-1"></i>Today</span>' : '';
+        
+        eventEl.innerHTML = `
+            <div class="mr-4">
+                <div class="text-center">
+                    <div class="font-bold text-lg">${eventDate.getDate()}</div>
+                    <div class="text-xs uppercase text-gray-500">${eventDate.toLocaleDateString('en-US', { month: 'short' })}</div>
+                </div>
+            </div>
+            <div class="flex-1" onclick="currentCalendar.showEventDetails(${JSON.stringify(event).replace(/"/g, '&quot;')})">
+                <div class="flex items-center flex-wrap">
+                    <h4 class="font-bold text-gray-900">${this.escapeHtml(event.title)}</h4>
+                    ${creatorBadge}
+                    ${todayBadge}
+                </div>
+                <p class="text-sm text-gray-600">
+                    <i class="far fa-clock mr-1"></i> ${timeStr}
+                    ${event.location ? `• <i class="fas fa-map-marker-alt mr-1 ml-2"></i> ${this.escapeHtml(event.location)}` : ''}
+                </p>
+                <div class="flex items-center mt-2">
+                    <span class="px-2 py-1 ${this.getEventClass(event.type || event.event_type)} text-xs rounded">${(event.type || event.event_type).charAt(0).toUpperCase() + (event.type || event.event_type).slice(1)}</span>
+                </div>
+            </div>
+            ${!isPublic ? `
+            <div class="flex space-x-2" onclick="event.stopPropagation()">
+                <button onclick="editEvent(${event.id})" class="text-blue-500 hover:text-blue-700 p-1" title="Edit">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="confirmDelete(${event.id})" class="text-red-500 hover:text-red-700 p-1" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            ` : ''}
+        `;
+        
+        upcomingEvents.appendChild(eventEl);
+    });
+}
 
-        updateStatistics(data) {
-            const stats = data.data || data;
-            const statLectures = document.getElementById('stat-lectures');
-            const statDeadlines = document.getElementById('stat-deadlines');
-            const statExams = document.getElementById('stat-exams');
-            
-            if (statLectures && stats.lectures !== undefined) statLectures.textContent = stats.lectures;
-            if (statDeadlines && stats.deadlines !== undefined) statDeadlines.textContent = stats.deadlines;
-            if (statExams && stats.exams !== undefined) statExams.textContent = stats.exams;
-        }
+       updateStatistics(data) {
+    const stats = data.data || data;
+    const statLectures = document.getElementById('stat-lectures');
+    const statDeadlines = document.getElementById('stat-deadlines');
+    const statExams = document.getElementById('stat-exams');
+    
+    if (statLectures && stats.lectures !== undefined) statLectures.textContent = stats.lectures;
+    if (statDeadlines && stats.deadlines !== undefined) statDeadlines.textContent = stats.deadlines;
+    if (statExams && stats.exams !== undefined) statExams.textContent = stats.exams;
+}
 
         openEventModal(date = null, event = null) {
             const modal = document.getElementById('event-modal');
@@ -1263,82 +1322,114 @@
         }
 
         showEventDetails(event) {
-            const detailsModal = document.createElement('div');
-            detailsModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            detailsModal.id = 'event-details-modal';
-            
-            const eventDate = new Date(event.start_date || event.start);
-            const formattedDate = eventDate.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-            
-            const timeStr = event.all_day ? 'All Day' : 
-                `${event.start_time || ''}${event.end_time ? ' - ' + event.end_time : ''}`;
-            
-            detailsModal.innerHTML = `
-                <div class="bg-white rounded-xl shadow-lg w-full max-w-md mx-4">
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-bold text-gray-900">${this.escapeHtml(event.title)}</h3>
-                            <button onclick="closeEventDetailsModal()" class="text-gray-400 hover:text-gray-600">
-                                <i class="fas fa-times"></i>
+    const detailsModal = document.createElement('div');
+    detailsModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    detailsModal.id = 'event-details-modal';
+    
+    const eventDate = new Date(event.start_date || event.start);
+    const formattedDate = eventDate.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+    
+    const timeStr = event.all_day ? 'All Day' : 
+        `${event.start_time || ''}${event.end_time ? ' - ' + event.end_time : ''}`;
+    
+    // Determine if the event is created by admin or user
+    const isPublic = event.visibility === 'public';
+    const createdByName = event.created_by?.name || 'Unknown';
+    const createdByRole = event.created_by?.role || '';
+    const isCurrentUser = event.created_by?.id === {{ Auth::id() }};
+    
+    // Create creator badge based on role
+    let creatorBadge = '';
+    if (isPublic) {
+        creatorBadge = `<span class="ml-2 px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">
+                            <i class="fas fa-globe mr-1"></i> Posted by Admin
+                        </span>`;
+    } else if (isCurrentUser) {
+        creatorBadge = `<span class="ml-2 px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                            <i class="fas fa-user mr-1"></i> Created by You
+                        </span>`;
+    } else {
+        creatorBadge = `<span class="ml-2 px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+                            <i class="fas fa-user mr-1"></i> Created by ${createdByName}
+                        </span>`;
+    }
+    
+    detailsModal.innerHTML = `
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-md mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center">
+                        <h3 class="text-lg font-bold text-gray-900">${this.escapeHtml(event.title)}</h3>
+                        ${creatorBadge}
+                    </div>
+                    <button onclick="closeEventDetailsModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <i class="far fa-calendar text-gray-500 w-5 mr-3"></i>
+                        <span>${formattedDate}</span>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <i class="far fa-clock text-gray-500 w-5 mr-3"></i>
+                        <span>${timeStr}</span>
+                    </div>
+                    
+                    ${event.location ? `
+                    <div class="flex items-center">
+                        <i class="fas fa-map-marker-alt text-gray-500 w-5 mr-3"></i>
+                        <span>${this.escapeHtml(event.location)}</span>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="flex items-center">
+                        <span class="px-2 py-1 ${this.getEventClass(event.type || event.event_type)} text-xs rounded">${(event.type || event.event_type).charAt(0).toUpperCase() + (event.type || event.event_type).slice(1)}</span>
+                    </div>
+                    
+                    ${event.description ? `
+                    <div>
+                        <h4 class="font-medium text-gray-700 mb-2">Description</h4>
+                        <p class="text-gray-600">${this.escapeHtml(event.description)}</p>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+                        ${!isPublic ? `
+                        <button onclick="confirmDelete(${event.id})" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition">
+                            Delete
+                        </button>
+                        <div class="space-x-2">
+                            <button onclick="editEvent(${event.id})" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                Edit
+                            </button>
+                            <button onclick="closeEventDetailsModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                                Close
                             </button>
                         </div>
-                        
-                        <div class="space-y-3">
-                            <div class="flex items-center">
-                                <i class="far fa-calendar text-gray-500 w-5 mr-3"></i>
-                                <span>${formattedDate}</span>
-                            </div>
-                            
-                            <div class="flex items-center">
-                                <i class="far fa-clock text-gray-500 w-5 mr-3"></i>
-                                <span>${timeStr}</span>
-                            </div>
-                            
-                            ${event.location ? `
-                            <div class="flex items-center">
-                                <i class="fas fa-map-marker-alt text-gray-500 w-5 mr-3"></i>
-                                <span>${this.escapeHtml(event.location)}</span>
-                            </div>
-                            ` : ''}
-                            
-                            <div class="flex items-center">
-                                <span class="px-2 py-1 ${this.getEventClass(event.type || event.event_type)} text-xs rounded">${(event.type || event.event_type).charAt(0).toUpperCase() + (event.type || event.event_type).slice(1)}</span>
-                            </div>
-                            
-                            ${event.description ? `
-                            <div>
-                                <h4 class="font-medium text-gray-700 mb-2">Description</h4>
-                                <p class="text-gray-600">${this.escapeHtml(event.description)}</p>
-                            </div>
-                            ` : ''}
-                            
-                            <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
-                                <button onclick="confirmDelete(${event.id})" class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition">
-                                    Delete
-                                </button>
-                                <div class="space-x-2">
-                                    <button onclick="editEvent(${event.id})" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                                        Edit
-                                    </button>
-                                    <button onclick="closeEventDetailsModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
-                                        Close
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        ` : `
+                        <div></div>
+                        <button onclick="closeEventDetailsModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                            Close
+                        </button>
+                        `}
                     </div>
                 </div>
-            `;
-            
-            const existingModal = document.getElementById('event-details-modal');
-            if (existingModal) existingModal.remove();
-            document.body.appendChild(detailsModal);
-        }
+            </div>
+        </div>
+    `;
+    
+    const existingModal = document.getElementById('event-details-modal');
+    if (existingModal) existingModal.remove();
+    document.body.appendChild(detailsModal);
+}
 
         showDayEvents(events) {
             const detailsModal = document.createElement('div');
@@ -1447,6 +1538,17 @@
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
             }
+            // In setupEventForm, after save:
+try {
+    const formData = new FormData(this);
+    await currentCalendar.saveEvent(formData);
+    
+    closeEventModal();
+    await currentCalendar.init(); // This reloads everything including upcoming events
+    currentCalendar.showToast('Event saved successfully!');
+} catch (error) {
+    // handle error
+}
             
             try {
                 const formData = new FormData(this);

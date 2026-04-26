@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Announcement - UTHM Bulletin Board</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -33,6 +34,16 @@
             border-color: #0056a6;
             ring: 2px;
             ring-color: rgba(0, 86, 166, 0.2);
+        }
+        
+        .form-input.moderation-warning {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+        
+        .form-input.moderation-safe {
+            border-color: #10b981;
+            background-color: #f0fdf4;
         }
         
         .form-error {
@@ -84,22 +95,10 @@
         }
         
         /* Badge styles */
-        .badge-admin {
-            background-color: #dc2626;
-            color: white;
-        }
-        .badge-staff {
-            background-color: #2563eb;
-            color: white;
-        }
-        .badge-student {
-            background-color: #059669;
-            color: white;
-        }
-        .badge-guest {
-            background-color: #6b7280;
-            color: white;
-        }
+        .badge-admin { background-color: #dc2626; color: white; }
+        .badge-staff { background-color: #2563eb; color: white; }
+        .badge-student { background-color: #059669; color: white; }
+        .badge-guest { background-color: #6b7280; color: white; }
         
         /* Verification info styles */
         .verification-info {
@@ -116,6 +115,16 @@
         .verification-unofficial {
             background-color: #fefce8;
             border: 1px solid #fef08a;
+        }
+        
+        /* Moderation animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .moderation-message {
+            animation: fadeIn 0.3s ease;
         }
     </style>
 </head>
@@ -181,6 +190,23 @@
                 </div>
             </div>
 
+            <!-- Moderation Global Error Display -->
+            @error('moderation')
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="flex items-start">
+                        <i class="fas fa-shield-alt text-red-600 mt-0.5 mr-3 text-lg"></i>
+                        <div>
+                            <strong class="text-red-800 font-semibold block mb-1">⚠️ Content Blocked</strong>
+                            <p class="text-red-700">{{ $message }}</p>
+                            <p class="text-sm text-red-600 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Please remove any inappropriate language before submitting.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @enderror
+
             <!-- Form Section -->
             <div class="bg-white rounded-xl shadow p-6">
                 <form action="{{ route('announcements.store') }}" method="POST" enctype="multipart/form-data" id="announcement-form">
@@ -217,7 +243,6 @@
                                     </span>
                                 </div>
                                 
-                                <!-- Verification Requirement Info -->
                                 <div id="official-info" class="verification-info verification-official mt-3" 
                                      style="{{ old('announcement_type', 'unofficial') == 'official' ? 'display: block;' : 'display: none;' }}">
                                     <div class="flex items-start">
@@ -265,7 +290,6 @@
                                     </span>
                                 </div>
                                 
-                                <!-- Immediate Posting Info -->
                                 <div id="unofficial-info" class="verification-info verification-unofficial mt-3"
                                      style="{{ old('announcement_type', 'unofficial') == 'unofficial' ? 'display: block;' : 'display: none;' }}">
                                     <div class="flex items-start">
@@ -288,7 +312,7 @@
                         @enderror
                     </div>
 
-                    <!-- Title Field -->
+                    <!-- Title Field with Moderation -->
                     <div class="mb-6">
                         <label for="title" class="form-label">
                             Announcement Title <span class="text-red-500">*</span>
@@ -300,12 +324,13 @@
                                class="form-input"
                                placeholder="Enter a clear and descriptive title"
                                required>
+                        <div id="title-moderation-message" class="mt-2 text-sm hidden moderation-message"></div>
                         @error('title')
                             <p class="form-error">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <!-- Content Field -->
+                    <!-- Content Field with Moderation -->
                     <div class="mb-6">
                         <label for="content" class="form-label">
                             Announcement Content <span class="text-red-500">*</span>
@@ -316,6 +341,7 @@
                                   class="form-input"
                                   placeholder="Provide detailed information about your announcement..."
                                   required>{{ old('content') }}</textarea>
+                        <div id="content-moderation-message" class="mt-2 text-sm hidden moderation-message"></div>
                         <div class="flex justify-between mt-2">
                             <p class="text-sm text-gray-500">
                                 <i class="fas fa-lightbulb mr-1"></i>
@@ -367,14 +393,12 @@
                             Featured Image (Optional)
                         </label>
                         
-                        <!-- Hidden File Input -->
                         <input type="file" 
                                id="image" 
                                name="image"
                                class="hidden"
                                accept=".jpg,.jpeg,.png,.gif,.webp">
                         
-                        <!-- Image Preview -->
                         <div id="image-preview-container" class="hidden mb-4">
                             <div class="relative rounded-lg overflow-hidden shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                                 <img id="image-preview" src="" alt="Image preview" class="w-full h-auto max-h-96 object-cover">
@@ -394,7 +418,6 @@
                             </div>
                         </div>
 
-                        <!-- Image Placeholder (when no image selected) -->
                         <div id="image-placeholder-container" 
                              onclick="document.getElementById('image').click()" 
                              class="mb-4 rounded-lg overflow-hidden shadow-lg cursor-pointer transition-transform hover:scale-105" 
@@ -411,7 +434,6 @@
                             </div>
                         </div>
                         
-                        <!-- Support Text -->
                         <p class="mt-2 text-sm text-gray-500">
                             <i class="fas fa-info-circle mr-1"></i>
                             Supported formats: JPG, JPEG, PNG, GIF, WEBP (Max: 5MB)
@@ -430,10 +452,10 @@
                         </h3>
                         <ul class="text-sm text-gray-600 space-y-1">
                             <li>• All announcements will be visible to the UTHM community</li>
+                            <li>• <strong class="text-green-600">✓ Content moderation is active</strong> - inappropriate content will be automatically blocked</li>
                             <li>• Official announcements may require verification before publishing</li>
                             <li>• Unofficial announcements are published immediately</li>
                             <li>• Be respectful and follow community guidelines</li>
-                            <li>• Double-check information before publishing</li>
                         </ul>
                     </div>
 
@@ -444,7 +466,6 @@
                             Cancel
                         </a>
                         
-                        <!-- Save as Draft Button -->
                         <button type="submit" 
                                 name="status" 
                                 value="draft"
@@ -453,7 +474,6 @@
                             Save as Draft
                         </button>
                         
-                        <!-- Publish Button -->
                         <button type="submit" 
                                 name="status" 
                                 value="published"
@@ -477,65 +497,22 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Feature
-                                </th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Official Announcement
-                                </th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Unofficial Announcement
-                                </th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Feature</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Official Announcement</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unofficial Announcement</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            <tr>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    Purpose
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-600">
-                                    University policy, official notices, important updates
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-600">
-                                    Club activities, personal notices, informal updates
-                                </td>
+                            <tr><td class="px-4 py-3 text-sm font-medium text-gray-900">Purpose</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">University policy, official notices, important updates</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">Club activities, personal notices, informal updates</td>
                             </tr>
-                            <tr>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    Verification
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-600">
-                                    Requires admin/staff verification (except for admin/staff users)
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-600">
-                                    Published immediately, no verification required
-                                </td>
+                            <tr><td class="px-4 py-3 text-sm font-medium text-gray-900">Verification</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">Requires admin/staff verification</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">Published immediately</td>
                             </tr>
-                            <tr>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    Visibility Badge
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                                        <i class="fas fa-check-circle mr-1"></i> Official
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                        <i class="fas fa-users mr-1"></i> Unofficial
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                    Best For
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-600">
-                                    Admin, staff, or verified official communications
-                                </td>
-                                <td class="px-4 py-3 text-sm text-gray-600">
-                                    Students, clubs, community members, informal updates
-                                </td>
+                            <tr><td class="px-4 py-3 text-sm font-medium text-gray-900">Content Moderation</td>
+                                <td class="px-4 py-3 text-sm text-gray-600" colspan="2">✓ Active for all announcements - inappropriate content blocked</td>
                             </tr>
                         </tbody>
                     </table>
@@ -549,19 +526,20 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center text-gray-500 text-sm">
                 <p>UTHM Digital Bulletin Board &copy; {{ date('Y') }}</p>
-                <p class="mt-1">Choose announcement type based on your needs. Official announcements may require verification.</p>
+                <p class="mt-1">Content moderation is active. Please keep your announcements respectful.</p>
             </div>
         </div>
     </footer>
 
-    <!-- JavaScript -->
+    <!-- Moderation JavaScript -->
     <script>
+        let moderationTimeouts = {};
+
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('announcement-form');
             const titleInput = document.getElementById('title');
             const contentInput = document.getElementById('content');
             const publishButton = document.getElementById('publish-button');
-            const publishText = document.getElementById('publish-text');
+            const submitBtns = document.querySelectorAll('button[type="submit"]');
             
             // Initialize type selection
             initializeTypeSelection();
@@ -579,33 +557,46 @@
                         counter.classList.remove('text-red-500');
                     }
                 });
-                
-                // Initialize counter
                 contentInput.dispatchEvent(new Event('input'));
             }
             
-            // Basic form validation
+            // Real-time moderation for title
+            if (titleInput) {
+                titleInput.addEventListener('input', function() {
+                    clearTimeout(moderationTimeouts.title);
+                    moderationTimeouts.title = setTimeout(() => {
+                        checkContent(this.value, 'title');
+                    }, 800);
+                });
+            }
+            
+            // Real-time moderation for content
+            if (contentInput) {
+                contentInput.addEventListener('input', function() {
+                    clearTimeout(moderationTimeouts.content);
+                    moderationTimeouts.content = setTimeout(() => {
+                        checkContent(this.value, 'content');
+                    }, 800);
+                });
+            }
+            
+            // Form validation
+            const form = document.getElementById('announcement-form');
             form.addEventListener('submit', function(e) {
+                const titleInput = document.getElementById('title');
+                const contentInput = document.getElementById('content');
                 let isValid = true;
                 
-                // Clear previous error styles
-                document.querySelectorAll('.form-input').forEach(input => {
-                    input.classList.remove('border-red-500');
-                });
-                
-                // Validate title
                 if (!titleInput.value.trim()) {
                     titleInput.classList.add('border-red-500');
                     isValid = false;
                 }
                 
-                // Validate content
                 if (!contentInput.value.trim()) {
                     contentInput.classList.add('border-red-500');
                     isValid = false;
                 }
                 
-                // Validate announcement type
                 const announcementType = document.querySelector('input[name="announcement_type"]:checked');
                 if (!announcementType) {
                     alert('Please select an announcement type (Official or Unofficial).');
@@ -615,17 +606,6 @@
                 if (!isValid) {
                     e.preventDefault();
                     alert('Please fill in all required fields marked with *.');
-                } else {
-                    // Show confirmation for official announcements from non-admin/staff
-                    const isOfficial = announcementType.value === 'official';
-                    const userRole = "{{ $user?->role ?? 'guest' }}";
-                    const isAdminOrStaff = ['admin', 'staff'].includes(userRole);
-                    
-                    if (isOfficial && !isAdminOrStaff) {
-                        if (!confirm('Official announcements require admin/staff verification.\n\nYour announcement will be submitted for review and published after verification.\n\nDo you want to continue?')) {
-                            e.preventDefault();
-                        }
-                    }
                 }
             });
             
@@ -634,128 +614,210 @@
             const imagePlaceholder = document.getElementById('image-placeholder-container');
             
             if (imageInput) {
-                imageInput.addEventListener('change', function() {
-                    handleImageUpload(this.files[0]);
-                });
+                imageInput.addEventListener('change', function() { handleImageUpload(this.files[0]); });
                 
-                // Drag and drop support
-                imagePlaceholder.addEventListener('dragover', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.classList.add('opacity-75');
-                });
-                
-                imagePlaceholder.addEventListener('dragleave', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.classList.remove('opacity-75');
-                });
-                
-                imagePlaceholder.addEventListener('drop', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.classList.remove('opacity-75');
+                if (imagePlaceholder) {
+                    imagePlaceholder.addEventListener('dragover', function(e) {
+                        e.preventDefault();
+                        this.classList.add('opacity-75');
+                    });
                     
-                    const files = e.dataTransfer.files;
-                    if (files.length > 0) {
-                        imageInput.files = files;
-                        handleImageUpload(files[0]);
+                    imagePlaceholder.addEventListener('dragleave', function(e) {
+                        e.preventDefault();
+                        this.classList.remove('opacity-75');
+                    });
+                    
+                    imagePlaceholder.addEventListener('drop', function(e) {
+                        e.preventDefault();
+                        this.classList.remove('opacity-75');
+                        const files = e.dataTransfer.files;
+                        if (files.length > 0) {
+                            imageInput.files = files;
+                            handleImageUpload(files[0]);
+                        }
+                    });
+                }
+            }
+        });
+        
+        async function checkContent(text, field) {
+            if (!text || text.length < 5) {
+                removeModerationWarning(field);
+                enableSubmitButtons();
+                return;
+            }
+            
+            showCheckingIndicator(field);
+            
+            try {
+                const response = await fetch(`/api/moderate/test?text=${encodeURIComponent(text)}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     }
                 });
-            }
-            
-            function handleImageUpload(file) {
-                if (!file) return;
                 
-                // File size validation
-                const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-                if (file.size > maxSize) {
-                    alert('Image size exceeds 5MB limit. Please choose a smaller image.');
-                    document.getElementById('image').value = '';
-                    document.getElementById('image-preview-container').classList.add('hidden');
-                    document.getElementById('image-placeholder-container').classList.remove('hidden');
-                    return;
-                }
+                const result = await response.json();
+                hideCheckingIndicator(field);
                 
-                // File type validation
-                const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-                if (!validTypes.includes(file.type)) {
-                    alert('Invalid image format. Please use JPG, PNG, GIF, or WEBP.');
-                    document.getElementById('image').value = '';
-                    document.getElementById('image-preview-container').classList.add('hidden');
-                    document.getElementById('image-placeholder-container').classList.remove('hidden');
-                    return;
-                }
-                
-                // Show preview
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('image-preview').src = e.target.result;
-                    document.getElementById('image-filename').textContent = file.name;
-                    document.getElementById('image-preview-container').classList.remove('hidden');
-                    document.getElementById('image-placeholder-container').classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            }
-            
-            window.removeImage = function() {
-                document.getElementById('image').value = '';
-                document.getElementById('image-preview-container').classList.add('hidden');
-                document.getElementById('image-placeholder-container').classList.remove('hidden');
-                document.getElementById('image-preview').src = '';
-            };
-            
-            function initializeTypeSelection() {
-                // Set initial selection
-                const initialType = "{{ old('announcement_type', 'unofficial') }}";
-                selectType(initialType);
-                
-                // Update publish button text based on type
-                updatePublishButtonText(initialType);
-            }
-            
-            window.selectType = function(type) {
-                // Update radio button
-                document.getElementById(`type_${type}`).checked = true;
-                
-                // Update visual selection
-                document.getElementById('official-option').classList.remove('selected');
-                document.getElementById('unofficial-option').classList.remove('selected');
-                document.getElementById(`${type}-option`).classList.add('selected');
-                
-                // Show/hide info sections
-                document.getElementById('official-info').style.display = type === 'official' ? 'block' : 'none';
-                document.getElementById('unofficial-info').style.display = type === 'unofficial' ? 'block' : 'none';
-                
-                // Update publish button text
-                updatePublishButtonText(type);
-            }
-            
-            function updatePublishButtonText(type) {
-                const userRole = "{{ $user?->role ?? 'guest' }}";
-                const isAdminOrStaff = ['admin', 'staff'].includes(userRole);
-                
-                if (type === 'official') {
-                    if (isAdminOrStaff) {
-                        publishText.textContent = 'Publish Official Announcement';
-                        publishButton.title = 'Publish immediately as official announcement';
-                    } else {
-                        publishText.textContent = 'Submit for Verification';
-                        publishButton.title = 'Submit for admin/staff verification';
-                    }
+                if (result.flagged) {
+                    showModerationWarning(field, result.violations);
+                    disableSubmitButtons();
                 } else {
-                    publishText.textContent = 'Publish Announcement';
-                    publishButton.title = 'Publish immediately as unofficial announcement';
+                    removeModerationWarning(field);
+                    enableSubmitButtons();
+                }
+                
+                updateFieldStyle(field, result.flagged);
+                
+            } catch (error) {
+                console.error('Moderation check failed:', error);
+                hideCheckingIndicator(field);
+                enableSubmitButtons();
+            }
+        }
+        
+        function showCheckingIndicator(field) {
+            const messageDiv = document.getElementById(`${field}-moderation-message`);
+            if (messageDiv) {
+                messageDiv.className = 'mt-2 text-sm text-blue-600 flex items-center moderation-message';
+                messageDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Checking content...';
+                messageDiv.classList.remove('hidden');
+            }
+        }
+        
+        function hideCheckingIndicator(field) {
+            const messageDiv = document.getElementById(`${field}-moderation-message`);
+            if (messageDiv && messageDiv.innerHTML.includes('Checking')) {
+                messageDiv.classList.add('hidden');
+            }
+        }
+        
+        function showModerationWarning(field, violations) {
+            const messageDiv = document.getElementById(`${field}-moderation-message`);
+            if (messageDiv) {
+                const violationTypes = violations.map(v => v.classifier).join(', ');
+                messageDiv.className = 'mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 moderation-message';
+                messageDiv.innerHTML = `
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-triangle mt-0.5 mr-2"></i>
+                        <div>
+                            <strong class="font-semibold">Inappropriate ${field} detected:</strong>
+                            <span class="ml-1">Please avoid ${violationTypes} language.</span>
+                        </div>
+                    </div>
+                `;
+                messageDiv.classList.remove('hidden');
+            }
+        }
+        
+        function removeModerationWarning(field) {
+            const messageDiv = document.getElementById(`${field}-moderation-message`);
+            if (messageDiv) {
+                messageDiv.classList.add('hidden');
+            }
+        }
+        
+        function updateFieldStyle(field, isFlagged) {
+            const input = document.getElementById(field);
+            if (input) {
+                if (isFlagged) {
+                    input.classList.add('moderation-warning');
+                    input.classList.remove('moderation-safe');
+                } else if (input.value.length > 5) {
+                    input.classList.add('moderation-safe');
+                    input.classList.remove('moderation-warning');
+                } else {
+                    input.classList.remove('moderation-warning', 'moderation-safe');
                 }
             }
+        }
+        
+        function disableSubmitButtons() {
+            const submitButtons = document.querySelectorAll('button[type="submit"]');
+            submitButtons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            });
+        }
+        
+        function enableSubmitButtons() {
+            const titleWarning = document.getElementById('title-moderation-message');
+            const contentWarning = document.getElementById('content-moderation-message');
             
-            // Add click handlers for radio options
-            document.querySelectorAll('.radio-input').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.checked) {
-                        selectType(this.value);
-                    }
+            const titleBlocked = titleWarning && !titleWarning.classList.contains('hidden') && titleWarning.innerHTML.includes('Inappropriate');
+            const contentBlocked = contentWarning && !contentWarning.classList.contains('hidden') && contentWarning.innerHTML.includes('Inappropriate');
+            
+            if (!titleBlocked && !contentBlocked) {
+                const submitButtons = document.querySelectorAll('button[type="submit"]');
+                submitButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
                 });
+            }
+        }
+        
+        // Image upload functions
+        function handleImageUpload(file) {
+            if (!file) return;
+            
+            const maxSize = 5 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('Image size exceeds 5MB limit.');
+                document.getElementById('image').value = '';
+                return;
+            }
+            
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validTypes.includes(file.type)) {
+                alert('Invalid image format. Use JPG, PNG, GIF, or WEBP.');
+                document.getElementById('image').value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('image-preview').src = e.target.result;
+                document.getElementById('image-filename').textContent = file.name;
+                document.getElementById('image-preview-container').classList.remove('hidden');
+                document.getElementById('image-placeholder-container').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        window.removeImage = function() {
+            document.getElementById('image').value = '';
+            document.getElementById('image-preview-container').classList.add('hidden');
+            document.getElementById('image-placeholder-container').classList.remove('hidden');
+        };
+        
+        function initializeTypeSelection() {
+            const initialType = "{{ old('announcement_type', 'unofficial') }}";
+            selectType(initialType);
+        }
+        
+        window.selectType = function(type) {
+            document.getElementById(`type_${type}`).checked = true;
+            document.getElementById('official-option').classList.remove('selected');
+            document.getElementById('unofficial-option').classList.remove('selected');
+            document.getElementById(`${type}-option`).classList.add('selected');
+            
+            document.getElementById('official-info').style.display = type === 'official' ? 'block' : 'none';
+            document.getElementById('unofficial-info').style.display = type === 'unofficial' ? 'block' : 'none';
+            
+            const userRole = "{{ $user?->role ?? 'guest' }}";
+            const isAdminOrStaff = ['admin', 'staff'].includes(userRole);
+            const publishText = document.getElementById('publish-text');
+            
+            if (type === 'official') {
+                publishText.textContent = isAdminOrStaff ? 'Publish Official Announcement' : 'Submit for Verification';
+            } else {
+                publishText.textContent = 'Publish Announcement';
+            }
+        };
+        
+        document.querySelectorAll('.radio-input').forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) selectType(this.value);
             });
         });
     </script>

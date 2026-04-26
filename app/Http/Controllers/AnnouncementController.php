@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Announcement;
 use App\Models\User;
+use App\Services\LocalModService;  // ADD THIS
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -16,6 +17,16 @@ use Illuminate\Support\Facades\Storage;
 
 class AnnouncementController extends Controller
 {
+    protected $localMod;  // ADD THIS
+
+    /**
+     * Constructor with LocalMod injection
+     */
+    public function __construct(LocalModService $localMod)  // ADD THIS
+    {
+        $this->localMod = $localMod;
+    }
+
     /**
      * Display a listing of announcements.
      */
@@ -65,7 +76,7 @@ class AnnouncementController extends Controller
     }
 
     /**
-     * Store a newly created announcement in storage.
+     * Store a newly created announcement in storage with MODERATION.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -88,6 +99,43 @@ class AnnouncementController extends Controller
         
         // Validate all fields at once
         $validated = $request->validate($validationRules);
+        
+        // ============================================
+        // MODERATION CHECK - Check title and content
+        // ============================================
+        $titleModeration = $this->localMod->analyzeText($validated['title'], ['toxicity', 'pii', 'spam']);
+        $contentModeration = $this->localMod->analyzeText($validated['content'], ['toxicity', 'pii', 'spam']);
+        
+        // If moderation fails, block the announcement
+        if (($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false)) {
+            $violations = [];
+            
+            if ($titleModeration['flagged'] ?? false) {
+                foreach ($titleModeration['results'] ?? [] as $v) {
+                    if ($v['flagged'] ?? false) {
+                        $violations[] = "Title contains {$v['classifier']}";
+                    }
+                }
+            }
+            
+            if ($contentModeration['flagged'] ?? false) {
+                foreach ($contentModeration['results'] ?? [] as $v) {
+                    if ($v['flagged'] ?? false) {
+                        $violations[] = "Content contains {$v['classifier']}";
+                    }
+                }
+            }
+            
+            $violationText = implode(', ', $violations);
+            $errorMessage = "Your announcement was blocked by our content moderation system. " .
+                           "Please remove inappropriate language. " .
+                           "Detected: {$violationText}";
+            
+            return back()->withErrors(['moderation' => $errorMessage])->withInput();
+        }
+        // ============================================
+        // END MODERATION CHECK
+        // ============================================
         
         // Add author_id to the validated data
         $validated['author_id'] = auth()->id();
@@ -150,6 +198,14 @@ class AnnouncementController extends Controller
                 Log::error('Image upload failed: ' . $e->getMessage());
             }
         }
+        
+        // Save moderation results (optional - for audit)
+        $validated['moderation_flagged'] = ($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false);
+        $validated['moderation_results'] = json_encode([
+            'title' => $titleModeration,
+            'content' => $contentModeration,
+            'checked_at' => now()->toDateTimeString()
+        ]);
         
         // Create the announcement
         $announcement = Announcement::create($validated);
@@ -215,7 +271,7 @@ class AnnouncementController extends Controller
     }
 
     /**
-     * Update the specified announcement in storage.
+     * Update the specified announcement in storage with MODERATION.
      */
     public function update(Request $request, Announcement $announcement): RedirectResponse
     {
@@ -242,6 +298,43 @@ class AnnouncementController extends Controller
         
         // Validate all fields at once
         $validated = $request->validate($validationRules);
+        
+        // ============================================
+        // MODERATION CHECK - Check updated title and content
+        // ============================================
+        $titleModeration = $this->localMod->analyzeText($validated['title'], ['toxicity', 'pii', 'spam']);
+        $contentModeration = $this->localMod->analyzeText($validated['content'], ['toxicity', 'pii', 'spam']);
+        
+        // If moderation fails, block the update
+        if (($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false)) {
+            $violations = [];
+            
+            if ($titleModeration['flagged'] ?? false) {
+                foreach ($titleModeration['results'] ?? [] as $v) {
+                    if ($v['flagged'] ?? false) {
+                        $violations[] = "Title contains {$v['classifier']}";
+                    }
+                }
+            }
+            
+            if ($contentModeration['flagged'] ?? false) {
+                foreach ($contentModeration['results'] ?? [] as $v) {
+                    if ($v['flagged'] ?? false) {
+                        $violations[] = "Content contains {$v['classifier']}";
+                    }
+                }
+            }
+            
+            $violationText = implode(', ', $violations);
+            $errorMessage = "Your updated announcement was blocked by our content moderation system. " .
+                           "Please remove inappropriate language. " .
+                           "Detected: {$violationText}";
+            
+            return back()->withErrors(['moderation' => $errorMessage])->withInput();
+        }
+        // ============================================
+        // END MODERATION CHECK
+        // ============================================
         
         // Determine announcement type and verification status
         $announcementType = $validated['announcement_type'];
@@ -294,6 +387,14 @@ class AnnouncementController extends Controller
         
         // Remove announcement_type from data as it's not a database column
         unset($validated['announcement_type']);
+        
+        // Save moderation results (optional - for audit)
+        $validated['moderation_flagged'] = ($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false);
+        $validated['moderation_results'] = json_encode([
+            'title' => $titleModeration,
+            'content' => $contentModeration,
+            'checked_at' => now()->toDateTimeString()
+        ]);
         
         // Handle image upload
         if ($request->hasFile('image')) {
@@ -357,106 +458,108 @@ class AnnouncementController extends Controller
             ->with('success', 'Announcement deleted successfully.');
     }
 
-   /**
- * Display user's own announcements
- */
-public function myAnnouncements(Request $request): View
-{
-    $user = auth()->user();
-    $status = $request->get('status', 'all');
-    
-    // Get counts from database BEFORE applying status filter
-    $totalCount = Announcement::where('author_id', $user->id)->count();
-    $publishedCount = Announcement::where('author_id', $user->id)->where('status', 'published')->count();
-    $draftCount = Announcement::where('author_id', $user->id)->where('status', 'draft')->count();
-    $pendingCount = Announcement::where('author_id', $user->id)->where('status', 'pending_verification')->count();
-    $rejectedCount = Announcement::where('author_id', $user->id)->where('status', 'rejected')->count();
-    
-    // Then apply status filter for the paginated results
-    $query = Announcement::where('author_id', $user->id);
-    
-    if ($status !== 'all') {
-        $query->where('status', $status);
+    /**
+     * Display user's own announcements
+     */
+    public function myAnnouncements(Request $request): View
+    {
+        $user = auth()->user();
+        $status = $request->get('status', 'all');
+        
+        // Get counts from database BEFORE applying status filter
+        $totalCount = Announcement::where('author_id', $user->id)->count();
+        $publishedCount = Announcement::where('author_id', $user->id)->where('status', 'published')->count();
+        $draftCount = Announcement::where('author_id', $user->id)->where('status', 'draft')->count();
+        $pendingCount = Announcement::where('author_id', $user->id)->where('status', 'pending_verification')->count();
+        $rejectedCount = Announcement::where('author_id', $user->id)->where('status', 'rejected')->count();
+        
+        // Then apply status filter for the paginated results
+        $query = Announcement::where('author_id', $user->id);
+        
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+        
+        $announcements = $query->orderBy('created_at', 'desc')->paginate(10);
+        
+        // Calculate total views
+        $totalViews = 0;
+        if (Schema::hasColumn('announcements', 'view_count')) {
+            $totalViews = Announcement::where('author_id', $user->id)->sum('view_count');
+        }
+        
+        return view('announcements.my-announcements', compact(
+            'announcements', 
+            'totalViews', 
+            'user',
+            'totalCount',
+            'publishedCount',
+            'draftCount',
+            'pendingCount',
+            'rejectedCount'
+        ));
     }
-    
-    $announcements = $query->orderBy('created_at', 'desc')->paginate(10);
-    
-    // Calculate total views
-    $totalViews = 0;
-    if (Schema::hasColumn('announcements', 'view_count')) {
-        $totalViews = Announcement::where('author_id', $user->id)->sum('view_count');
-    }
-    
-    return view('announcements.my-announcements', compact(
-        'announcements', 
-        'totalViews', 
-        'user',
-        'totalCount',
-        'publishedCount',
-        'draftCount',
-        'pendingCount',
-        'rejectedCount'
-    ));
-}
+
     /**
      * APPROVE announcement (Admin & Staff)
      * Convert from pending_verification to published
      */
-   public function approve(Request $request, $id)
-{
-    try {
-        // Add debug logging
-        \Log::info('Approve method called for ID: ' . $id);
-        \Log::info('Request method: ' . $request->method());
-        \Log::info('User: ' . auth()->user()->id . ', Role: ' . auth()->user()->role);
-        
-        $announcement = Announcement::findOrFail($id);
-        $user = auth()->user();
-        
-        // Check authorization
-        if (!in_array($user->role, ['admin', 'staff'])) {
-            \Log::warning('Unauthorized user tried to approve: ' . $user->role);
-            return response()->json(['success' => false, 'message' => 'Unauthorized. Only admin/staff can approve announcements.'], 403);
-        }
-        
-        // Check if announcement is pending verification
-        if ($announcement->status !== 'pending_verification') {
-            \Log::warning('Announcement not pending: ' . $announcement->status);
+    public function approve(Request $request, $id)
+    {
+        try {
+            // Add debug logging
+            \Log::info('Approve method called for ID: ' . $id);
+            \Log::info('Request method: ' . $request->method());
+            \Log::info('User: ' . auth()->user()->id . ', Role: ' . auth()->user()->role);
+            
+            $announcement = Announcement::findOrFail($id);
+            $user = auth()->user();
+            
+            // Check authorization
+            if (!in_array($user->role, ['admin', 'staff'])) {
+                \Log::warning('Unauthorized user tried to approve: ' . $user->role);
+                return response()->json(['success' => false, 'message' => 'Unauthorized. Only admin/staff can approve announcements.'], 403);
+            }
+            
+            // Check if announcement is pending verification
+            if ($announcement->status !== 'pending_verification') {
+                \Log::warning('Announcement not pending: ' . $announcement->status);
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'Only pending announcements can be approved. Current status: ' . $announcement->status
+                ], 400);
+            }
+            
+            // Update announcement
+            $announcement->update([
+                'status' => 'published',
+                'is_official' => true,
+                'needs_verification' => false,
+                'verified_at' => now(),
+                'verified_by' => $user->id,
+                'rejection_reason' => null,
+                'rejected_at' => null,
+                'rejected_by' => null,
+            ]);
+            
+            \Log::info('Announcement approved successfully: ' . $announcement->id);
+            
+            return response()->json([
+                'success' => true, 
+                'message' => 'Announcement "' . $announcement->title . '" has been approved and published.',
+                'data' => $announcement
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Approval failed: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
                 'success' => false, 
-                'message' => 'Only pending announcements can be approved. Current status: ' . $announcement->status
-            ], 400);
+                'message' => 'Error approving announcement: ' . $e->getMessage()
+            ], 500);
         }
-        
-        // Update announcement
-        $announcement->update([
-            'status' => 'published',
-            'is_official' => true,
-            'needs_verification' => false,
-            'verified_at' => now(),
-            'verified_by' => $user->id,
-            'rejection_reason' => null,
-            'rejected_at' => null,
-            'rejected_by' => null,
-        ]);
-        
-        \Log::info('Announcement approved successfully: ' . $announcement->id);
-        
-        return response()->json([
-            'success' => true, 
-            'message' => 'Announcement "' . $announcement->title . '" has been approved and published.',
-            'data' => $announcement
-        ]);
-        
-    } catch (\Exception $e) {
-        \Log::error('Approval failed: ' . $e->getMessage());
-        \Log::error('Stack trace: ' . $e->getTraceAsString());
-        return response()->json([
-            'success' => false, 
-            'message' => 'Error approving announcement: ' . $e->getMessage()
-        ], 500);
     }
-}
+
     /**
      * REJECT announcement (Admin & Staff)
      * Convert from pending_verification to rejected with reason
@@ -580,10 +683,6 @@ public function myAnnouncements(Request $request): View
         
         return response()->json(['count' => $count]);
     }
-
-    // ============================================
-    // EXISTING METHODS (preserved from original)
-    // ============================================
 
     /**
      * Archive the specified announcement.

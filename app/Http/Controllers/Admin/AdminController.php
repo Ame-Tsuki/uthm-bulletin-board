@@ -476,6 +476,15 @@ class AdminController extends Controller
         ]);
     }
 
+   /**
+ * Show moderation page for reported announcements
+ */
+public function moderation()
+{
+    $user = auth()->user();
+    return view('admin.moderation', compact('user'));
+}
+
     /**
      * Get events for management
      */

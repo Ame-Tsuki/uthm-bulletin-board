@@ -15,6 +15,29 @@
             font-family: 'Inter', sans-serif;
         }
         
+        /* Sidebar styles matching admin layout */
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .sidebar-link {
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            padding-left: 1.5rem;
+        }
+        
+        .active-link {
+            background: rgba(255, 255, 255, 0.2);
+            border-left: 4px solid #fff;
+        }
+        
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -107,15 +130,22 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .badge {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 9999px;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Main Container -->
     <div class="flex h-screen">
-        <!-- Sidebar -->
-        <div class="w-64 bg-gray-900 text-white">
+        <div class="sidebar w-64 bg-gray-900 text-white hidden md:block">
             <div class="p-6">
                 <div class="flex items-center space-x-3 mb-8">
-                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-3 rounded-xl">
+                    <div class="gradient-bg p-3 rounded-xl">
                         <i class="fas fa-shield-alt text-xl"></i>
                     </div>
                     <div>
@@ -125,11 +155,33 @@
                 </div>
                 
                 <nav class="space-y-1">
-                    <a href="{{ route('admin.dashboard') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
-                        <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center sidebar-link p-3 rounded-lg">
+                        <i class="fas fa-tachometer-alt mr-3 text-gray-300"></i>
+                        Dashboard
                     </a>
-                    <a href="{{ route('admin.calendar') }}" class="flex items-center p-3 rounded-lg bg-gray-800">
-                        <i class="fas fa-calendar-alt mr-3"></i> Calendar
+                    <a href="{{ route('admin.users.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-users mr-3 text-gray-300"></i>
+                        User Management
+                    </a>
+                    <a href="{{ route('admin.announcements.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-clipboard-list mr-3 text-gray-300"></i>
+                        Posts & Content
+                    </a>
+                    <a href="{{ route('admin.moderation') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-flag mr-3 text-gray-300"></i>
+                        Moderation
+                    </a>
+                    <a href="{{ route('admin.calendar') }}" class="flex items-center sidebar-link active-link rounded-lg p-3 hover:bg-gray-700">
+                        <i class="fas fa-calendar-alt mr-3 text-gray-300"></i>
+                        Calendar
+                    </a>
+                    <a href="{{ route('admin.analytics') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-chart-bar mr-3 text-gray-300"></i>
+                        Analytics
+                    </a>
+                    <a href="{{ route('admin.settings.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-cog mr-3 text-gray-300"></i>
+                        System Settings
                     </a>
                 </nav>
                 
@@ -149,18 +201,103 @@
 
         <!-- Main Content -->
         <div class="flex-1 overflow-auto">
-            <header class="bg-white shadow-sm border-b px-6 py-4">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-800">Calendar Management</h1>
-                        <p class="text-gray-600 text-sm">Manage important dates visible to all users</p>
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm border-b">
+                <div class="px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <button id="menuToggle" class="md:hidden mr-4 text-gray-600">
+                                <i class="fas fa-bars text-xl"></i>
+                            </button>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-800">Calendar Management</h1>
+                                <p class="text-gray-600 text-sm">Manage important dates visible to all users</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <button onclick="openEventModal()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                                <i class="fas fa-plus mr-2"></i> Post Important Date
+                            </button>
+                            
+                            <button class="relative text-gray-600 hover:text-gray-800">
+                                <i class="fas fa-bell text-xl"></i>
+                                <span class="absolute -top-1 -right-1 bg-red-500 text-xs text-white rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                            </button>
+                            
+                            <div class="relative">
+                                <button id="userMenu" class="flex items-center space-x-2 focus:outline-none">
+                                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                        <span class="text-white font-bold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                    </div>
+                                    <span class="font-medium hidden md:inline">Administrator</span>
+                                    <i class="fas fa-chevron-down text-gray-400"></i>
+                                </button>
+                                <!-- Dropdown Menu -->
+                                <div id="dropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-10">
+                                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-user mr-2"></i>Profile
+                                    </a>
+                                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-cog mr-2"></i>Settings
+                                    </a>
+                                    <hr class="my-2">
+                                    <form action="{{ route('logout') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">
+                                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <button onclick="openEventModal()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
-                        <i class="fas fa-plus mr-2"></i> Post Important Date
-                    </button>
                 </div>
             </header>
 
+            <!-- Mobile Sidebar Overlay -->
+            <div id="mobileSidebar" class="fixed inset-0 bg-gray-900 bg-opacity-50 z-40 md:hidden hidden">
+                <div class="absolute left-0 top-0 h-full w-64 bg-gray-900 text-white">
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-8">
+                            <div class="flex items-center space-x-3">
+                                <div class="gradient-bg p-3 rounded-xl">
+                                    <i class="fas fa-shield-alt text-xl"></i>
+                                </div>
+                                <div>
+                                    <h2 class="text-xl font-bold">Admin Panel</h2>
+                                    <p class="text-gray-400 text-sm">UTHM Bulletin System</p>
+                                </div>
+                            </div>
+                            <button id="closeMenu" class="text-white">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                        <nav class="space-y-1">
+                            <a href="{{ route('admin.dashboard') }}" class="flex items-center p-3 rounded-lg bg-gray-800">
+                                <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
+                            </a>
+                            <a href="{{ route('admin.users.index') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
+                                <i class="fas fa-users mr-3"></i>User Management
+                            </a>
+                            <a href="{{ route('admin.announcements.index') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
+                                <i class="fas fa-clipboard-list mr-3"></i>Posts & Content
+                            </a>
+                            <a href="{{ route('admin.calendar') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
+                                <i class="fas fa-calendar-alt mr-3"></i>Calendar
+                            </a>
+                            <a href="{{ route('admin.analytics') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
+                                <i class="fas fa-chart-bar mr-3"></i>Analytics
+                            </a>
+                            <a href="{{ route('admin.settings.index') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
+                                <i class="fas fa-cog mr-3"></i>Settings
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar Content -->
             <main class="p-6">
                 <!-- Calendar -->
                 <div class="bg-white rounded-lg shadow">
@@ -279,31 +416,48 @@
         let allEvents = [];
         let deleteEventId = null;
         
+        // Mobile menu toggle
+        document.getElementById('menuToggle')?.addEventListener('click', function() {
+            document.getElementById('mobileSidebar').classList.remove('hidden');
+        });
+
+        document.getElementById('closeMenu')?.addEventListener('click', function() {
+            document.getElementById('mobileSidebar').classList.add('hidden');
+        });
+
+        // User dropdown
+        document.getElementById('userMenu')?.addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.getElementById('dropdownMenu').classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('dropdownMenu');
+            const userMenu = document.getElementById('userMenu');
+            if (!userMenu?.contains(event.target) && !dropdown?.contains(event.target)) {
+                dropdown?.classList.add('hidden');
+            }
+        });
+        
         // Load everything on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadAllData();
             setupFormSubmit();
             
-            // Set default date for modal
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('startDate').value = today;
         });
         
-        // Load all data
         async function loadAllData() {
             await loadEvents();
             await loadUpcomingEvents();
         }
         
-        // Load events from API
         async function loadEvents() {
             try {
                 const year = currentDate.getFullYear();
                 const month = currentDate.getMonth() + 1;
                 
-                console.log('Loading events for:', year, month);
-                
-                // Use the regular events endpoint and filter for public events
                 const response = await fetch(`/api/events?year=${year}&month=${month}`, {
                     headers: {
                         'Accept': 'application/json',
@@ -313,9 +467,6 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('API Response for calendar:', data);
-                    
-                    // Filter to only show public events
                     if (Array.isArray(data)) {
                         allEvents = data.filter(event => event.visibility === 'public');
                     } else if (data.data && Array.isArray(data.data)) {
@@ -323,11 +474,7 @@
                     } else {
                         allEvents = [];
                     }
-                    
-                    console.log('Public events for calendar:', allEvents.length);
                     renderCalendar();
-                } else {
-                    console.error('Failed to load events:', response.status);
                 }
             } catch (error) {
                 console.error('Error loading events:', error);
@@ -335,7 +482,6 @@
             }
         }
         
-        // Render calendar grid
         function renderCalendar() {
             const calendarGrid = document.getElementById('calendarGrid');
             const monthYearDisplay = document.getElementById('currentMonthYear');
@@ -353,14 +499,12 @@
             const totalDays = lastDay.getDate();
             const startingDay = firstDay.getDay();
             
-            // Previous month days
             const prevMonthLastDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate();
             for (let i = 0; i < startingDay; i++) {
                 const day = prevMonthLastDay - startingDay + i + 1;
                 calendarGrid.appendChild(createDayCell(day, 'other-month'));
             }
             
-            // Current month days
             const today = new Date();
             for (let day = 1; day <= totalDays; day++) {
                 const isToday = today.getDate() === day && 
@@ -368,7 +512,6 @@
                                today.getFullYear() === currentDate.getFullYear();
                 const cell = createDayCell(day, isToday ? 'today' : '');
                 
-                // Add events for this day
                 const dayEvents = allEvents.filter(event => {
                     if (!event.start_date) return false;
                     const eventDate = new Date(event.start_date);
@@ -391,7 +534,6 @@
                 calendarGrid.appendChild(cell);
             }
             
-            // Next month days
             const totalCells = 42;
             const remainingCells = totalCells - (startingDay + totalDays);
             for (let i = 1; i <= remainingCells; i++) {
@@ -409,11 +551,8 @@
             return cell;
         }
         
-        // Load upcoming events - FIXED to properly refresh
         async function loadUpcomingEvents() {
             try {
-                console.log('Loading upcoming events...');
-                
                 const response = await fetch('/api/events/upcoming', {
                     headers: {
                         'Accept': 'application/json',
@@ -425,8 +564,6 @@
                 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Upcoming events API response:', data);
-                    
                     let eventsArray = [];
                     
                     if (Array.isArray(data)) {
@@ -435,10 +572,7 @@
                         eventsArray = data.data;
                     }
                     
-                    // Filter to only public events
                     const publicEvents = eventsArray.filter(e => e.visibility === 'public');
-                    
-                    console.log('Public upcoming events count:', publicEvents.length);
                     
                     if (publicEvents.length === 0) {
                         container.innerHTML = '<div class="p-8 text-center text-gray-500">No upcoming important dates</div>';
@@ -471,20 +605,15 @@
                         `;
                         container.appendChild(div);
                     });
-                } else {
-                    console.error('Failed to load upcoming events:', response.status);
                 }
             } catch (error) {
                 console.error('Error loading upcoming events:', error);
             }
         }
         
-        // Save event (Create or Update)
         async function saveEvent(eventData, isEdit = false, eventId = null) {
             const url = isEdit ? `/api/events/${eventId}` : '/api/events';
             const method = isEdit ? 'PUT' : 'POST';
-            
-            console.log('Saving event:', { url, method, eventData });
             
             const response = await fetch(url, {
                 method: method,
@@ -499,14 +628,12 @@
             const result = await response.json();
             
             if (!response.ok) {
-                throw new Error(result.message || result.error || 'Error saving event');
+                throw new Error(result.message || 'Error saving event');
             }
             
-            console.log('Save response:', result);
             return result;
         }
         
-        // Delete event
         async function deleteEvent(eventId) {
             const response = await fetch(`/api/events/${eventId}`, {
                 method: 'DELETE',
@@ -525,45 +652,42 @@
         }
         
         function showEventDetails(event) {
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    modal.innerHTML = `
-        <div class="bg-white rounded-lg max-w-md w-full mx-4 p-6">
-            <div class="flex justify-between items-center mb-4">
-                <div class="flex items-center">
-                    <h3 class="text-xl font-bold">${escapeHtml(event.title)}</h3>
-                    <span class="ml-2 px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">
-                        <i class="fas fa-globe mr-1"></i> Public
-                    </span>
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg max-w-md w-full mx-4 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex items-center">
+                            <h3 class="text-xl font-bold">${escapeHtml(event.title)}</h3>
+                            <span class="ml-2 px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">
+                                <i class="fas fa-globe mr-1"></i> Public
+                            </span>
+                        </div>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-2">
+                        <p><i class="far fa-calendar mr-2"></i> ${new Date(event.start_date).toLocaleDateString()}</p>
+                        ${event.location ? `<p><i class="fas fa-map-marker-alt mr-2"></i> ${escapeHtml(event.location)}</p>` : ''}
+                        ${event.description ? `<p class="mt-4 pt-4 border-t">${escapeHtml(event.description)}</p>` : ''}
+                        <div class="mt-4 pt-4 border-t">
+                            <p class="text-sm text-gray-500">
+                                <i class="fas fa-user-circle mr-2"></i> 
+                                Created by: <span class="font-medium text-gray-700">Admin</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-2 mt-6 pt-4 border-t">
+                        <button onclick="editEvent(${event.id}); this.closest('.fixed').remove()" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Edit</button>
+                        <button onclick="openDeleteModal(${event.id}); this.closest('.fixed').remove()" class="px-4 py-2 bg-red-500 text-white rounded-lg">Delete</button>
+                        <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border rounded-lg">Close</button>
+                    </div>
                 </div>
-                <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="space-y-2">
-                <p><i class="far fa-calendar mr-2"></i> ${new Date(event.start_date).toLocaleDateString()}</p>
-                ${event.location ? `<p><i class="fas fa-map-marker-alt mr-2"></i> ${escapeHtml(event.location)}</p>` : ''}
-                ${event.description ? `<p class="mt-4 pt-4 border-t">${escapeHtml(event.description)}</p>` : ''}
-                <div class="mt-4 pt-4 border-t">
-                    <p class="text-sm text-gray-500">
-                        <i class="fas fa-user-circle mr-2"></i> 
-                        Created by: <span class="font-medium text-gray-700">${event.created_by?.name || 'Unknown'}</span>
-                        <span class="ml-1 text-xs">(${event.created_by?.role || 'User'})</span>
-                    </p>
-                    <p class="text-xs text-gray-400 mt-1">Created on: ${new Date(event.created_at).toLocaleString()}</p>
-                </div>
-            </div>
-            <div class="flex justify-end space-x-2 mt-6 pt-4 border-t">
-                <button onclick="editEvent(${event.id}); this.closest('.fixed').remove()" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Edit</button>
-                <button onclick="openDeleteModal(${event.id}); this.closest('.fixed').remove()" class="px-4 py-2 bg-red-500 text-white rounded-lg">Delete</button>
-                <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border rounded-lg">Close</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
+            `;
+            document.body.appendChild(modal);
+        }
         
-        // Open modal for new event
         function openEventModal() {
             document.getElementById('modalTitle').textContent = 'Post Important Date';
             document.getElementById('eventId').value = '';
@@ -578,14 +702,9 @@
             document.getElementById('eventModal').classList.remove('hidden');
         }
         
-        // Edit existing event
         function editEvent(eventId) {
             const event = allEvents.find(e => e.id === eventId);
-            if (!event) {
-                console.error('Event not found:', eventId);
-                showToast('Event not found', true);
-                return;
-            }
+            if (!event) return;
             
             document.getElementById('modalTitle').textContent = 'Edit Important Date';
             document.getElementById('eventId').value = event.id;
@@ -615,30 +734,16 @@
         async function confirmDelete() {
             if (!deleteEventId) return;
             
-            const confirmBtn = document.querySelector('#deleteModal button:last-child');
-            if (confirmBtn) {
-                confirmBtn.disabled = true;
-                confirmBtn.innerHTML = '<div class="loading"></div> Deleting...';
-            }
-            
             try {
                 await deleteEvent(deleteEventId);
                 closeDeleteModal();
                 showToast('Event deleted successfully!');
-                // Refresh all data after delete
                 await loadAllData();
             } catch (error) {
-                console.error('Delete error:', error);
                 showToast(error.message, true);
-            } finally {
-                if (confirmBtn) {
-                    confirmBtn.disabled = false;
-                    confirmBtn.innerHTML = 'Delete';
-                }
             }
         }
         
-        // Form submission - FIXED to refresh both calendar and upcoming events
         function setupFormSubmit() {
             const form = document.getElementById('eventForm');
             if (!form) return;
@@ -657,10 +762,8 @@
                     location: document.getElementById('location').value,
                     description: document.getElementById('description').value,
                     all_day: true,
-                    visibility: 'public'  // Explicitly send public visibility
+                    visibility: 'public'
                 };
-                
-                console.log('Submitting event data:', formData);
                 
                 const submitBtn = form.querySelector('button[type="submit"]');
                 if (submitBtn) {
@@ -669,18 +772,11 @@
                 }
                 
                 try {
-                    const result = await saveEvent(formData, isEdit, eventId);
-                    console.log('Save result:', result);
+                    await saveEvent(formData, isEdit, eventId);
                     closeModal();
-                    
-                    const successMessage = isEdit ? 'Event updated successfully! Visible to all users.' : 'Event posted to all users successfully!';
-                    showToast(successMessage);
-                    
-                    // IMPORTANT: Refresh both calendar and upcoming events
+                    showToast(isEdit ? 'Event updated!' : 'Event created!');
                     await loadAllData();
-                    
                 } catch (error) {
-                    console.error('Save error:', error);
                     showToast(error.message, true);
                 } finally {
                     if (submitBtn) {
@@ -691,7 +787,6 @@
             });
         }
         
-        // Navigation
         function prevMonth() {
             currentDate.setMonth(currentDate.getMonth() - 1);
             loadAllData();
@@ -707,7 +802,6 @@
             loadAllData();
         }
         
-        // UI Helpers
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toastMessage');

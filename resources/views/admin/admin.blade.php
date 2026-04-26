@@ -76,19 +76,17 @@
                         <i class="fas fa-tachometer-alt mr-3 text-gray-300"></i>
                         Dashboard
                     </a>
-                    <a href="{{ route('admin.users.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
+                    <a href="{{ route('admin.users') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-users mr-3 text-gray-300"></i>
                         User Management
-                        <span class="ml-auto bg-red-500 text-xs px-2 py-1 rounded-full">{{ $stats['unverified_users'] ?? 0 }}</span>
                     </a>
                     <a href="{{ route('admin.announcements.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-clipboard-list mr-3 text-gray-300"></i>
                         Posts & Content
                     </a>
-                    <a href="{{ route('admin.announcements.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
+                    <a href="{{ route('admin.moderation') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-flag mr-3 text-gray-300"></i>
                         Moderation
-                        <span class="ml-auto bg-yellow-500 text-xs px-2 py-1 rounded-full">12</span>
                     </a>
                     <a href="{{ route('admin.calendar') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-calendar-alt mr-3 text-gray-300"></i>
@@ -101,10 +99,6 @@
                     <a href="{{ route('admin.settings.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-cog mr-3 text-gray-300"></i>
                         System Settings
-                    </a>
-                    <a href="#" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
-                        <i class="fas fa-bell mr-3 text-gray-300"></i>
-                        Notifications
                     </a>
                 </nav>
                 

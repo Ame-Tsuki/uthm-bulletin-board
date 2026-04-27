@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\CommunityGroup;
 use App\Models\GroupMember;
+use App\Models\GroupPost;
 use App\Models\GroupJoinRequest;
+use Illuminate\Support\Facades\DB;
 
 class CommunityHubController extends Controller
 {
@@ -13,88 +15,34 @@ class CommunityHubController extends Controller
     {
         $user = auth()->user();
         
-        // Get user's groups
+        // Get all groups with member count
+        $allGroups = CommunityGroup::withCount('members')
+            ->orderBy('created_at', 'desc')
+            ->paginate(9);
+        
+        // Get user's joined groups
         $myGroups = CommunityGroup::whereHas('members', function($q) use ($user) {
             $q->where('user_id', $user->id)->where('status', 'approved');
         })->withCount('members')->get();
         
-        // Get pending join requests
+        // Get user's pending join requests
         $pendingRequests = GroupJoinRequest::where('user_id', $user->id)
             ->where('status', 'pending')
             ->with('group')
             ->get();
         
-        // Get groups user manages (for approval)
-        $manageRequests = GroupJoinRequest::whereHas('group.members', function($q) use ($user) {
-            $q->where('user_id', $user->id)->whereIn('role', ['admin', 'moderator']);
-        })->where('status', 'pending')->with(['group', 'user'])->get();
-        
-        // Get recommended groups
-        $recommendedGroups = CommunityGroup::where('privacy', 'public')
-            ->whereDoesntHave('members', function($q) use ($user) {
-                $q->where('user_id', $user->id);
-            })
-            ->withCount('members')
-            ->latest()
-            ->take(6)
+        // Get all posts from groups user is member of
+        $groupIds = GroupMember::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->pluck('group_id');
+            
+        $posts = GroupPost::with(['user', 'group'])
+            ->whereIn('group_id', $groupIds)
+            ->orderBy('created_at', 'desc')
+            ->take(20)
             ->get();
         
-        // Get all groups for discovery
-        $allGroups = CommunityGroup::withCount('members')
-            ->orderBy('member_count', 'desc')
-            ->paginate(12);
-        
-        // Return your existing view - NOT community-hub.index
-        return view('student.community-hub', compact('myGroups', 'pendingRequests', 'manageRequests', 'recommendedGroups', 'allGroups', 'user'));
-    }
-    
-    public function show($id)
-    {
-        $group = CommunityGroup::with(['creator', 'members.user', 'posts.user'])
-            ->withCount('members')
-            ->findOrFail($id);
-        
-        $user = auth()->user();
-        
-        $isMember = GroupMember::where('group_id', $id)
-            ->where('user_id', $user->id)
-            ->where('status', 'approved')
-            ->exists();
-        
-        $userRole = null;
-        if ($isMember) {
-            $member = GroupMember::where('group_id', $id)
-                ->where('user_id', $user->id)
-                ->first();
-            $userRole = $member->role;
-        }
-        
-        $pendingRequest = GroupJoinRequest::where('group_id', $id)
-            ->where('user_id', $user->id)
-            ->where('status', 'pending')
-            ->first();
-        
-        $members = GroupMember::with('user')
-            ->where('group_id', $id)
-            ->where('status', 'approved')
-            ->paginate(20);
-        
-        $posts = GroupPost::with(['user', 'comments.user', 'likes'])
-            ->where('group_id', $id)
-            ->orderBy('is_pinned', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-        
-        $joinRequests = [];
-        if (in_array($userRole, ['admin', 'moderator'])) {
-            $joinRequests = GroupJoinRequest::with('user')
-                ->where('group_id', $id)
-                ->where('status', 'pending')
-                ->get();
-        }
-        
-        // Return your group detail view (you may need to create this)
-        return view('student.community-hub-show', compact('group', 'isMember', 'userRole', 'pendingRequest', 'members', 'posts', 'joinRequests', 'user'));
+        return view('student.community-hub', compact('allGroups', 'myGroups', 'pendingRequests', 'posts', 'user'));
     }
     
     public function create()
@@ -110,26 +58,42 @@ class CommunityHubController extends Controller
             'category' => 'required|string',
             'privacy' => 'required|in:public,private,by_approval',
             'max_members' => 'nullable|integer|min:1|max:10000',
-            'allow_posts' => 'boolean',
-            'allow_events' => 'boolean',
         ]);
         
-        $validated['created_by'] = auth()->id();
-        $validated['member_count'] = 1;
+        DB::beginTransaction();
         
-        $group = CommunityGroup::create($validated);
-        
-        // Add creator as admin member
-        GroupMember::create([
-            'group_id' => $group->id,
-            'user_id' => auth()->id(),
-            'role' => 'admin',
-            'status' => 'approved',
-            'joined_at' => now()
-        ]);
-        
-        return redirect()->route('student.community-hub.show', $group->id)
-            ->with('success', 'Group created successfully!');
+        try {
+            $group = CommunityGroup::create([
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'category' => $validated['category'],
+                'privacy' => $validated['privacy'],
+                'max_members' => $validated['max_members'],
+                'created_by' => auth()->id(),
+                'member_count' => 1,
+                'allow_posts' => true,
+                'allow_events' => true,
+                'require_approval' => false,
+            ]);
+            
+            // Add creator as admin member
+            GroupMember::create([
+                'group_id' => $group->id,
+                'user_id' => auth()->id(),
+                'role' => 'admin',
+                'status' => 'approved',
+                'joined_at' => now()
+            ]);
+            
+            DB::commit();
+            
+            return redirect()->route('student.community-hub')
+                ->with('success', 'Group "' . $group->name . '" created successfully!');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Failed to create group. Please try again.');
+        }
     }
     
     public function join($id)
@@ -137,10 +101,7 @@ class CommunityHubController extends Controller
         $group = CommunityGroup::findOrFail($id);
         $user = auth()->user();
         
-        if ($group->isFull()) {
-            return back()->with('error', 'This group is full!');
-        }
-        
+        // Check if already a member
         $existing = GroupMember::where('group_id', $id)
             ->where('user_id', $user->id)
             ->first();
@@ -149,23 +110,39 @@ class CommunityHubController extends Controller
             return back()->with('error', 'You are already a member or have a pending request.');
         }
         
-        if ($group->privacy === 'public') {
-            GroupMember::create([
-                'group_id' => $id,
-                'user_id' => $user->id,
-                'role' => 'member',
-                'status' => 'approved',
-                'joined_at' => now()
-            ]);
-            $group->increment('member_count');
-            return back()->with('success', 'You have joined the group!');
-        } else {
-            GroupJoinRequest::create([
-                'group_id' => $id,
-                'user_id' => $user->id,
-                'message' => $request->message ?? null
-            ]);
-            return back()->with('info', 'Join request sent! Waiting for approval.');
+        // Check member limit
+        if ($group->max_members && $group->member_count >= $group->max_members) {
+            return back()->with('error', 'This group has reached its maximum member limit.');
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            if ($group->privacy === 'public') {
+                // Public group - join immediately
+                GroupMember::create([
+                    'group_id' => $id,
+                    'user_id' => $user->id,
+                    'role' => 'member',
+                    'status' => 'approved',
+                    'joined_at' => now()
+                ]);
+                $group->increment('member_count');
+                DB::commit();
+                return back()->with('success', 'You joined "' . $group->name . '"!');
+            } else {
+                // Private or approval required - send request
+                GroupJoinRequest::create([
+                    'group_id' => $id,
+                    'user_id' => $user->id,
+                    'status' => 'pending'
+                ]);
+                DB::commit();
+                return back()->with('info', 'Join request sent to "' . $group->name . '". Admin will review it.');
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Failed to join group. Please try again.');
         }
     }
     
@@ -175,12 +152,90 @@ class CommunityHubController extends Controller
             ->where('user_id', auth()->id())
             ->first();
         
-        if ($member && $member->role !== 'admin') {
-            $member->delete();
-            CommunityGroup::where('id', $id)->decrement('member_count');
-            return redirect()->route('student.community-hub')->with('success', 'You have left the group.');
+        if (!$member) {
+            return back()->with('error', 'You are not a member of this group.');
         }
         
-        return back()->with('error', 'Group admin cannot leave. Transfer ownership first.');
+        if ($member->role === 'admin') {
+            return back()->with('error', 'Group admins cannot leave. Transfer ownership or delete the group first.');
+        }
+        
+        DB::beginTransaction();
+        
+        try {
+            $member->delete();
+            CommunityGroup::where('id', $id)->decrement('member_count');
+            DB::commit();
+            return redirect()->route('student.community-hub')->with('success', 'You have left the group.');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Failed to leave group.');
+        }
+    }
+    
+    public function createPost(Request $request, $groupId)
+    {
+        $request->validate([
+            'content' => 'required|string|max:5000'
+        ]);
+        
+        // Check if user is a member of the group
+        $isMember = GroupMember::where('group_id', $groupId)
+            ->where('user_id', auth()->id())
+            ->where('status', 'approved')
+            ->exists();
+            
+        if (!$isMember) {
+            return back()->with('error', 'You must be a member to post in this group.');
+        }
+        
+        $post = GroupPost::create([
+            'group_id' => $groupId,
+            'user_id' => auth()->id(),
+            'content' => $request->content,
+            'media' => null,
+            'is_pinned' => false
+        ]);
+        
+        return back()->with('success', 'Your post has been published!');
+    }
+    
+    public function deletePost($groupId, $postId)
+    {
+        $post = GroupPost::where('group_id', $groupId)->findOrFail($postId);
+        
+        // Check if user is admin of group or post owner
+        $isAdmin = GroupMember::where('group_id', $groupId)
+            ->where('user_id', auth()->id())
+            ->where('role', 'admin')
+            ->exists();
+            
+        if ($post->user_id === auth()->id() || $isAdmin) {
+            $post->delete();
+            return back()->with('success', 'Post deleted.');
+        }
+        
+        return back()->with('error', 'Unauthorized to delete this post.');
+    }
+    
+    public function likePost($groupId, $postId)
+    {
+        $post = GroupPost::findOrFail($postId);
+        
+        // Check if user is member
+        $isMember = GroupMember::where('group_id', $groupId)
+            ->where('user_id', auth()->id())
+            ->where('status', 'approved')
+            ->exists();
+            
+        if (!$isMember) {
+            return response()->json(['error' => 'You must be a member to like posts'], 403);
+        }
+        
+        // Check if already liked (using a likes table - simplified, just increment count for demo)
+        // For now, just increment/decrement like count
+        $post->increment('likes_count');
+        
+        return response()->json(['success' => true, 'likes' => $post->likes_count]);
     }
 }

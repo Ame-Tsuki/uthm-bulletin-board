@@ -244,6 +244,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/announcements/{announcement}/publish', [AnnouncementController::class, 'publish'])->name('announcements.publish');
     Route::post('/announcements/{announcement}/toggle-official', [AnnouncementController::class, 'toggleOfficialStatus'])->name('announcements.toggle-official');
 
+    // Featured Announcements Route
+    Route::get('/announcements/featured', [App\Http\Controllers\AnnouncementController::class, 'getFeatured'])->name('announcements.featured');
+
     // ============================================
     // APPROVAL ROUTES (ADMIN/STAFF)
     // ============================================

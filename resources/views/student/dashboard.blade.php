@@ -429,6 +429,399 @@
                     </div>
                 </div>
 
+                <!-- Featured Posts Carousel Section - Add this after the Welcome Section in your dashboard -->
+<div class="bg-white rounded-xl shadow p-6 mb-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h3 class="text-lg font-bold text-gray-900">📌 Featured Announcements</h3>
+            <p class="text-sm text-gray-500 mt-1">Important announcements and highlights from UTHM</p>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span id="featured-counter" class="text-sm text-gray-500">0/0</span>
+        </div>
+    </div>
+    
+    <!-- Featured Posts Carousel -->
+    <div class="relative">
+        <!-- Loading State -->
+        <div id="featured-loading" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-uthm-blue"></div>
+            <p class="mt-2 text-gray-500">Loading featured announcements...</p>
+        </div>
+        
+        <!-- Carousel Container -->
+        <div id="featured-carousel-container" class="hidden">
+            <div class="overflow-hidden rounded-xl">
+                <div id="featured-carousel" class="flex transition-transform duration-500 ease-in-out">
+                    <!-- Featured posts will be dynamically inserted here -->
+                </div>
+            </div>
+            
+            <!-- Navigation Buttons -->
+            <button id="prev-featured" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all hover:scale-110">
+                <i class="fas fa-chevron-left text-xl"></i>
+            </button>
+            <button id="next-featured" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all hover:scale-110">
+                <i class="fas fa-chevron-right text-xl"></i>
+            </button>
+            
+            <!-- Dots Indicator -->
+            <div id="featured-dots" class="flex justify-center mt-6 space-x-2">
+                <!-- Dots will be dynamically inserted here -->
+            </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="featured-empty" class="hidden text-center py-12">
+            <div class="inline-block p-6 bg-gray-100 rounded-full mb-4">
+                <i class="fas fa-star text-gray-400 text-4xl"></i>
+            </div>
+            <h3 class="text-xl font-medium text-gray-900 mb-2">No featured announcements</h3>
+            <p class="text-gray-600">Check back later for important announcements!</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Featured Posts Carousel Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        loadFeaturedAnnouncements();
+    });
+    
+    async function loadFeaturedAnnouncements() {
+        const loadingDiv = document.getElementById('featured-loading');
+        const container = document.getElementById('featured-carousel-container');
+        const emptyDiv = document.getElementById('featured-empty');
+        
+        try {
+            // Fetch featured announcements from your backend
+            const response = await fetch('/announcements/featured', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to load featured announcements');
+            }
+            
+            const data = await response.json();
+            
+            if (data.success && data.announcements && data.announcements.length > 0) {
+                loadingDiv.classList.add('hidden');
+                container.classList.remove('hidden');
+                renderFeaturedCarousel(data.announcements);
+            } else {
+                loadingDiv.classList.add('hidden');
+                emptyDiv.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error loading featured announcements:', error);
+            loadingDiv.classList.add('hidden');
+            emptyDiv.classList.remove('hidden');
+        }
+    }
+    
+    function renderFeaturedCarousel(announcements) {
+        const carousel = document.getElementById('featured-carousel');
+        const dotsContainer = document.getElementById('featured-dots');
+        const counter = document.getElementById('featured-counter');
+        let currentIndex = 0;
+        const totalSlides = announcements.length;
+        
+        // Clear previous content
+        carousel.innerHTML = '';
+        dotsContainer.innerHTML = '';
+        
+        // Get category color and icon mappings
+        const categoryConfig = {
+            urgent: { bg: 'bg-red-50', text: 'text-red-700', badge: 'bg-red-100 text-red-700', icon: 'exclamation-circle', label: 'Urgent' },
+            important: { bg: 'bg-yellow-50', text: 'text-yellow-700', badge: 'bg-yellow-100 text-yellow-700', icon: 'star', label: 'Important' },
+            academic: { bg: 'bg-blue-50', text: 'text-blue-700', badge: 'bg-blue-100 text-blue-700', icon: 'graduation-cap', label: 'Academic' },
+            events: { bg: 'bg-purple-50', text: 'text-purple-700', badge: 'bg-purple-100 text-purple-700', icon: 'calendar-alt', label: 'Events' },
+            general: { bg: 'bg-gray-50', text: 'text-gray-700', badge: 'bg-gray-100 text-gray-700', icon: 'newspaper', label: 'General' }
+        };
+        
+        // Get priority badge mapping
+        const priorityConfig = {
+            urgent: { bg: 'bg-red-500', text: 'HOT', icon: 'fire' },
+            important: { bg: 'bg-yellow-500', text: 'IMPORTANT', icon: 'exclamation-triangle' },
+            normal: { bg: 'bg-blue-500', text: 'INFO', icon: 'info-circle' }
+        };
+        
+        announcements.forEach((announcement, index) => {
+            const category = announcement.category || 'general';
+            const priority = announcement.priority || 'normal';
+            const config = categoryConfig[category] || categoryConfig.general;
+            const priorityConf = priorityConfig[priority] || priorityConfig.normal;
+            
+            // Format date
+            const date = new Date(announcement.created_at);
+            const formattedDate = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            // Determine gradient based on category
+            let gradientClass = '';
+            if (category === 'urgent') gradientClass = 'from-red-50 to-orange-50';
+            else if (category === 'important') gradientClass = 'from-yellow-50 to-amber-50';
+            else if (category === 'academic') gradientClass = 'from-blue-50 to-indigo-50';
+            else if (category === 'events') gradientClass = 'from-purple-50 to-pink-50';
+            else gradientClass = 'from-gray-50 to-blue-50';
+            
+            // Get featured image (you can add a featured_image column to your announcements table)
+            const featuredImage = announcement.featured_image || getRandomImage(category);
+            
+            // Create slide HTML
+            const slide = document.createElement('div');
+            slide.className = 'w-full flex-shrink-0';
+            slide.innerHTML = `
+                <div class="bg-gradient-to-r ${gradientClass} rounded-xl overflow-hidden">
+                    <div class="flex flex-col md:flex-row">
+                        <!-- Image Section -->
+                        <div class="md:w-2/5 relative">
+                            <img src="${featuredImage}" 
+                                 alt="${escapeHtml(announcement.title)}"
+                                 class="w-full h-64 md:h-full object-cover"
+                                 onerror="this.src='https://picsum.photos/id/20/600/400'">
+                            <div class="absolute top-4 left-4">
+                                <span class="${priorityConf.bg} text-white px-3 py-1 rounded-full text-xs font-semibold">
+                                    <i class="fas fa-${priorityConf.icon} mr-1"></i> ${priorityConf.text}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Content Section -->
+                        <div class="md:w-3/5 p-6 md:p-8 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center gap-2 mb-3 flex-wrap">
+                                    <span class="px-3 py-1 ${config.badge} rounded-full text-xs font-semibold">
+                                        <i class="fas fa-${config.icon} mr-1"></i> ${config.label}
+                                    </span>
+                                    ${announcement.is_official ? 
+                                        `<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                                            <i class="fas fa-check-circle mr-1"></i> Official
+                                        </span>` : 
+                                        `<span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+                                            <i class="fas fa-users mr-1"></i> Community
+                                        </span>`
+                                    }
+                                    <span class="text-sm text-gray-500">
+                                        <i class="far fa-calendar-alt mr-1"></i> ${formattedDate}
+                                    </span>
+                                </div>
+                                <h4 class="text-2xl font-bold text-gray-900 mb-3 line-clamp-2">
+                                    ${escapeHtml(announcement.title)}
+                                </h4>
+                                <p class="text-gray-600 mb-4 leading-relaxed line-clamp-3">
+                                    ${escapeHtml(stripHtml(announcement.content).substring(0, 200))}${stripHtml(announcement.content).length > 200 ? '...' : ''}
+                                </p>
+                                <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                                    <div class="flex items-center">
+                                        <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center mr-2">
+                                            <span class="text-xs font-bold">${(announcement.author?.name?.charAt(0) || 'A').toUpperCase()}</span>
+                                        </div>
+                                        <span>${escapeHtml(announcement.author?.name || 'Anonymous')}</span>
+                                        ${announcement.author?.role ? 
+                                            `<span class="ml-2 px-2 py-0.5 text-xs rounded-full badge-${announcement.author.role}">
+                                                ${announcement.author.role.charAt(0).toUpperCase() + announcement.author.role.slice(1)}
+                                            </span>` : ''
+                                        }
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="far fa-eye mr-1"></i> ${formatNumber(announcement.views || 0)} views
+                                    </div>
+                                    ${announcement.comments_count !== undefined ? `
+                                    <div class="flex items-center">
+                                        <i class="far fa-comment mr-1"></i> ${formatNumber(announcement.comments_count)} comments
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between mt-4">
+                                <div class="flex gap-2">
+                                    ${announcement.tags && announcement.tags.length > 0 ? 
+                                        announcement.tags.slice(0, 2).map(tag => `
+                                            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs">
+                                                <i class="fas fa-tag mr-1"></i> ${escapeHtml(tag)}
+                                            </span>
+                                        `).join('') : ''
+                                    }
+                                </div>
+                                <a href="/announcements/${announcement.id}" 
+                                   class="bg-uthm-blue text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition transform hover:scale-105 inline-flex items-center">
+                                    View Details <i class="fas fa-arrow-right ml-2"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            carousel.appendChild(slide);
+            
+            // Create dot
+            const dot = document.createElement('button');
+            dot.className = `w-3 h-3 rounded-full transition-all ${index === 0 ? 'bg-uthm-blue' : 'bg-gray-300'}`;
+            dot.setAttribute('data-index', index);
+            dot.addEventListener('click', () => goToSlide(index));
+            dotsContainer.appendChild(dot);
+        });
+        
+        // Update counter
+        if (counter) {
+            counter.textContent = `1/${totalSlides}`;
+        }
+        
+        // Initialize carousel controls
+        initializeCarouselControls(announcements.length);
+        
+        function goToSlide(index) {
+            currentIndex = index;
+            const translateX = -currentIndex * 100;
+            carousel.style.transform = `translateX(${translateX}%)`;
+            
+            // Update dots
+            const dots = document.querySelectorAll('#featured-dots button');
+            dots.forEach((dot, i) => {
+                if (i === currentIndex) {
+                    dot.classList.remove('bg-gray-300');
+                    dot.classList.add('bg-uthm-blue');
+                } else {
+                    dot.classList.remove('bg-uthm-blue');
+                    dot.classList.add('bg-gray-300');
+                }
+            });
+            
+            // Update counter
+            if (counter) {
+                counter.textContent = `${currentIndex + 1}/${totalSlides}`;
+            }
+        }
+        
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % totalSlides;
+            goToSlide(currentIndex);
+        }
+        
+        function prevSlide() {
+            currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+            goToSlide(currentIndex);
+        }
+        
+        function initializeCarouselControls(slideCount) {
+            const prevBtn = document.getElementById('prev-featured');
+            const nextBtn = document.getElementById('next-featured');
+            
+            if (prevBtn) {
+                prevBtn.replaceWith(prevBtn.cloneNode(true));
+                const newPrevBtn = document.getElementById('prev-featured');
+                if (newPrevBtn) newPrevBtn.addEventListener('click', prevSlide);
+            }
+            
+            if (nextBtn) {
+                nextBtn.replaceWith(nextBtn.cloneNode(true));
+                const newNextBtn = document.getElementById('next-featured');
+                if (newNextBtn) newNextBtn.addEventListener('click', nextSlide);
+            }
+            
+            // Auto-play (optional - uncomment to enable)
+            // let autoPlayInterval;
+            // function startAutoPlay() {
+            //     autoPlayInterval = setInterval(nextSlide, 5000);
+            // }
+            // function stopAutoPlay() {
+            //     if (autoPlayInterval) clearInterval(autoPlayInterval);
+            // }
+            // startAutoPlay();
+            // const carouselContainer = document.querySelector('#featured-carousel-container .overflow-hidden');
+            // if (carouselContainer) {
+            //     carouselContainer.addEventListener('mouseenter', stopAutoPlay);
+            //     carouselContainer.addEventListener('mouseleave', startAutoPlay);
+            // }
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') prevSlide();
+                else if (e.key === 'ArrowRight') nextSlide();
+            });
+            
+            // Touch/swipe support
+            let touchStartX = 0;
+            let touchEndX = 0;
+            carousel.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+            carousel.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                if (touchEndX < touchStartX - 50) nextSlide();
+                else if (touchEndX > touchStartX + 50) prevSlide();
+            });
+        }
+    }
+    
+    // Helper functions
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function stripHtml(html) {
+        if (!html) return '';
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return div.textContent || div.innerText || '';
+    }
+    
+    function formatNumber(num) {
+        if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'k';
+        }
+        return num.toString();
+    }
+    
+    function getRandomImage(category) {
+        // Map categories to relevant placeholder images
+        const images = {
+            urgent: 'https://picsum.photos/id/0/600/400',      // laptop
+            important: 'https://picsum.photos/id/26/600/400',  // nature walk
+            academic: 'https://picsum.photos/id/20/600/400',   // coffee laptop
+            events: 'https://picsum.photos/id/29/600/400',     // city buildings
+            general: 'https://picsum.photos/id/91/600/400'     // camera flash
+        };
+        return images[category] || images.general;
+    }
+</script>
+
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+</style>
+
                 <!-- Main Content Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- Left Column: Today's Announcements -->

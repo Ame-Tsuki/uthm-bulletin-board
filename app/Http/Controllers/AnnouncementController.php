@@ -440,6 +440,48 @@ class AnnouncementController extends Controller
     }
 
     /**
+ * Get featured announcements for the carousel
+ */
+public function getFeatured(Request $request)
+{
+    try {
+        // Fetch announcements that are:
+        // 1. Published/approved
+        // 2. Marked as featured (you can add a 'is_featured' column to your announcements table)
+        // Or you can fetch based on priority (urgent/important) to show in carousel
+        
+        $announcements = Announcement::with('author')
+            ->where('status', 'published') // Only published announcements
+            ->where(function($query) {
+                // Show urgent/important announcements or those marked as featured
+                $query->whereIn('priority', ['urgent', 'important'])
+                      ->orWhere('is_featured', true);
+            })
+            ->orderByRaw("FIELD(priority, 'urgent', 'important', 'normal')")
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+        
+        // Add view counts and comments count (if you have these relationships)
+        foreach ($announcements as $announcement) {
+            $announcement->views = $announcement->views()->count() ?? 0;
+            $announcement->comments_count = $announcement->comments()->count() ?? 0;
+        }
+        
+        return response()->json([
+            'success' => true,
+            'announcements' => $announcements
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Error fetching featured announcements: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to load featured announcements'
+        ], 500);
+    }
+}
+
+    /**
      * Remove the specified announcement from storage.
      */
     public function destroy(Announcement $announcement): RedirectResponse

@@ -175,6 +175,10 @@
                         <i class="fas fa-calendar-alt mr-3 text-gray-300"></i>
                         Calendar
                     </a>
+                    <a href="{{ route('admin.featured-posts') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-star mr-3 text-gray-300"></i>
+                        Featured Posts
+                    </a>
                     <a href="{{ route('admin.analytics') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-chart-bar mr-3 text-gray-300"></i>
                         Analytics

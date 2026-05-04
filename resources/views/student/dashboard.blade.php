@@ -23,7 +23,6 @@
         }
     </script>
     <style>
-        /* Custom sidebar styles */
         :root {
             --sidebar-collapsed: 80px;
             --sidebar-expanded: 280px;
@@ -46,7 +45,6 @@
             margin-left: var(--sidebar-expanded) !important;
         }
         
-        /* Smooth transitions */
         .sidebar-transition {
             transition: width var(--transition-speed) ease;
         }
@@ -55,7 +53,6 @@
             transition: margin-left var(--transition-speed) ease;
         }
         
-        /* Text visibility control */
         .sidebar-text {
             transition: all var(--transition-speed) ease;
             overflow: hidden;
@@ -74,7 +71,6 @@
             margin-left: 0.75rem !important;
         }
 
-        /* Role badges */
         .badge-admin {
             background-color: #dc2626;
             color: white;
@@ -92,7 +88,6 @@
             color: white;
         }
         
-        /* Mobile styles */
         @media (max-width: 768px) {
             .sidebar-collapsed,
             .sidebar-expanded {
@@ -110,7 +105,6 @@
             }
         }
 
-        /* Dashboard custom styles */
         .stats-card {
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
@@ -143,6 +137,13 @@
         .event-card:hover {
             transform: translateY(-2px);
         }
+
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -155,12 +156,10 @@
         </button>
     </div>
 
-    <!-- Sidebar Dashboard Navigation - MATCHING MAIN DASHBOARD STRUCTURE -->
+    <!-- Sidebar -->
     <div id="sidebar" class="sidebar-collapsed bg-white shadow-lg h-screen fixed left-0 top-0 overflow-y-auto z-40 sidebar-transition">
-        <!-- Sidebar Header -->
         <div class="p-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
-                <!-- Logo -->
                 <div class="flex items-center space-x-3 overflow-hidden">
                     <div class="bg-green-600 text-white p-2 rounded-lg shrink-0">
                         <i class="fas fa-user-graduate text-lg"></i>
@@ -171,7 +170,6 @@
                     </div>
                 </div>
                 
-                <!-- Toggle Button -->
                 <button id="sidebar-toggle" class="hidden md:block text-gray-500 hover:text-uthm-blue shrink-0">
                     <svg id="toggle-icon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
@@ -180,21 +178,15 @@
             </div>
         </div>
 
-       
-
-        <!-- Dashboard Navigation - EXACT SAME ORDER AS MAIN DASHBOARD -->
-
-       <!-- User Profile - Now Clickable -->
         <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
             <div class="p-4 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
-                        <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
+                        <span class="font-bold text-uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
                     </div>
                     <div class="sidebar-text">
                         <h3 class="font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</h3>
                         <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
-                        <!-- Role badge in sidebar -->
                         @if($user?->role)
                             <span class="mt-1 inline-block px-2 py-1 text-xs rounded-full badge-{{ $user->role }}">
                                 {{ ucfirst($user->role) }}
@@ -207,93 +199,54 @@
 
         <nav class="p-4">
             <ul class="space-y-2">
-                <!-- Dashboard -->
                 <li>
-                    <a href="{{ route('dashboard') }}" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-home w-5 h-5"></i>
-                        </div>
+                    <a href="{{ route('dashboard') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0"><i class="fas fa-home w-5 h-5"></i></div>
                         <span class="sidebar-text ml-3">Dashboard</span>
                     </a>
                 </li>
-
-                <!-- Announcements -->
                 <li>
-                    <a href="{{ route('announcements.index') }}" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-bullhorn w-5 h-5"></i>
-                        </div>
+                    <a href="{{ route('announcements.index') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0"><i class="fas fa-bullhorn w-5 h-5"></i></div>
                         <span class="sidebar-text ml-3">Announcements</span>
                     </a>
                 </li>
-
-                <!-- My Announcements -->
                 <li>
-                    <a href="{{ route('announcements.my-announcements') }}" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-file-alt w-5 h-5"></i>
-                        </div>
+                    <a href="{{ route('announcements.my-announcements') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0"><i class="fas fa-file-alt w-5 h-5"></i></div>
                         <span class="sidebar-text ml-3">My Announcements</span>
                     </a>
                 </li>
-
-                <!-- Calendar -->
                 <li>
-                    <a href="{{ route('calendar') }}"
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-calendar-alt w-5 h-5"></i>
-                        </div>
+                    <a href="{{ route('calendar') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0"><i class="fas fa-calendar-alt w-5 h-5"></i></div>
                         <span class="sidebar-text ml-3">Calendar</span>
                     </a>
                 </li>
-
-                <!-- Community -->
-                <a href="{{ route('student.community-hub') }}" 
-                    class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-users w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Community Hub</span>
-                </a>
-
-                
-
-               
-
-                <!-- Settings -->
                 <li>
-                    <a href="{{ route('settings') }}" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-cog w-5 h-5"></i>
-                        </div>
+                    <a href="{{ route('student.community-hub') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0"><i class="fas fa-users w-5 h-5"></i></div>
+                        <span class="sidebar-text ml-3">Community Hub</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('settings') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0"><i class="fas fa-cog w-5 h-5"></i></div>
                         <span class="sidebar-text ml-3">Settings</span>
                     </a>
                 </li>
+            </ul>
+        </nav>
 
-                <
-                 <!-- Logout -->
         <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
-                <button type="submit" 
-                        class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
-                    <div class="shrink-0">
-                        <i class="fas fa-sign-out-alt w-5 h-5"></i>
-                    </div>
+                <button type="submit" class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
+                    <div class="shrink-0"><i class="fas fa-sign-out-alt w-5 h-5"></i></div>
                     <span class="sidebar-text ml-3">Logout</span>
                 </button>
             </form>
         </div>
-    </div>
-            </ul>
-        </nav>
-
-        <!-- REMOVED: Separate Logout section at bottom since it's now in the main nav -->
     </div>
 
     <!-- Main Content -->
@@ -302,22 +255,18 @@
         <nav class="bg-white shadow">
             <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
-                    <!-- Breadcrumb -->
                     <div class="flex items-center">
                         <h1 class="text-xl font-bold text-gray-900">Student Dashboard</h1>
                         <span class="mx-2 text-gray-400">/</span>
                         <span class="text-gray-600">Overview</span>
                     </div>
                     
-                    <!-- Quick Actions -->
                     <div class="flex items-center space-x-4">
-                        <!-- Notification Bell -->
                         <button class="relative p-2 text-gray-600 hover:text-uthm-blue">
                             <i class="fas fa-bell text-lg"></i>
                             <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                         </button>
                         
-                        <!-- User Menu -->
                         <div class="relative">
                             <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100">
                                 <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -331,24 +280,20 @@
                             </button>
                             
                             <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden">
-    
-    <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-        <i class="fas fa-user mr-2"></i> My Profile
-    </a>
-    
-    <a href="{{ route('settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-        <i class="fas fa-cog mr-2"></i> Settings
-    </a>
-    
-    <div class="border-t border-gray-200 my-2"></div>
-    
-    <form action="{{ route('logout') }}" method="POST">
-        @csrf
-        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-            <i class="fas fa-sign-out-alt mr-2"></i> Logout
-        </button>
-    </form>
-</div>
+                                <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-user mr-2"></i> My Profile
+                                </a>
+                                <a href="{{ route('settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-cog mr-2"></i> Settings
+                                </a>
+                                <div class="border-t border-gray-200 my-2"></div>
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -377,49 +322,37 @@
                         </div>
                     </div>
                     
-                    <!-- Student Info Cards -->
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-6">
                         <div class="stats-card bg-blue-50 rounded-lg p-4">
                             <div class="flex items-center">
-                                <div class="bg-blue-100 p-3 rounded-lg mr-3">
-                                    <i class="fas fa-id-card text-blue-600"></i>
-                                </div>
+                                <div class="bg-blue-100 p-3 rounded-lg mr-3"><i class="fas fa-id-card text-blue-600"></i></div>
                                 <div>
                                     <p class="text-sm text-gray-600">UTHM ID</p>
                                     <p class="font-bold text-gray-900">{{ Auth::user()->uthm_id }}</p>
                                 </div>
                             </div>
                         </div>
-                        
                         <div class="stats-card bg-green-50 rounded-lg p-4">
                             <div class="flex items-center">
-                                <div class="bg-green-100 p-3 rounded-lg mr-3">
-                                    <i class="fas fa-university text-green-600"></i>
-                                </div>
+                                <div class="bg-green-100 p-3 rounded-lg mr-3"><i class="fas fa-university text-green-600"></i></div>
                                 <div>
                                     <p class="text-sm text-gray-600">Faculty</p>
                                     <p class="font-bold text-gray-900">{{ Auth::user()->faculty ?? 'Not specified' }}</p>
                                 </div>
                             </div>
                         </div>
-                        
                         <div class="stats-card bg-purple-50 rounded-lg p-4">
                             <div class="flex items-center">
-                                <div class="bg-purple-100 p-3 rounded-lg mr-3">
-                                    <i class="fas fa-envelope text-purple-600"></i>
-                                </div>
+                                <div class="bg-purple-100 p-3 rounded-lg mr-3"><i class="fas fa-envelope text-purple-600"></i></div>
                                 <div>
                                     <p class="text-sm text-gray-600">Email</p>
                                     <p class="font-bold text-gray-900">{{ Auth::user()->email }}</p>
                                 </div>
                             </div>
                         </div>
-                        
                         <div class="stats-card bg-yellow-50 rounded-lg p-4">
                             <div class="flex items-center">
-                                <div class="bg-yellow-100 p-3 rounded-lg mr-3">
-                                    <i class="fas fa-book text-yellow-600"></i>
-                                </div>
+                                <div class="bg-yellow-100 p-3 rounded-lg mr-3"><i class="fas fa-book text-yellow-600"></i></div>
                                 <div>
                                     <p class="text-sm text-gray-600">Enrolled Courses</p>
                                     <p class="font-bold text-gray-900">6 Courses</p>
@@ -429,598 +362,226 @@
                     </div>
                 </div>
 
-                <!-- Featured Posts Carousel Section - Add this after the Welcome Section in your dashboard -->
-<div class="bg-white rounded-xl shadow p-6 mb-8">
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h3 class="text-lg font-bold text-gray-900">📌 Featured Announcements</h3>
-            <p class="text-sm text-gray-500 mt-1">Important announcements and highlights from UTHM</p>
-        </div>
-        <div class="flex items-center space-x-2">
-            <span id="featured-counter" class="text-sm text-gray-500">0/0</span>
-        </div>
-    </div>
-    
-    <!-- Featured Posts Carousel -->
-    <div class="relative">
-        <!-- Loading State -->
-        <div id="featured-loading" class="text-center py-12">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-uthm-blue"></div>
-            <p class="mt-2 text-gray-500">Loading featured announcements...</p>
-        </div>
-        
-        <!-- Carousel Container -->
-        <div id="featured-carousel-container" class="hidden">
-            <div class="overflow-hidden rounded-xl">
-                <div id="featured-carousel" class="flex transition-transform duration-500 ease-in-out">
-                    <!-- Featured posts will be dynamically inserted here -->
-                </div>
-            </div>
-            
-            <!-- Navigation Buttons -->
-            <button id="prev-featured" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all hover:scale-110">
-                <i class="fas fa-chevron-left text-xl"></i>
-            </button>
-            <button id="next-featured" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg transition-all hover:scale-110">
-                <i class="fas fa-chevron-right text-xl"></i>
-            </button>
-            
-            <!-- Dots Indicator -->
-            <div id="featured-dots" class="flex justify-center mt-6 space-x-2">
-                <!-- Dots will be dynamically inserted here -->
-            </div>
-        </div>
-        
-        <!-- Empty State -->
-        <div id="featured-empty" class="hidden text-center py-12">
-            <div class="inline-block p-6 bg-gray-100 rounded-full mb-4">
-                <i class="fas fa-star text-gray-400 text-4xl"></i>
-            </div>
-            <h3 class="text-xl font-medium text-gray-900 mb-2">No featured announcements</h3>
-            <p class="text-gray-600">Check back later for important announcements!</p>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Featured Posts Carousel Functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        loadFeaturedAnnouncements();
-    });
-    
-    async function loadFeaturedAnnouncements() {
-        const loadingDiv = document.getElementById('featured-loading');
-        const container = document.getElementById('featured-carousel-container');
-        const emptyDiv = document.getElementById('featured-empty');
-        
-        try {
-            // Fetch featured announcements from your backend
-            const response = await fetch('/announcements/featured', {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to load featured announcements');
-            }
-            
-            const data = await response.json();
-            
-            if (data.success && data.announcements && data.announcements.length > 0) {
-                loadingDiv.classList.add('hidden');
-                container.classList.remove('hidden');
-                renderFeaturedCarousel(data.announcements);
-            } else {
-                loadingDiv.classList.add('hidden');
-                emptyDiv.classList.remove('hidden');
-            }
-        } catch (error) {
-            console.error('Error loading featured announcements:', error);
-            loadingDiv.classList.add('hidden');
-            emptyDiv.classList.remove('hidden');
-        }
-    }
-    
-    function renderFeaturedCarousel(announcements) {
-        const carousel = document.getElementById('featured-carousel');
-        const dotsContainer = document.getElementById('featured-dots');
-        const counter = document.getElementById('featured-counter');
-        let currentIndex = 0;
-        const totalSlides = announcements.length;
-        
-        // Clear previous content
-        carousel.innerHTML = '';
-        dotsContainer.innerHTML = '';
-        
-        // Get category color and icon mappings
-        const categoryConfig = {
-            urgent: { bg: 'bg-red-50', text: 'text-red-700', badge: 'bg-red-100 text-red-700', icon: 'exclamation-circle', label: 'Urgent' },
-            important: { bg: 'bg-yellow-50', text: 'text-yellow-700', badge: 'bg-yellow-100 text-yellow-700', icon: 'star', label: 'Important' },
-            academic: { bg: 'bg-blue-50', text: 'text-blue-700', badge: 'bg-blue-100 text-blue-700', icon: 'graduation-cap', label: 'Academic' },
-            events: { bg: 'bg-purple-50', text: 'text-purple-700', badge: 'bg-purple-100 text-purple-700', icon: 'calendar-alt', label: 'Events' },
-            general: { bg: 'bg-gray-50', text: 'text-gray-700', badge: 'bg-gray-100 text-gray-700', icon: 'newspaper', label: 'General' }
-        };
-        
-        // Get priority badge mapping
-        const priorityConfig = {
-            urgent: { bg: 'bg-red-500', text: 'HOT', icon: 'fire' },
-            important: { bg: 'bg-yellow-500', text: 'IMPORTANT', icon: 'exclamation-triangle' },
-            normal: { bg: 'bg-blue-500', text: 'INFO', icon: 'info-circle' }
-        };
-        
-        announcements.forEach((announcement, index) => {
-            const category = announcement.category || 'general';
-            const priority = announcement.priority || 'normal';
-            const config = categoryConfig[category] || categoryConfig.general;
-            const priorityConf = priorityConfig[priority] || priorityConfig.normal;
-            
-            // Format date
-            const date = new Date(announcement.created_at);
-            const formattedDate = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-            
-            // Determine gradient based on category
-            let gradientClass = '';
-            if (category === 'urgent') gradientClass = 'from-red-50 to-orange-50';
-            else if (category === 'important') gradientClass = 'from-yellow-50 to-amber-50';
-            else if (category === 'academic') gradientClass = 'from-blue-50 to-indigo-50';
-            else if (category === 'events') gradientClass = 'from-purple-50 to-pink-50';
-            else gradientClass = 'from-gray-50 to-blue-50';
-            
-            // Get featured image (you can add a featured_image column to your announcements table)
-            const featuredImage = announcement.featured_image || getRandomImage(category);
-            
-            // Create slide HTML
-            const slide = document.createElement('div');
-            slide.className = 'w-full flex-shrink-0';
-            slide.innerHTML = `
-                <div class="bg-gradient-to-r ${gradientClass} rounded-xl overflow-hidden">
-                    <div class="flex flex-col md:flex-row">
-                        <!-- Image Section -->
-                        <div class="md:w-2/5 relative">
-                            <img src="${featuredImage}" 
-                                 alt="${escapeHtml(announcement.title)}"
-                                 class="w-full h-64 md:h-full object-cover"
-                                 onerror="this.src='https://picsum.photos/id/20/600/400'">
-                            <div class="absolute top-4 left-4">
-                                <span class="${priorityConf.bg} text-white px-3 py-1 rounded-full text-xs font-semibold">
-                                    <i class="fas fa-${priorityConf.icon} mr-1"></i> ${priorityConf.text}
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <!-- Content Section -->
-                        <div class="md:w-3/5 p-6 md:p-8 flex flex-col justify-between">
-                            <div>
-                                <div class="flex items-center gap-2 mb-3 flex-wrap">
-                                    <span class="px-3 py-1 ${config.badge} rounded-full text-xs font-semibold">
-                                        <i class="fas fa-${config.icon} mr-1"></i> ${config.label}
-                                    </span>
-                                    ${announcement.is_official ? 
-                                        `<span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                                            <i class="fas fa-check-circle mr-1"></i> Official
-                                        </span>` : 
-                                        `<span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
-                                            <i class="fas fa-users mr-1"></i> Community
-                                        </span>`
-                                    }
-                                    <span class="text-sm text-gray-500">
-                                        <i class="far fa-calendar-alt mr-1"></i> ${formattedDate}
-                                    </span>
-                                </div>
-                                <h4 class="text-2xl font-bold text-gray-900 mb-3 line-clamp-2">
-                                    ${escapeHtml(announcement.title)}
-                                </h4>
-                                <p class="text-gray-600 mb-4 leading-relaxed line-clamp-3">
-                                    ${escapeHtml(stripHtml(announcement.content).substring(0, 200))}${stripHtml(announcement.content).length > 200 ? '...' : ''}
-                                </p>
-                                <div class="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                                    <div class="flex items-center">
-                                        <div class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center mr-2">
-                                            <span class="text-xs font-bold">${(announcement.author?.name?.charAt(0) || 'A').toUpperCase()}</span>
-                                        </div>
-                                        <span>${escapeHtml(announcement.author?.name || 'Anonymous')}</span>
-                                        ${announcement.author?.role ? 
-                                            `<span class="ml-2 px-2 py-0.5 text-xs rounded-full badge-${announcement.author.role}">
-                                                ${announcement.author.role.charAt(0).toUpperCase() + announcement.author.role.slice(1)}
-                                            </span>` : ''
-                                        }
-                                    </div>
-                                    <div class="flex items-center">
-                                        <i class="far fa-eye mr-1"></i> ${formatNumber(announcement.views || 0)} views
-                                    </div>
-                                    ${announcement.comments_count !== undefined ? `
-                                    <div class="flex items-center">
-                                        <i class="far fa-comment mr-1"></i> ${formatNumber(announcement.comments_count)} comments
-                                    </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between mt-4">
-                                <div class="flex gap-2">
-                                    ${announcement.tags && announcement.tags.length > 0 ? 
-                                        announcement.tags.slice(0, 2).map(tag => `
-                                            <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs">
-                                                <i class="fas fa-tag mr-1"></i> ${escapeHtml(tag)}
-                                            </span>
-                                        `).join('') : ''
-                                    }
-                                </div>
-                                <a href="/announcements/${announcement.id}" 
-                                   class="bg-uthm-blue text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition transform hover:scale-105 inline-flex items-center">
-                                    View Details <i class="fas fa-arrow-right ml-2"></i>
-                                </a>
-                            </div>
+                <!-- Featured Posts Carousel -->
+                <div class="bg-white rounded-xl shadow p-6 mb-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900">📌 Featured Announcements</h3>
+                            <p class="text-sm text-gray-500 mt-1">Important announcements from UTHM</p>
                         </div>
                     </div>
+                    
+                    @if(isset($featuredAnnouncements) && $featuredAnnouncements->count() > 0)
+                        <div class="relative">
+                            <div class="overflow-hidden rounded-xl">
+                                <div id="featured-carousel" class="flex transition-transform duration-500 ease-in-out">
+                                    @foreach($featuredAnnouncements as $announcement)
+                                        @php
+                                            $categoryConfig = [
+                                                'urgent' => ['bg' => 'from-red-50 to-orange-50', 'badge' => 'bg-red-100 text-red-700', 'icon' => 'exclamation-circle', 'label' => 'Urgent'],
+                                                'important' => ['bg' => 'from-yellow-50 to-amber-50', 'badge' => 'bg-yellow-100 text-yellow-700', 'icon' => 'exclamation-triangle', 'label' => 'Important'],
+                                                'academic' => ['bg' => 'from-blue-50 to-indigo-50', 'badge' => 'bg-blue-100 text-blue-700', 'icon' => 'graduation-cap', 'label' => 'Academic'],
+                                                'events' => ['bg' => 'from-purple-50 to-pink-50', 'badge' => 'bg-purple-100 text-purple-700', 'icon' => 'calendar-alt', 'label' => 'Events'],
+                                                'general' => ['bg' => 'from-gray-50 to-blue-50', 'badge' => 'bg-gray-100 text-gray-700', 'icon' => 'newspaper', 'label' => 'General']
+                                            ];
+                                            $category = $announcement->category ?? 'general';
+                                            $config = $categoryConfig[$category] ?? $categoryConfig['general'];
+                                            $imageUrl = $announcement->featured_image ?? $announcement->image ?? 'https://picsum.photos/id/20/600/400';
+                                        @endphp
+                                        
+                                        <div class="w-full flex-shrink-0">
+                                            <div class="bg-gradient-to-r {{ $config['bg'] }} rounded-xl overflow-hidden">
+                                                <div class="flex flex-col md:flex-row">
+                                                    <div class="md:w-2/5 relative">
+                                                        <img src="{{ $imageUrl }}" alt="{{ $announcement->title }}" class="w-full h-64 md:h-full object-cover">
+                                                        @if($announcement->priority === 'urgent')
+                                                            <div class="absolute top-4 left-4">
+                                                                <span class="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">URGENT</span>
+                                                            </div>
+                                                        @elseif($announcement->priority === 'important')
+                                                            <div class="absolute top-4 left-4">
+                                                                <span class="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold">IMPORTANT</span>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                    <div class="md:w-3/5 p-6 md:p-8">
+                                                        <div class="flex items-center gap-2 mb-3 flex-wrap">
+                                                            <span class="px-3 py-1 {{ $config['badge'] }} rounded-full text-xs font-semibold">{{ $config['label'] }}</span>
+                                                            @if($announcement->is_official)
+                                                                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">Official</span>
+                                                            @else
+                                                                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Community</span>
+                                                            @endif
+                                                        </div>
+                                                        <h4 class="text-2xl font-bold text-gray-900 mb-3">{{ $announcement->title }}</h4>
+                                                        <p class="text-gray-600 mb-4 line-clamp-3">{{ Str::limit(strip_tags($announcement->content), 200) }}</p>
+                                                        <a href="{{ route('announcements.show', $announcement) }}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center">
+                                                            View Details <i class="fas fa-arrow-right ml-2"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            
+                            @if($featuredAnnouncements->count() > 1)
+                                <button id="prev-featured" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg">
+                                    <i class="fas fa-chevron-left text-xl"></i>
+                                </button>
+                                <button id="next-featured" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg">
+                                    <i class="fas fa-chevron-right text-xl"></i>
+                                </button>
+                            @endif
+                        </div>
+                        
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const carousel = document.getElementById('featured-carousel');
+                            const prevBtn = document.getElementById('prev-featured');
+                            const nextBtn = document.getElementById('next-featured');
+                            const totalSlides = {{ $featuredAnnouncements->count() }};
+                            let currentIndex = 0;
+                            
+                            function goToSlide(index) {
+                                if (!carousel) return;
+                                currentIndex = index;
+                                carousel.style.transform = `translateX(-${currentIndex * 100}%)`;
+                            }
+                            
+                            function nextSlide() { if (totalSlides > 1) { currentIndex = (currentIndex + 1) % totalSlides; goToSlide(currentIndex); } }
+                            function prevSlide() { if (totalSlides > 1) { currentIndex = (currentIndex - 1 + totalSlides) % totalSlides; goToSlide(currentIndex); } }
+                            
+                            if (prevBtn) prevBtn.onclick = prevSlide;
+                            if (nextBtn) nextBtn.onclick = nextSlide;
+                            if (totalSlides > 1) setInterval(nextSlide, 5000);
+                        });
+                        </script>
+                    @else
+                        <div class="text-center py-12">
+                            <div class="inline-block p-6 bg-gray-100 rounded-full mb-4">
+                                <i class="fas fa-star text-gray-400 text-4xl"></i>
+                            </div>
+                            <h3 class="text-xl font-medium text-gray-900">No featured announcements</h3>
+                            <p class="text-gray-600">Check back later for important updates!</p>
+                        </div>
+                    @endif
                 </div>
-            `;
-            carousel.appendChild(slide);
-            
-            // Create dot
-            const dot = document.createElement('button');
-            dot.className = `w-3 h-3 rounded-full transition-all ${index === 0 ? 'bg-uthm-blue' : 'bg-gray-300'}`;
-            dot.setAttribute('data-index', index);
-            dot.addEventListener('click', () => goToSlide(index));
-            dotsContainer.appendChild(dot);
-        });
-        
-        // Update counter
-        if (counter) {
-            counter.textContent = `1/${totalSlides}`;
-        }
-        
-        // Initialize carousel controls
-        initializeCarouselControls(announcements.length);
-        
-        function goToSlide(index) {
-            currentIndex = index;
-            const translateX = -currentIndex * 100;
-            carousel.style.transform = `translateX(${translateX}%)`;
-            
-            // Update dots
-            const dots = document.querySelectorAll('#featured-dots button');
-            dots.forEach((dot, i) => {
-                if (i === currentIndex) {
-                    dot.classList.remove('bg-gray-300');
-                    dot.classList.add('bg-uthm-blue');
-                } else {
-                    dot.classList.remove('bg-uthm-blue');
-                    dot.classList.add('bg-gray-300');
-                }
-            });
-            
-            // Update counter
-            if (counter) {
-                counter.textContent = `${currentIndex + 1}/${totalSlides}`;
-            }
-        }
-        
-        function nextSlide() {
-            currentIndex = (currentIndex + 1) % totalSlides;
-            goToSlide(currentIndex);
-        }
-        
-        function prevSlide() {
-            currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
-            goToSlide(currentIndex);
-        }
-        
-        function initializeCarouselControls(slideCount) {
-            const prevBtn = document.getElementById('prev-featured');
-            const nextBtn = document.getElementById('next-featured');
-            
-            if (prevBtn) {
-                prevBtn.replaceWith(prevBtn.cloneNode(true));
-                const newPrevBtn = document.getElementById('prev-featured');
-                if (newPrevBtn) newPrevBtn.addEventListener('click', prevSlide);
-            }
-            
-            if (nextBtn) {
-                nextBtn.replaceWith(nextBtn.cloneNode(true));
-                const newNextBtn = document.getElementById('next-featured');
-                if (newNextBtn) newNextBtn.addEventListener('click', nextSlide);
-            }
-            
-            // Auto-play (optional - uncomment to enable)
-            // let autoPlayInterval;
-            // function startAutoPlay() {
-            //     autoPlayInterval = setInterval(nextSlide, 5000);
-            // }
-            // function stopAutoPlay() {
-            //     if (autoPlayInterval) clearInterval(autoPlayInterval);
-            // }
-            // startAutoPlay();
-            // const carouselContainer = document.querySelector('#featured-carousel-container .overflow-hidden');
-            // if (carouselContainer) {
-            //     carouselContainer.addEventListener('mouseenter', stopAutoPlay);
-            //     carouselContainer.addEventListener('mouseleave', startAutoPlay);
-            // }
-            
-            // Keyboard navigation
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'ArrowLeft') prevSlide();
-                else if (e.key === 'ArrowRight') nextSlide();
-            });
-            
-            // Touch/swipe support
-            let touchStartX = 0;
-            let touchEndX = 0;
-            carousel.addEventListener('touchstart', (e) => {
-                touchStartX = e.changedTouches[0].screenX;
-            });
-            carousel.addEventListener('touchend', (e) => {
-                touchEndX = e.changedTouches[0].screenX;
-                if (touchEndX < touchStartX - 50) nextSlide();
-                else if (touchEndX > touchStartX + 50) prevSlide();
-            });
-        }
-    }
-    
-    // Helper functions
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    function stripHtml(html) {
-        if (!html) return '';
-        const div = document.createElement('div');
-        div.innerHTML = html;
-        return div.textContent || div.innerText || '';
-    }
-    
-    function formatNumber(num) {
-        if (num >= 1000) {
-            return (num / 1000).toFixed(1) + 'k';
-        }
-        return num.toString();
-    }
-    
-    function getRandomImage(category) {
-        // Map categories to relevant placeholder images
-        const images = {
-            urgent: 'https://picsum.photos/id/0/600/400',      // laptop
-            important: 'https://picsum.photos/id/26/600/400',  // nature walk
-            academic: 'https://picsum.photos/id/20/600/400',   // coffee laptop
-            events: 'https://picsum.photos/id/29/600/400',     // city buildings
-            general: 'https://picsum.photos/id/91/600/400'     // camera flash
-        };
-        return images[category] || images.general;
-    }
-</script>
-
-<style>
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-    
-    .line-clamp-3 {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-    
-    @keyframes spin {
-        from {
-            transform: rotate(0deg);
-        }
-        to {
-            transform: rotate(360deg);
-        }
-    }
-    
-    .animate-spin {
-        animation: spin 1s linear infinite;
-    }
-</style>
 
                 <!-- Main Content Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Left Column: Today's Announcements -->
+                    <!-- Left Column: Latest Announcements -->
                     <div class="lg:col-span-2">
-                        <!-- Section Header -->
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-2 sm:mb-0">Today's Announcements</h3>
-                            <div class="flex space-x-2">
-                                <button class="px-3 py-1 bg-uthm-blue text-white rounded text-sm hover:bg-blue-700 transition">
-                                    All
-                                </button>
-                                <button class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-                                    My Faculty
-                                </button>
-                                <button class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200 transition">
-                                    University
-                                </button>
-                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 mb-2 sm:mb-0">Latest Announcements</h3>
+                            <a href="{{ route('announcements.index') }}" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">
+                                View All <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
                         </div>
 
-                        <!-- Announcements List -->
                         <div class="space-y-4">
-                            <div class="announcement-card bg-white rounded-lg shadow p-6 important">
-                                <div class="flex justify-between items-start">
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <h4 class="font-semibold text-gray-900 text-lg">FYP Submission Deadline Extended</h4>
-                                            <span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full">Important</span>
+                            @forelse($announcements ?? [] as $announcement)
+                                @php
+                                    $priorityClass = $announcement->priority === 'urgent' ? 'urgent' : ($announcement->priority === 'important' ? 'important' : 'normal');
+                                    $priorityColor = $announcement->priority === 'urgent' ? 'bg-red-100 text-red-700' : ($announcement->priority === 'important' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700');
+                                @endphp
+                                <div class="announcement-card {{ $priorityClass }} bg-white rounded-lg shadow p-6">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <h4 class="font-semibold text-gray-900 text-lg">{{ $announcement->title }}</h4>
+                                                @if($announcement->priority)
+                                                    <span class="px-2 py-1 text-xs font-medium {{ $priorityColor }} rounded-full">{{ ucfirst($announcement->priority) }}</span>
+                                                @endif
+                                            </div>
+                                            <p class="text-gray-600 text-sm mb-3">{{ Str::limit(strip_tags($announcement->content), 150) }}</p>
+                                            <div class="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                                <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded">
+                                                    <i class="fas fa-tag mr-1"></i> {{ ucfirst($announcement->category ?? 'General') }}
+                                                </span>
+                                                <span><i class="far fa-clock mr-1"></i> {{ $announcement->created_at->diffForHumans() }}</span>
+                                                <span><i class="far fa-eye mr-1"></i> {{ $announcement->view_count ?? 0 }} views</span>
+                                            </div>
                                         </div>
-                                        <p class="text-gray-600 text-sm mb-3">Final Year Project submission deadline extended to December 20, 2024. Please ensure all submissions are complete.</p>
-                                        <div class="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                                            <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded">
-                                                <i class="fas fa-university mr-1"></i> Faculty of Computer Science
-                                            </span>
-                                            <span><i class="far fa-clock mr-1"></i> 2 hours ago</span>
-                                            <span><i class="far fa-eye mr-1"></i> 342 views</span>
-                                            <span><i class="far fa-comment mr-1"></i> 24 comments</span>
+                                        <div class="ml-4">
+                                            <a href="{{ route('announcements.show', $announcement) }}" class="text-blue-600 hover:text-blue-800">
+                                                <i class="fas fa-arrow-right"></i>
+                                            </a>
                                         </div>
-                                    </div>
-                                    <div class="ml-4 flex space-x-2">
-                                        <button class="text-blue-600 hover:text-blue-800 p-2">
-                                            <i class="far fa-calendar-plus"></i>
-                                        </button>
-                                        <button class="text-gray-400 hover:text-gray-600 p-2">
-                                            <i class="far fa-bookmark"></i>
-                                        </button>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="announcement-card bg-white rounded-lg shadow p-6 normal">
-                                <div class="flex justify-between items-start">
-                                    <div class="flex-1">
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <h4 class="font-semibold text-gray-900 text-lg">Sports Day Registration Open</h4>
-                                            <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full">Event</span>
-                                        </div>
-                                        <p class="text-gray-600 text-sm mb-3">Annual UTHM Sports Day registration is now open. Click here to register your team for various sports competitions.</p>
-                                        <div class="flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                                            <span class="px-2 py-1 bg-green-50 text-green-700 rounded">
-                                                <i class="fas fa-running mr-1"></i> Student Affairs Department
-                                            </span>
-                                            <span><i class="far fa-clock mr-1"></i> 1 day ago</span>
-                                            <span><i class="far fa-eye mr-1"></i> 521 views</span>
-                                            <span><i class="far fa-comment mr-1"></i> 18 comments</span>
-                                        </div>
-                                    </div>
-                                    <div class="ml-4 flex space-x-2">
-                                        <button class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition">
-                                            <i class="fas fa-external-link-alt mr-1"></i> Register
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- More announcements can be added here -->
-                            <div class="text-center mt-4">
-                                <a href="{{ route('announcements.index') }}" class="text-uthm-blue hover:text-blue-700 font-medium">
-                                    <i class="fas fa-arrow-right mr-1"></i> View All Announcements
-                                </a>
-                            </div>
+                            @empty
+                                <div class="text-center py-12">
+    <i class="fas fa-bullhorn text-gray-300 text-4xl mb-4"></i>
+    <h3 class="text-lg font-semibold text-gray-700">No Announcements Yet</h3>
+    <p class="text-gray-500">Check back later or create one.</p>
+</div>
+                            @endforelse
                         </div>
 
                         <!-- Quick Stats -->
                         <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div class="bg-white rounded-lg shadow p-4">
                                 <div class="flex items-center">
-                                    <div class="bg-uthm-blue-light p-3 rounded-lg mr-3">
-                                        <i class="fas fa-fire text-uthm-blue"></i>
-                                    </div>
+                                    <div class="bg-uthm-blue-light p-3 rounded-lg mr-3"><i class="fas fa-fire text-uthm-blue"></i></div>
                                     <div>
-                                        <p class="text-sm text-gray-600">Trending Announcement</p>
-                                        <p class="font-bold text-gray-900">"Campus Fest 2024"</p>
-                                        <p class="text-xs text-gray-500">862 views</p>
+                                        <p class="text-sm text-gray-600">Trending</p>
+                                        <p class="font-bold text-gray-900 text-sm">Campus Fest 2024</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="bg-white rounded-lg shadow p-4">
                                 <div class="flex items-center">
-                                    <div class="bg-green-50 p-3 rounded-lg mr-3">
-                                        <i class="fas fa-chart-line text-uthm-green"></i>
-                                    </div>
+                                    <div class="bg-green-50 p-3 rounded-lg mr-3"><i class="fas fa-chart-line text-uthm-green"></i></div>
                                     <div>
-                                        <p class="text-sm text-gray-600">Your Faculty Updates</p>
-                                        <p class="font-bold text-gray-900">12 New Posts</p>
-                                        <p class="text-xs text-gray-500">This week</p>
+                                        <p class="text-sm text-gray-600">Faculty Updates</p>
+                                        <p class="font-bold text-gray-900">{{ $announcements->count() ?? 0 }} New</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="bg-white rounded-lg shadow p-4">
                                 <div class="flex items-center">
-                                    <div class="bg-yellow-50 p-3 rounded-lg mr-3">
-                                        <i class="fas fa-bell text-uthm-yellow"></i>
-                                    </div>
+                                    <div class="bg-yellow-50 p-3 rounded-lg mr-3"><i class="fas fa-bell text-uthm-yellow"></i></div>
                                     <div>
-                                        <p class="text-sm text-gray-600">Unread Announcements</p>
-                                        <p class="font-bold text-gray-900">5 New</p>
-                                        <p class="text-xs text-gray-500">2 Urgent</p>
+                                        <p class="text-sm text-gray-600">Unread</p>
+                                        <p class="font-bold text-gray-900">{{ $announcements->where('priority', 'urgent')->count() ?? 0 }} Urgent</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Right Column: Upcoming Events & Quick Links -->
+                    <!-- Right Column -->
                     <div class="space-y-8">
                         <!-- Upcoming Events -->
                         <div class="bg-white rounded-xl shadow p-6">
                             <div class="flex justify-between items-center mb-6">
                                 <h3 class="text-lg font-bold text-gray-900">Upcoming Events</h3>
-                                <a href="{{ route('student.calendar') }}" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">
-                                    View Calendar <i class="fas fa-arrow-right ml-1"></i>
-                                </a>
+                                <a href="{{ route('student.calendar') }}" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">View Calendar <i class="fas fa-arrow-right ml-1"></i></a>
                             </div>
                             <div class="space-y-4">
-                                <div class="event-card flex items-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition">
-                                    <div class="bg-yellow-100 p-3 rounded-lg mr-4">
-                                        <div class="text-center">
-                                            <div class="font-bold text-lg">15</div>
-                                            <div class="text-xs uppercase">DEC</div>
-                                        </div>
+                                <div class="event-card flex items-center p-4 bg-yellow-50 rounded-lg">
+                                    <div class="bg-yellow-100 p-3 rounded-lg mr-4 text-center min-w-[60px]">
+                                        <div class="font-bold text-lg">15</div>
+                                        <div class="text-xs uppercase">DEC</div>
                                     </div>
                                     <div class="flex-1">
-                                        <h4 class="font-bold text-gray-900">Career Workshop: Resume Building</h4>
-                                        <p class="text-sm text-gray-600">
-                                            <i class="far fa-clock mr-1"></i> 2:00 PM • 
-                                            <i class="fas fa-map-marker-alt mr-1 ml-2"></i> Main Hall
-                                        </p>
-                                        <div class="flex items-center mt-2">
-                                            <span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">Career</span>
-                                        </div>
+                                        <h4 class="font-bold text-gray-900">Career Workshop</h4>
+                                        <p class="text-sm text-gray-600">2:00 PM • Main Hall</p>
                                     </div>
-                                    <button class="bg-uthm-blue text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition">
-                                        Attend
-                                    </button>
+                                    <button class="bg-uthm-blue text-white px-3 py-2 rounded text-sm">Attend</button>
                                 </div>
-                                
-                                <div class="event-card flex items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition">
-                                    <div class="bg-purple-100 p-3 rounded-lg mr-4">
-                                        <div class="text-center">
-                                            <div class="font-bold text-lg">20</div>
-                                            <div class="text-xs uppercase">DEC</div>
-                                        </div>
+                                <div class="event-card flex items-center p-4 bg-purple-50 rounded-lg">
+                                    <div class="bg-purple-100 p-3 rounded-lg mr-4 text-center min-w-[60px]">
+                                        <div class="font-bold text-lg">20</div>
+                                        <div class="text-xs uppercase">DEC</div>
                                     </div>
                                     <div class="flex-1">
-                                        <h4 class="font-bold text-gray-900">Final Year Project Submission</h4>
-                                        <p class="text-sm text-gray-600">
-                                            <i class="far fa-clock mr-1"></i> All Day • 
-                                            <i class="fas fa-map-marker-alt mr-1 ml-2"></i> Faculty Offices
-                                        </p>
-                                        <div class="flex items-center mt-2">
-                                            <span class="px-2 py-1 bg-red-50 text-red-700 text-xs rounded">Deadline</span>
-                                        </div>
+                                        <h4 class="font-bold text-gray-900">FYP Submission</h4>
+                                        <p class="text-sm text-gray-600">All Day • Faculty Offices</p>
                                     </div>
-                                    <button class="bg-uthm-blue text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition">
-                                        <i class="far fa-calendar-plus mr-1"></i> Add
-                                    </button>
-                                </div>
-                                
-                                <div class="event-card flex items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition">
-                                    <div class="bg-green-100 p-3 rounded-lg mr-4">
-                                        <div class="text-center">
-                                            <div class="font-bold text-lg">25</div>
-                                            <div class="text-xs uppercase">DEC</div>
-                                        </div>
-                                    </div>
-                                    <div class="flex-1">
-                                        <h4 class="font-bold text-gray-900">Christmas Celebration</h4>
-                                        <p class="text-sm text-gray-600">
-                                            <i class="far fa-clock mr-1"></i> 6:00 PM • 
-                                            <i class="fas fa-map-marker-alt mr-1 ml-2"></i> Student Center
-                                        </p>
-                                        <div class="flex items-center mt-2">
-                                            <span class="px-2 py-1 bg-green-50 text-green-700 text-xs rounded">Social</span>
-                                        </div>
-                                    </div>
-                                    <button class="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition">
-                                        Join
-                                    </button>
+                                    <button class="bg-uthm-blue text-white px-3 py-2 rounded text-sm">Remind</button>
                                 </div>
                             </div>
                         </div>
@@ -1029,64 +590,22 @@
                         <div class="bg-white rounded-xl shadow p-6">
                             <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Links</h3>
                             <div class="grid grid-cols-2 gap-3">
-                                <a href="#" class="bg-blue-50 hover:bg-blue-100 rounded-lg p-4 text-center transition-colors">
-                                    <div class="bg-blue-100 p-3 rounded-lg mb-2 mx-auto w-fit">
-                                        <i class="fas fa-graduation-cap text-blue-600"></i>
-                                    </div>
-                                    <p class="text-sm font-medium text-gray-900">Academic Portal</p>
+                                <a href="#" class="bg-blue-50 hover:bg-blue-100 rounded-lg p-4 text-center">
+                                    <i class="fas fa-graduation-cap text-blue-600 text-xl mb-2 block"></i>
+                                    <p class="text-sm font-medium">Academic Portal</p>
                                 </a>
-                                <a href="#" class="bg-green-50 hover:bg-green-100 rounded-lg p-4 text-center transition-colors">
-                                    <div class="bg-green-100 p-3 rounded-lg mb-2 mx-auto w-fit">
-                                        <i class="fas fa-book text-green-600"></i>
-                                    </div>
-                                    <p class="text-sm font-medium text-gray-900">E-Library</p>
+                                <a href="#" class="bg-green-50 hover:bg-green-100 rounded-lg p-4 text-center">
+                                    <i class="fas fa-book text-green-600 text-xl mb-2 block"></i>
+                                    <p class="text-sm font-medium">E-Library</p>
                                 </a>
-                                <a href="#" class="bg-yellow-50 hover:bg-yellow-100 rounded-lg p-4 text-center transition-colors">
-                                    <div class="bg-yellow-100 p-3 rounded-lg mb-2 mx-auto w-fit">
-                                        <i class="fas fa-file-alt text-yellow-600"></i>
-                                    </div>
-                                    <p class="text-sm font-medium text-gray-900">Assignments</p>
+                                <a href="#" class="bg-yellow-50 hover:bg-yellow-100 rounded-lg p-4 text-center">
+                                    <i class="fas fa-file-alt text-yellow-600 text-xl mb-2 block"></i>
+                                    <p class="text-sm font-medium">Assignments</p>
                                 </a>
-                                <a href="#" class="bg-purple-50 hover:bg-purple-100 rounded-lg p-4 text-center transition-colors">
-                                    <div class="bg-purple-100 p-3 rounded-lg mb-2 mx-auto w-fit">
-                                        <i class="fas fa-users text-purple-600"></i>
-                                    </div>
-                                    <p class="text-sm font-medium text-gray-900">Student Clubs</p>
+                                <a href="#" class="bg-purple-50 hover:bg-purple-100 rounded-lg p-4 text-center">
+                                    <i class="fas fa-users text-purple-600 text-xl mb-2 block"></i>
+                                    <p class="text-sm font-medium">Student Clubs</p>
                                 </a>
-                            </div>
-                        </div>
-
-                        <!-- Academic Summary -->
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">Academic Summary</h3>
-                            <div class="space-y-3">
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-gray-600">Current GPA</span>
-                                        <span class="font-bold text-green-600">3.75</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-green-600 h-2 rounded-full" style="width: 88%"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-gray-600">Attendance Rate</span>
-                                        <span class="font-bold text-blue-600">94%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-blue-600 h-2 rounded-full" style="width: 94%"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="text-gray-600">Assignment Completion</span>
-                                        <span class="font-bold text-purple-600">87%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-purple-600 h-2 rounded-full" style="width: 87%"></div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -1095,7 +614,6 @@
         </div>
     </div>
 
-    <!-- JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
@@ -1106,98 +624,49 @@
             const userMenuButton = document.getElementById('user-menu-button');
             const userMenu = document.getElementById('user-menu');
             
-            // Load sidebar state from localStorage
             const isSidebarExpanded = localStorage.getItem('sidebarExpanded') === 'true';
             if (isSidebarExpanded) {
-                expandSidebar();
-            } else {
-                collapseSidebar();
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('sidebar-expanded');
+                mainContent.classList.remove('content-collapsed');
+                mainContent.classList.add('content-expanded');
+                if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
             }
             
-            // Desktop sidebar toggle
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
                     if (sidebar.classList.contains('sidebar-expanded')) {
-                        collapseSidebar();
+                        sidebar.classList.remove('sidebar-expanded');
+                        sidebar.classList.add('sidebar-collapsed');
+                        mainContent.classList.remove('content-expanded');
+                        mainContent.classList.add('content-collapsed');
+                        if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
+                        localStorage.setItem('sidebarExpanded', 'false');
                     } else {
-                        expandSidebar();
+                        sidebar.classList.remove('sidebar-collapsed');
+                        sidebar.classList.add('sidebar-expanded');
+                        mainContent.classList.remove('content-collapsed');
+                        mainContent.classList.add('content-expanded');
+                        if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
+                        localStorage.setItem('sidebarExpanded', 'true');
                     }
                 });
             }
             
-            // Mobile menu toggle
             if (mobileMenuToggle) {
                 mobileMenuToggle.addEventListener('click', function() {
-                    if (sidebar.classList.contains('mobile-open')) {
-                        sidebar.classList.remove('mobile-open');
-                    } else {
-                        sidebar.classList.add('mobile-open');
-                    }
+                    sidebar.classList.toggle('mobile-open');
                 });
             }
             
-            // User menu toggle
             if (userMenuButton && userMenu) {
                 userMenuButton.addEventListener('click', function(e) {
                     e.stopPropagation();
                     userMenu.classList.toggle('hidden');
                 });
-                
-                // Close user menu when clicking outside
                 document.addEventListener('click', function() {
                     userMenu.classList.add('hidden');
                 });
-            }
-            
-            // Close mobile sidebar when clicking on links
-            if (window.innerWidth < 768) {
-                document.querySelectorAll('#sidebar a').forEach(link => {
-                    link.addEventListener('click', function() {
-                        sidebar.classList.remove('mobile-open');
-                    });
-                });
-            }
-            
-            function expandSidebar() {
-                sidebar.classList.remove('sidebar-collapsed');
-                sidebar.classList.add('sidebar-expanded');
-                mainContent.classList.remove('content-collapsed');
-                mainContent.classList.add('content-expanded');
-                
-                if (toggleIcon) {
-                    toggleIcon.style.transform = 'rotate(180deg)';
-                }
-                
-                localStorage.setItem('sidebarExpanded', 'true');
-            }
-            
-            function collapseSidebar() {
-                sidebar.classList.remove('sidebar-expanded');
-                sidebar.classList.add('sidebar-collapsed');
-                mainContent.classList.remove('content-expanded');
-                mainContent.classList.add('content-collapsed');
-                
-                if (toggleIcon) {
-                    toggleIcon.style.transform = 'rotate(0deg)';
-                }
-                
-                localStorage.setItem('sidebarExpanded', 'false');
-            }
-            
-            // Responsive behavior
-            window.addEventListener('resize', function() {
-                if (window.innerWidth < 768) {
-                    if (!sidebar.classList.contains('mobile-open')) {
-                        sidebar.style.transform = 'translateX(-100%)';
-                    }
-                } else {
-                    sidebar.style.transform = 'translateX(0)';
-                }
-            });
-            
-            // Initialize mobile state
-            if (window.innerWidth < 768) {
-                sidebar.style.transform = 'translateX(-100%)';
             }
         });
     </script>

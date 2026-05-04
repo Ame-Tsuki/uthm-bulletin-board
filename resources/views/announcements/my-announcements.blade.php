@@ -523,6 +523,17 @@
                                                            class="inline-flex items-center px-3 py-1 border border-transparent text-xs rounded btn-edit hover:bg-blue-700">
                                                             <i class="fas fa-edit mr-1"></i> Edit
                                                         </a>
+                                                        @if($announcement->status === 'published' && in_array(auth()->user()->role, ['staff', 'club_admin']))
+                                                            <form action="{{ route('announcements.toggle-featured', $announcement) }}" 
+                                                                  method="POST" 
+                                                                  class="inline">
+                                                                @csrf
+                                                                <button type="submit" 
+                                                                        class="inline-flex items-center px-3 py-1 border border-transparent text-xs rounded {{ $announcement->is_featured ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-gray-600 bg-gray-50 hover:bg-gray-100' }}">
+                                                                    <i class="fas fa-star mr-1"></i> {{ $announcement->is_featured ? 'Unfeature' : 'Feature' }}
+                                                                </button>
+                                                            </form>
+                                                        @endif
                                                         <form action="{{ route('announcements.destroy', $announcement) }}" 
                                                               method="POST" 
                                                               class="inline"

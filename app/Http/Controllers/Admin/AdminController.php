@@ -621,4 +621,183 @@ public function moderation()
         ]);
     }
 
+    /**
+     * Get featured announcements for admin management
+     */
+    public function getFeaturedAnnouncements(Request $request)
+    {
+        $perPage = $request->get('per_page', 15);
+        $search = $request->get('search', '');
+
+        $query = \App\Models\Announcement::where('is_featured', true)
+            ->where('status', 'published')
+            ->with('author');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        $announcements = $query->orderBy('featured_order', 'asc')
+            ->orderBy('featured_at', 'desc')
+            ->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $announcements
+        ]);
+    }
+
+    /**
+     * Get all announcements available for featuring
+     */
+    public function getAvailableAnnouncements(Request $request)
+    {
+        $search = $request->get('search', '');
+        $limit = $request->get('limit', 10);
+
+        $query = \App\Models\Announcement::where('status', 'published')
+            ->where('is_featured', false)
+            ->with('author');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%");
+            });
+        }
+
+        $announcements = $query->orderBy('created_at', 'desc')
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $announcements
+        ]);
+    }
+
+    /**
+     * Toggle featured status for an announcement
+     */
+    public function toggleFeaturedAnnouncement($id)
+    {
+        $announcement = \App\Models\Announcement::findOrFail($id);
+
+        if ($announcement->status !== 'published') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only published announcements can be featured'
+            ], 422);
+        }
+
+        if ($announcement->is_featured) {
+            // Remove from featured
+            $announcement->is_featured = false;
+            $announcement->featured_at = null;
+            $announcement->featured_order = null;
+            $announcement->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Announcement removed from featured',
+                'data' => $announcement
+            ]);
+        } else {
+            // Add to featured
+            $maxOrder = \App\Models\Announcement::where('is_featured', true)
+                ->max('featured_order') ?? 0;
+
+            $announcement->is_featured = true;
+            $announcement->featured_at = now();
+            $announcement->featured_order = $maxOrder + 1;
+            $announcement->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Announcement added to featured',
+                'data' => $announcement
+            ]);
+        }
+    }
+
+    /**
+     * Update featured order
+     */
+    public function updateFeaturedOrder(Request $request)
+    {
+        $validated = $request->validate([
+            'announcements' => 'required|array',
+            'announcements.*.id' => 'required|exists:announcements,id',
+            'announcements.*.order' => 'required|integer|min:0'
+        ]);
+
+        foreach ($validated['announcements'] as $item) {
+            \App\Models\Announcement::where('id', $item['id'])
+                ->update(['featured_order' => $item['order']]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Featured announcements order updated successfully'
+        ]);
+    }
+
+    /**
+     * Add multiple announcements to featured
+     */
+    public function addToFeatured(Request $request)
+    {
+        $validated = $request->validate([
+            'announcement_ids' => 'required|array',
+            'announcement_ids.*' => 'exists:announcements,id'
+        ]);
+
+        $maxOrder = \App\Models\Announcement::where('is_featured', true)
+            ->max('featured_order') ?? 0;
+
+        $announcements = \App\Models\Announcement::whereIn('id', $validated['announcement_ids'])
+            ->where('status', 'published')
+            ->where('is_featured', false)
+            ->get();
+
+        foreach ($announcements as $index => $announcement) {
+            $announcement->is_featured = true;
+            $announcement->featured_at = now();
+            $announcement->featured_order = $maxOrder + $index + 1;
+            $announcement->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => count($announcements) . ' announcements added to featured',
+            'data' => $announcements
+        ]);
+    }
+
+    /**
+     * Remove multiple announcements from featured
+     */
+    public function removeFromFeatured(Request $request)
+    {
+        $validated = $request->validate([
+            'announcement_ids' => 'required|array',
+            'announcement_ids.*' => 'exists:announcements,id'
+        ]);
+
+        \App\Models\Announcement::whereIn('id', $validated['announcement_ids'])
+            ->update([
+                'is_featured' => false,
+                'featured_at' => null,
+                'featured_order' => null
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => count($validated['announcement_ids']) . ' announcements removed from featured'
+        ]);
+    }
+
 }

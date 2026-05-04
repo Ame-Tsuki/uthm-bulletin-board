@@ -439,45 +439,67 @@ class AnnouncementController extends Controller
         }
     }
 
-    /**
+        /**
  * Get featured announcements for the carousel
  */
 public function getFeatured(Request $request)
 {
     try {
-        // Fetch announcements that are:
-        // 1. Published/approved
-        // 2. Marked as featured (you can add a 'is_featured' column to your announcements table)
-        // Or you can fetch based on priority (urgent/important) to show in carousel
-        
-        $announcements = Announcement::with('author')
-            ->where('status', 'published') // Only published announcements
+        $featured = Announcement::with('author')
+            ->where('is_featured', 1)
+            ->where('is_active', 1)
+            ->where('status', 'published') // FIXED: Changed from 'approved' to 'published'
             ->where(function($query) {
-                // Show urgent/important announcements or those marked as featured
-                $query->whereIn('priority', ['urgent', 'important'])
-                      ->orWhere('is_featured', true);
+                $query->whereNull('published_at')
+                      ->orWhere('published_at', '<=', now());
             })
-            ->orderByRaw("FIELD(priority, 'urgent', 'important', 'normal')")
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
+            ->orderBy('featured_order', 'asc')
+            ->orderBy('featured_at', 'desc')
+            ->take(10)
             ->get();
         
-        // Add view counts and comments count (if you have these relationships)
-        foreach ($announcements as $announcement) {
-            $announcement->views = $announcement->views()->count() ?? 0;
-            $announcement->comments_count = $announcement->comments()->count() ?? 0;
+        // Format the response
+        $formatted = $featured->map(function($item) {
+            return [
+                'id' => $item->id,
+                'title' => $item->title,
+                'content' => $item->content,
+                'category' => $item->category,
+                'priority' => $item->priority,
+                'is_official' => $item->is_official,
+                'featured_image' => $item->featured_image_url, // Use the accessor
+                'image_url' => $item->image_url,
+                'created_at' => $item->created_at,
+                'author' => $item->author ? [
+                    'name' => $item->author->name,
+                    'role' => $item->author->role
+                ] : null
+            ];
+        });
+        
+        // If request expects JSON (AJAX call)
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'announcements' => $formatted,
+                'count' => $formatted->count()
+            ]);
         }
         
-        return response()->json([
-            'success' => true,
-            'announcements' => $announcements
-        ]);
+        // For non-AJAX, return view
+        return view('announcements.featured', ['announcements' => $formatted]);
+        
     } catch (\Exception $e) {
-        \Log::error('Error fetching featured announcements: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to load featured announcements'
-        ], 500);
+        \Log::error('Error fetching featured posts: ' . $e->getMessage());
+        
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading featured announcements: ' . $e->getMessage()
+            ], 500);
+        }
+        
+        return back()->with('error', 'Unable to load featured announcements');
     }
 }
 
@@ -542,6 +564,7 @@ public function getFeatured(Request $request)
         ));
     }
 
+
     /**
      * APPROVE announcement (Admin & Staff)
      * Convert from pending_verification to published
@@ -601,6 +624,7 @@ public function getFeatured(Request $request)
             ], 500);
         }
     }
+
 
     /**
      * REJECT announcement (Admin & Staff)
@@ -812,6 +836,49 @@ public function getFeatured(Request $request)
             return redirect()->back()->with('success', "Announcement {$action} successfully.");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Failed to update announcement status: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Toggle featured status for user announcement (author or admin only).
+     */
+    public function toggleUserFeatured(Announcement $announcement): RedirectResponse
+    {
+        $user = auth()->user();
+        
+        // Only author or admin can toggle featured status
+        if ($announcement->author_id !== $user->id && $user->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+        
+        // Only staff and club_admin can feature their own announcements
+        if ($user->role !== 'admin' && !in_array($user->role, ['staff', 'club_admin'])) {
+            abort(403, 'Only staff and club admins can feature their announcements.');
+        }
+        
+        if (!Schema::hasColumn('announcements', 'is_featured')) {
+            return redirect()->back()->with('error', 'Database column not found. Please run migration first.');
+        }
+        
+        try {
+            // Check if announcement is published
+            if ($announcement->status !== 'published') {
+                return redirect()->back()->with('error', 'Only published announcements can be featured.');
+            }
+            
+            // Toggle featured status
+            $is_featured = !$announcement->is_featured;
+            
+            $announcement->update([
+                'is_featured' => $is_featured,
+                'featured_at' => $is_featured ? now() : null,
+            ]);
+            
+            $action = $is_featured ? 'added to featured' : 'removed from featured';
+            
+            return redirect()->back()->with('success', "Announcement {$action} successfully.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to update announcement: ' . $e->getMessage());
         }
     }
 }

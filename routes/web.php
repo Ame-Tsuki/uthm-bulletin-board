@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CommunityHubController;
+use App\Http\Controllers\Admin\FeaturedPostController; // ADD THIS
 
 // Public Routes (No Auth Required)
 Route::get('/', function () {
@@ -115,19 +116,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     
     Route::middleware('role:student')->group(function () {
-        // Student Dashboard
         Route::get('/student/dashboard', function () {
-            $user = auth()->user();
-            return view('student.dashboard', compact('user'));
-        })->name('student.dashboard');
+    $user = auth()->user();
+
+    $featuredAnnouncements = App\Models\Announcement::with('author')
+        ->where('is_featured', 1)
+        ->where('is_active', 1)
+        ->where('status', 'published')
+        ->where(function($query) {
+            $query->whereNull('published_at')
+                  ->orWhere('published_at', '<=', now());
+        })
+        ->orderBy('featured_order', 'asc')
+        ->orderBy('featured_at', 'desc')
+        ->take(10)
+        ->get();
+
+    $announcements = App\Models\Announcement::with('author')
+        ->where('is_active', 1)
+        ->where('status', 'published')
+        ->where(function($query) {
+            $query->whereNull('published_at')
+                  ->orWhere('published_at', '<=', now());
+        })
+        ->orderBy('created_at', 'desc')
+        ->take(5)
+        ->get();
+
+    return view('student.dashboard', compact('user', 'announcements', 'featuredAnnouncements'));
+})->name('student.dashboard');
         
-        // Student Calendar
         Route::get('/student/calendar', function () {
             $user = auth()->user();
             return view('student.calendar', compact('user'));
         })->name('student.calendar');
         
-        // Student Community Hub - Using Controller
         Route::get('/student/community-hub', [CommunityHubController::class, 'index'])->name('student.community-hub');
         Route::get('/student/community-hub/create', [CommunityHubController::class, 'create'])->name('student.community-hub.create');
         Route::post('/student/community-hub/store', [CommunityHubController::class, 'store'])->name('student.community-hub.store');
@@ -140,6 +163,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/student/community-hub/{groupId}/join-request/{requestId}/reject', [CommunityHubController::class, 'rejectJoinRequest'])->name('student.community-hub.join-request.reject');
         Route::post('/student/community-hub/{groupId}/posts', [CommunityHubController::class, 'createPost'])->name('student.community-hub.post.create');
         Route::delete('/student/community-hub/{groupId}/posts/{postId}', [CommunityHubController::class, 'deletePost'])->name('student.community-hub.post.delete');
+
+    })->name('student.dashboard');
+    
     });
 
     // ============================================
@@ -157,7 +183,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return view('staff.calendar', compact('user'));
         })->name('staff.calendar');
         
-        // Staff Community Hub (optional - staff can also access community)
         Route::get('/staff/community-hub', [CommunityHubController::class, 'index'])->name('staff.community-hub');
         Route::get('/staff/community-hub/{id}', [CommunityHubController::class, 'show'])->name('staff.community-hub.show');
     });
@@ -177,7 +202,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return view('club.calendar', compact('user'));
         })->name('club.calendar');
         
-        // Club Community Hub
         Route::get('/club/community-hub', [CommunityHubController::class, 'index'])->name('club.community-hub');
         Route::get('/club/community-hub/{id}', [CommunityHubController::class, 'show'])->name('club.community-hub.show');
     });
@@ -243,9 +267,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/announcements/{announcement}/archive', [AnnouncementController::class, 'archive'])->name('announcements.archive');
     Route::post('/announcements/{announcement}/publish', [AnnouncementController::class, 'publish'])->name('announcements.publish');
     Route::post('/announcements/{announcement}/toggle-official', [AnnouncementController::class, 'toggleOfficialStatus'])->name('announcements.toggle-official');
+    Route::post('/announcements/{announcement}/toggle-featured', [AnnouncementController::class, 'toggleUserFeatured'])->name('announcements.toggle-featured');
 
     // Featured Announcements Route
-    Route::get('/announcements/featured', [App\Http\Controllers\AnnouncementController::class, 'getFeatured'])->name('announcements.featured');
+    Route::get('/announcements/featured', [AnnouncementController::class, 'getFeatured'])->name('announcements.featured');
 
     // ============================================
     // APPROVAL ROUTES (ADMIN/STAFF)
@@ -270,6 +295,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/statistics', [AdminController::class, 'getStatistics'])->name('statistics');
         Route::get('/content-stats', [AdminController::class, 'getContentStats'])->name('content-stats');
         
+                // Featured Posts Management Routes - ADD THESE
+        Route::get('/featured-posts', [FeaturedPostController::class, 'index'])->name('featured-posts');
+        Route::post('/featured-posts/toggle', [FeaturedPostController::class, 'toggle'])->name('featured-posts.toggle');
+        Route::post('/featured-posts/update-image', [FeaturedPostController::class, 'updateImage'])->name('featured-posts.update-image');
+        Route::post('/featured-posts/reorder', [FeaturedPostController::class, 'reorder'])->name('featured-posts.reorder');
+    
         // Admin Calendar
         Route::get('/calendar', function () {
             $user = auth()->user();
@@ -301,6 +332,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/{id}', [AdminController::class, 'deleteUser'])->name('destroy');
             Route::patch('/{id}/toggle-verification', [AdminController::class, 'toggleUserVerification'])->name('toggle-verification');
             Route::get('/statistics', [AdminController::class, 'getUserStatistics'])->name('statistics');
+
         });
     });
 
@@ -315,7 +347,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'name' => auth()->user()->name
         ]);
     });
-    
 
     // ============================================
     // DEBUG ROUTES (Remove in production)
@@ -350,4 +381,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return response()->json(['status' => 'ok']);
     });
     
-}); // End of authenticated routes group
+ // End of authenticated routes group - ONLY ONE CLOSING BRACE HERE

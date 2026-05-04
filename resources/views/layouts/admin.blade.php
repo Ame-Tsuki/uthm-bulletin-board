@@ -87,6 +87,10 @@
                         <i class="fas fa-clipboard-list mr-3 text-gray-300"></i>
                         Posts & Content
                     </a>
+                    <a href="{{ route('admin.featured-posts') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-star mr-3 text-amber-300"></i>
+                        Featured Posts
+                    </a>
                     <a href="{{ route('admin.announcements.index') }}" class="flex items-center sidebar-link p-3 rounded-lg hover:bg-gray-700">
                         <i class="fas fa-flag mr-3 text-gray-300"></i>
                         Moderation
@@ -198,6 +202,9 @@
                             </a>
                             <a href="{{ route('admin.announcements.index') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
                                 <i class="fas fa-clipboard-list mr-3"></i>Posts & Content
+                            </a>
+                            <a href="{{ route('admin.featured-posts') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
+                                <i class="fas fa-star mr-3"></i>Featured Posts
                             </a>
                             <a href="{{ route('admin.analytics') }}" class="flex items-center p-3 rounded-lg hover:bg-gray-800">
                                 <i class="fas fa-chart-bar mr-3"></i>Analytics

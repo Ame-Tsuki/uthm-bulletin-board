@@ -155,6 +155,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/student/community-hub/create', [CommunityHubController::class, 'create'])->name('student.community-hub.create');
         Route::post('/student/community-hub/store', [CommunityHubController::class, 'store'])->name('student.community-hub.store');
         Route::get('/student/community-hub/{id}', [CommunityHubController::class, 'show'])->name('student.community-hub.show');
+        Route::put('/student/community-hub/{id}', [CommunityHubController::class, 'update'])->name('student.community-hub.update');
+        Route::delete('/student/community-hub/{id}', [CommunityHubController::class, 'destroy'])->name('student.community-hub.destroy');
         Route::post('/student/community-hub/{id}/join', [CommunityHubController::class, 'join'])->name('student.community-hub.join');
         Route::post('/student/community-hub/{id}/leave', [CommunityHubController::class, 'leave'])->name('student.community-hub.leave');
         Route::put('/student/community-hub/{id}/settings', [CommunityHubController::class, 'updateSettings'])->name('student.community-hub.settings.update');
@@ -162,7 +164,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/student/community-hub/{groupId}/join-request/{requestId}/approve', [CommunityHubController::class, 'approveJoinRequest'])->name('student.community-hub.join-request.approve');
         Route::post('/student/community-hub/{groupId}/join-request/{requestId}/reject', [CommunityHubController::class, 'rejectJoinRequest'])->name('student.community-hub.join-request.reject');
         Route::post('/student/community-hub/{groupId}/posts', [CommunityHubController::class, 'createPost'])->name('student.community-hub.post.create');
+        Route::put('/student/community-hub/{groupId}/posts/{postId}', [CommunityHubController::class, 'editPost'])->name('student.community-hub.post.edit');
         Route::delete('/student/community-hub/{groupId}/posts/{postId}', [CommunityHubController::class, 'deletePost'])->name('student.community-hub.post.delete');
+        Route::post('/student/community-hub/{groupId}/posts/{postId}/pin', [CommunityHubController::class, 'pinPost'])->name('student.community-hub.post.pin');
+        Route::post('/student/community-hub/{groupId}/posts/{postId}/like', [CommunityHubController::class, 'likePost'])->name('student.community-hub.post.like');
 
     })->name('student.dashboard');
     
@@ -184,27 +189,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
         })->name('staff.calendar');
         
         Route::get('/staff/community-hub', [CommunityHubController::class, 'index'])->name('staff.community-hub');
+        Route::get('/staff/community-hub/create', [CommunityHubController::class, 'create'])->name('staff.community-hub.create');
+        Route::post('/staff/community-hub/store', [CommunityHubController::class, 'store'])->name('staff.community-hub.store');
         Route::get('/staff/community-hub/{id}', [CommunityHubController::class, 'show'])->name('staff.community-hub.show');
+        Route::put('/staff/community-hub/{id}', [CommunityHubController::class, 'update'])->name('staff.community-hub.update');
+        Route::delete('/staff/community-hub/{id}', [CommunityHubController::class, 'destroy'])->name('staff.community-hub.destroy');
+        Route::post('/staff/community-hub/{id}/join', [CommunityHubController::class, 'join'])->name('staff.community-hub.join');
+        Route::post('/staff/community-hub/{id}/leave', [CommunityHubController::class, 'leave'])->name('staff.community-hub.leave');
+        Route::put('/staff/community-hub/{id}/settings', [CommunityHubController::class, 'updateSettings'])->name('staff.community-hub.settings.update');
+        Route::delete('/staff/community-hub/{groupId}/member/{userId}', [CommunityHubController::class, 'removeMember'])->name('staff.community-hub.member.remove');
+        Route::post('/staff/community-hub/{groupId}/join-request/{requestId}/approve', [CommunityHubController::class, 'approveJoinRequest'])->name('staff.community-hub.join-request.approve');
+        Route::post('/staff/community-hub/{groupId}/join-request/{requestId}/reject', [CommunityHubController::class, 'rejectJoinRequest'])->name('staff.community-hub.join-request.reject');
+        Route::post('/staff/community-hub/{groupId}/posts', [CommunityHubController::class, 'createPost'])->name('staff.community-hub.post.create');
+        Route::put('/staff/community-hub/{groupId}/posts/{postId}', [CommunityHubController::class, 'editPost'])->name('staff.community-hub.post.edit');
+        Route::delete('/staff/community-hub/{groupId}/posts/{postId}', [CommunityHubController::class, 'deletePost'])->name('staff.community-hub.post.delete');
+        Route::post('/staff/community-hub/{groupId}/posts/{postId}/pin', [CommunityHubController::class, 'pinPost'])->name('staff.community-hub.post.pin');
     });
 
-    // ============================================
-    // CLUB ADMIN ROUTES
-    // ============================================
-    
-    Route::middleware('role:club_admin')->group(function () {
-        Route::get('/club/dashboard', function () {
-            $user = auth()->user();
-            return view('club.dashboard', compact('user'));
-        })->name('club.dashboard');
-        
-        Route::get('/club/calendar', function () {
-            $user = auth()->user();
-            return view('club.calendar', compact('user'));
-        })->name('club.calendar');
-        
-        Route::get('/club/community-hub', [CommunityHubController::class, 'index'])->name('club.community-hub');
-        Route::get('/club/community-hub/{id}', [CommunityHubController::class, 'show'])->name('club.community-hub.show');
-    });
+   
 
     // ============================================
     // GENERAL CALENDAR ROUTE (Role-based redirect)

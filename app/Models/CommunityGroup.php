@@ -55,4 +55,63 @@ class CommunityGroup extends Model
         $member = $this->members()->where('user_id', $userId)->first();
         return !$member || $member->status === 'rejected';
     }
+
+    /**
+     * Check if user is the creator of the group
+     */
+    public function isCreator($userId)
+    {
+        return $this->created_by == $userId;
+    }
+
+    /**
+     * Check if user is an admin of the group
+     */
+    public function isAdmin($userId)
+    {
+        return $this->members()
+            ->where('user_id', $userId)
+            ->where('role', 'admin')
+            ->where('status', 'approved')
+            ->exists();
+    }
+
+    /**
+     * Check if user is a member of the group
+     */
+    public function isMember($userId)
+    {
+        return $this->members()
+            ->where('user_id', $userId)
+            ->where('status', 'approved')
+            ->exists();
+    }
+
+    /**
+     * Get user's role in the group
+     */
+    public function getUserRole($userId)
+    {
+        if ($this->isCreator($userId)) {
+            return 'creator';
+        }
+        
+        $member = $this->members()
+            ->where('user_id', $userId)
+            ->first();
+        
+        return $member ? $member->role : null;
+    }
+
+    /**
+     * Get user's membership status
+     */
+    public function getUserStatus($userId)
+    {
+        $member = $this->members()
+            ->where('user_id', $userId)
+            ->first();
+        
+        return $member ? $member->status : null;
+    }
 }

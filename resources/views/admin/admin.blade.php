@@ -113,7 +113,7 @@
                         </div>
                         <div class="ml-3">
                             <p class="font-medium">Admin User</p>
-                            <p class="text-sm text-gray-400">Super Administrator</p>
+                            <p class="text-sm text-gray-400">Administrator</p>
                         </div>
                     </div>
                 </div>

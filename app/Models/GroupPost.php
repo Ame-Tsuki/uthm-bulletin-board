@@ -1,36 +1,73 @@
 <?php
-// app/Models/GroupPost.php
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class GroupPost extends Model
 {
-    protected $fillable = ['group_id', 'user_id', 'content', 'media', 'is_pinned'];
-
-    protected $casts = [
-        'media' => 'array',
-        'is_pinned' => 'boolean'
+    use HasFactory;
+    
+    protected $table = 'group_posts';
+    
+    protected $fillable = [
+        'group_id',
+        'user_id',
+        'content',
+        'media',
+        'is_pinned',
+        'likes_count'
     ];
-
-    public function group()
-    {
-        return $this->belongsTo(CommunityGroup::class, 'group_id'); // Add foreign key
-    }
-
+    
+    protected $casts = [
+        'is_pinned' => 'boolean',
+        'likes_count' => 'integer',
+    ];
+    
+    // Existing relationships...
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id'); // Add foreign key
+        return $this->belongsTo(User::class);
     }
-
-    public function comments()
+    
+    public function group()
     {
-        return $this->hasMany(GroupPostComment::class, 'post_id'); // Add foreign key
+        return $this->belongsTo(CommunityGroup::class, 'group_id');
     }
-
+    
+    // Add this relationship
     public function likes()
     {
-        return $this->hasMany(GroupPostLike::class, 'post_id'); // Add foreign key
+        return $this->hasMany(GroupPostLike::class, 'post_id');
+    }
+    
+    /**
+     * Check if a specific user has liked this post
+     */
+    public function isLikedBy($userId)
+    {
+        return $this->likes()->where('user_id', $userId)->exists();
+    }
+    
+    /**
+     * Toggle like for a user
+     * Returns true if liked, false if unliked
+     */
+    public function toggleLike($userId)
+    {
+        $existingLike = $this->likes()->where('user_id', $userId)->first();
+        
+        if ($existingLike) {
+            // Unlike
+            $existingLike->delete();
+            $this->decrement('likes_count');
+            return false;
+        } else {
+            // Like
+            $this->likes()->create(['user_id' => $userId]);
+            $this->increment('likes_count');
+            return true;
+        }
     }
 }

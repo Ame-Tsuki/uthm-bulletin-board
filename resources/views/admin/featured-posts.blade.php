@@ -141,8 +141,8 @@
             </button>
         </div>
         <div class="mb-4">
-            <label class="block text-sm font-medium mb-2">Image URL</label>
-            <input type="url" id="imageUrl" class="w-full border rounded-lg px-3 py-2" placeholder="https://example.com/image.jpg">
+            <label class="block text-sm font-medium mb-2">Image File</label>
+            <input type="file" id="imageFile" accept="image/*" class="w-full border rounded-lg px-3 py-2" placeholder="https://example.com/image.jpg">
             <p class="text-xs text-gray-500 mt-1">Use any image URL. Recommended size: 600x400px</p>
         </div>
         <div class="mb-4">
@@ -194,16 +194,19 @@ function toggleFeatured(id) {
 function editImage(id, currentUrl) {
     currentAnnouncementId = id;
     currentImageUrl = currentUrl;
-    document.getElementById('imageUrl').value = currentUrl;
+
+    // Reset file input (important)
+    document.getElementById('imageFile').value = '';
+
     document.getElementById('imageModal').style.display = 'flex';
     document.getElementById('imageModal').classList.remove('hidden');
     
-    // Preview current image if exists
+    const preview = document.getElementById('imagePreview');
+
     if (currentUrl) {
-        const preview = document.getElementById('imagePreview');
-        preview.innerHTML = `<img src="${currentUrl}" class="w-full h-full object-cover" onerror="this.src='https://picsum.photos/id/20/600/400'">`;
+        preview.innerHTML = `<img src="${currentUrl}" class="w-full h-full object-cover">`;
     } else {
-        document.getElementById('imagePreview').innerHTML = '<span class="text-gray-400">Preview will appear here</span>';
+        preview.innerHTML = '<span class="text-gray-400">Preview will appear here</span>';
     }
 }
 
@@ -214,31 +217,38 @@ function closeImageModal() {
 }
 
 function saveImage() {
-    const url = document.getElementById('imageUrl').value;
-    
+    const fileInput = document.getElementById('imageFile');
+    const file = fileInput.files[0];
+
+    let formData = new FormData();
+    formData.append('id', currentAnnouncementId);
+
+    // IMPORTANT: send flag if no file (delete image)
+    if (file) {
+        formData.append('featured_image', file);
+    } else {
+        formData.append('remove_image', 1);
+    }
+
     fetch('{{ route("admin.featured-posts.update-image") }}', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
             'X-CSRF-TOKEN': '{{ csrf_token() }}'
         },
-        body: JSON.stringify({ 
-            id: currentAnnouncementId, 
-            featured_image: url || null 
-        })
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showToast('Image updated successfully!');
+            showToast(data.message);
             closeImageModal();
             setTimeout(() => location.reload(), 1000);
         } else {
-            showToast(data.message || 'Failed to update image', 'error');
+            showToast(data.message || 'Failed', 'error');
         }
     })
     .catch(error => {
-        showToast('Error updating image', 'error');
+        showToast('Error uploading image', 'error');
         console.error(error);
     });
 }
@@ -264,21 +274,18 @@ function showToast(message, type = 'success') {
 }
 
 // Preview image on URL input
-document.getElementById('imageUrl')?.addEventListener('input', function() {
-    const url = this.value;
+document.getElementById('imageFile')?.addEventListener('change', function() {
+    const file = this.files[0];
     const preview = document.getElementById('imagePreview');
-    if (url) {
-        preview.innerHTML = `<img src="${url}" class="w-full h-full object-cover" onerror="this.src='https://picsum.photos/id/20/600/400'">`;
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+        };
+        reader.readAsDataURL(file);
     } else {
         preview.innerHTML = '<span class="text-gray-400">Preview will appear here</span>';
-    }
-});
-
-// Close modal when clicking outside
-window.addEventListener('click', function(event) {
-    const modal = document.getElementById('imageModal');
-    if (event.target === modal) {
-        closeImageModal();
     }
 });
 </script>

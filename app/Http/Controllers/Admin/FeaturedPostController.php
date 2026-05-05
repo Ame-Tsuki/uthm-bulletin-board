@@ -74,30 +74,51 @@ class FeaturedPostController extends Controller
         }
     }
     
-    public function updateImage(Request $request)
-    {
-        try {
-            $request->validate([
-                'id' => 'required|exists:announcements,id',
-                'featured_image' => 'nullable|url|max:500'
-            ]);
-            
-            $announcement = Announcement::findOrFail($request->id);
-            $announcement->featured_image = $request->featured_image;
-            $announcement->save();
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Featured image updated successfully'
-            ]);
-            
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
-            ], 500);
+   public function updateImage(Request $request)
+{
+    try {
+        $request->validate([
+            'id' => 'required|exists:announcements,id',
+            'featured_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
+        ]);
+
+        $announcement = Announcement::findOrFail($request->id);
+
+        // DELETE IMAGE
+        if ($request->has('remove_image')) {
+            if ($announcement->featured_image) {
+                $oldPath = str_replace(asset('storage/'), '', $announcement->featured_image);
+                \Storage::disk('public')->delete($oldPath);
+            }
+
+            $announcement->featured_image = null;
         }
+
+        // UPLOAD NEW IMAGE
+        if ($request->hasFile('featured_image')) {
+            if ($announcement->featured_image) {
+                $oldPath = str_replace(asset('storage/'), '', $announcement->featured_image);
+                \Storage::disk('public')->delete($oldPath);
+            }
+
+            $path = $request->file('featured_image')->store('featured_images', 'public');
+            $announcement->featured_image = asset('storage/' . $path);
+        }
+
+        $announcement->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Image updated successfully'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
     
     public function reorder(Request $request)
     {

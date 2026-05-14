@@ -175,14 +175,63 @@
     
     <p class="text-gray-700">{{ $post->content }}</p>
     
-    <!-- Add like button here -->
-    <div class="mt-3 flex items-center gap-4 text-gray-500 text-sm border-t pt-3">
+    <!-- Like Button -->
+    <div class="mt-3 flex items-center gap-4 text-gray-500 text-sm border-t pt-3 pb-3">
         <button onclick="likePost({{ $group->id }}, {{ $post->id }})" 
                 class="hover:text-red-500 transition flex items-center gap-1 focus:outline-none">
             <i id="heart-{{ $post->id }}" 
                class="{{ $post->is_liked ? 'fas text-red-500' : 'far' }} fa-heart"></i> 
             <span id="likes-{{ $post->id }}">{{ $post->likes_count }}</span> Likes
         </button>
+        <button onclick="toggleComments({{ $post->id }})" class="hover:text-uthm-blue transition flex items-center gap-1 focus:outline-none">
+            <i class="fas fa-comment"></i>
+            <span id="comments-count-{{ $post->id }}">{{ $post->comments->count() }}</span> Comments
+        </button>
+    </div>
+    
+    <!-- Comments Section -->
+    <div id="comments-{{ $post->id }}" class="hidden border-t pt-3 mt-3">
+        <!-- Display Comments -->
+        @if($post->comments->count() > 0)
+            <div class="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                @foreach($post->comments as $comment)
+                    <div id="comment-{{ $comment->id }}" class="bg-gray-50 rounded p-3">
+                        <div class="flex items-start justify-between mb-1">
+                            <div class="flex items-start space-x-2">
+                                <div class="w-8 h-8 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
+                                    <span class="font-bold text-uthm-blue text-xs">{{ strtoupper(substr($comment->user->name, 0, 1)) }}</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-sm text-gray-900">{{ $comment->user->name }}</p>
+                                    <p class="text-xs text-gray-500">{{ $comment->created_at->diffForHumans() }}</p>
+                                </div>
+                            </div>
+                            @if(Auth::id() === $comment->user_id || ($userMember && $userMember->role === 'admin') || $group->isCreator(Auth::id()))
+                                <button onclick="deleteComment({{ $group->id }}, {{ $post->id }}, {{ $comment->id }})" 
+                                        class="text-red-600 hover:text-red-800 text-xs focus:outline-none">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            @endif
+                        </div>
+                        <p class="text-sm text-gray-700">{{ $comment->content }}</p>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+        
+        <!-- Comment Form (if member) -->
+        @if($userMember)
+            <div class="border-t pt-3">
+                <form onsubmit="addComment(event, {{ $group->id }}, {{ $post->id }})" class="flex gap-2">
+                    <input type="text" placeholder="Add a comment..." 
+                           class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue text-sm"
+                           id="comment-input-{{ $post->id }}" required>
+                    <button type="submit" class="bg-uthm-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        @endif
     </div>
 </div>
 @endforeach
@@ -327,7 +376,7 @@
             alert('Edit post feature coming soon');
         }
 
-         async function likePost(groupId, postId) {
+        async function likePost(groupId, postId) {
         try {
             const response = await fetch(`/student/community-hub/${groupId}/posts/${postId}/like`, {
                 method: 'POST',
@@ -361,6 +410,126 @@
             console.error('Error:', error);
         }
     }
+
+        function toggleComments(postId) {
+            const commentsDiv = document.getElementById(`comments-${postId}`);
+            commentsDiv.classList.toggle('hidden');
+        }
+
+        async function addComment(event, groupId, postId) {
+            event.preventDefault();
+            
+            const input = document.getElementById(`comment-input-${postId}`);
+            const content = input.value.trim();
+            
+            if (!content) {
+                alert('Please enter a comment');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/student/community-hub/${groupId}/posts/${postId}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ content: content })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    input.value = '';
+                    
+                    // Update comment count
+                    const countSpan = document.getElementById(`comments-count-${postId}`);
+                    if (countSpan) {
+                        countSpan.textContent = parseInt(countSpan.textContent) + 1;
+                    }
+                    
+                    // Get or create comments container
+                    const commentsDiv = document.getElementById(`comments-${postId}`);
+                    const commentsList = commentsDiv.querySelector('.space-y-3') || createCommentsContainer(postId);
+                    
+                    // Add new comment to the list
+                    const commentHTML = `
+                        <div id="comment-${data.comment.id}" class="bg-gray-50 rounded p-3">
+                            <div class="flex items-start justify-between mb-1">
+                                <div class="flex items-start space-x-2">
+                                    <div class="w-8 h-8 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
+                                        <span class="font-bold text-uthm-blue text-xs">${data.comment.user_initial}</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-sm text-gray-900">${data.comment.user_name}</p>
+                                        <p class="text-xs text-gray-500">just now</p>
+                                    </div>
+                                </div>
+                                <button onclick="deleteComment(${groupId}, ${postId}, ${data.comment.id})" 
+                                        class="text-red-600 hover:text-red-800 text-xs focus:outline-none">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <p class="text-sm text-gray-700">${data.comment.content}</p>
+                        </div>
+                    `;
+                    
+                    if (commentsList) {
+                        commentsList.insertAdjacentHTML('afterbegin', commentHTML);
+                    }
+                } else {
+                    alert(data.message || 'Failed to add comment');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to add comment. Please try again.');
+            }
+        }
+
+        function createCommentsContainer(postId) {
+            const commentsDiv = document.getElementById(`comments-${postId}`);
+            const container = document.createElement('div');
+            container.className = 'space-y-3 mb-4 max-h-64 overflow-y-auto';
+            commentsDiv.insertBefore(container, commentsDiv.firstChild);
+            return container;
+        }
+
+        async function deleteComment(groupId, postId, commentId) {
+            if (!confirm('Delete this comment?')) return;
+            
+            try {
+                const response = await fetch(`/student/community-hub/${groupId}/posts/${postId}/comments/${commentId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Remove comment from DOM
+                    const commentDiv = document.getElementById(`comment-${commentId}`);
+                    if (commentDiv) {
+                        commentDiv.remove();
+                    }
+                    
+                    // Update comment count
+                    const countSpan = document.getElementById(`comments-count-${postId}`);
+                    if (countSpan) {
+                        countSpan.textContent = Math.max(0, parseInt(countSpan.textContent) - 1);
+                    }
+                } else {
+                    alert(data.message || 'Failed to delete comment');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to delete comment. Please try again.');
+            }
+        }
 
         @if ($errors->any())
             document.addEventListener('DOMContentLoaded', function() {

@@ -8,6 +8,7 @@ use App\Models\GroupMember;
 use App\Models\GroupPost;
 use App\Models\GroupJoinRequest;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class CommunityHubController extends Controller
 {
@@ -57,11 +58,20 @@ class CommunityHubController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100|unique:community_groups',
+            'name' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('community_groups')
+            ],
             'description' => 'required|string|max:1000',
             'category' => 'required|string',
             'privacy' => 'required|in:public,private,by_approval',
             'max_members' => 'nullable|integer|min:1|max:10000',
+        ], [
+            'name.unique' => 'A group with this name already exists. Please choose a different name.',
+            'name.required' => 'Group name is required.',
+            'name.max' => 'Group name cannot exceed 100 characters.',
         ]);
         
         DB::beginTransaction();
@@ -99,6 +109,28 @@ class CommunityHubController extends Controller
             return back()->with('error', 'Failed to create group. Please try again.')->withInput();
         }
     }
+    
+    public function checkGroupName(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string|min:3|max:255'
+    ]);
+    
+    // FIXED: Use CommunityGroup instead of Group
+    $exists = CommunityGroup::where('name', $request->name)->exists();
+    
+    if ($exists) {
+        return response()->json([
+            'exists' => true,
+            'message' => 'This group name is already taken. Please choose another name.'
+        ]);
+    }
+    
+    return response()->json([
+        'exists' => false,
+        'message' => 'Group name is available!'
+    ]);
+}
     
     public function join($id)
     {
@@ -203,7 +235,7 @@ class CommunityHubController extends Controller
         
         // Get posts with like status
         $posts = GroupPost::where('group_id', $id)
-            ->with(['user', 'group', 'likes'])
+            ->with(['user', 'group', 'likes', 'comments.user'])
             ->orderBy('is_pinned', 'desc')
             ->orderBy('created_at', 'desc')
             ->get()
@@ -325,8 +357,131 @@ class CommunityHubController extends Controller
                 'message' => 'Failed to process like. Please try again.'
             ], 500);
         }
-    }
+    }    
     /**
+     * Create a comment on a post
+     */
+    public function createComment(Request $request, $groupId, $postId)
+    {
+        try {
+            $validated = $request->validate([
+                'content' => 'required|string|max:1000'
+            ]);
+            
+            $userId = auth()->id();
+            
+            // Check if user is member of the group
+            $isMember = GroupMember::where('group_id', $groupId)
+                ->where('user_id', $userId)
+                ->where('status', 'approved')
+                ->exists();
+                
+            if (!$isMember) {
+                return response()->json([
+                    'success' => false, 
+                    'message' => 'You must be a member to comment'
+                ], 403);
+            }
+            
+            $post = GroupPost::findOrFail($postId);
+            
+            if ($post->group_id != $groupId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Post not found'
+                ], 404);
+            }
+            
+            $comment = $post->comments()->create([
+                'user_id' => $userId,
+                'content' => $validated['content']
+            ]);
+            
+            // Load the user relationship
+            $comment->load('user');
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment added successfully',
+                'comment' => [
+                    'id' => $comment->id,
+                    'content' => $comment->content,
+                    'user_name' => $comment->user->name,
+                    'user_initial' => strtoupper(substr($comment->user->name, 0, 1)),
+                    'created_at' => $comment->created_at->diffForHumans()
+                ]
+            ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Comment error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add comment. Please try again.'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Delete a comment
+     */
+    public function deleteComment($groupId, $postId, $commentId)
+    {
+        try {
+            $userId = auth()->id();
+            
+            $comment = GroupPostComment::findOrFail($commentId);
+            
+            // Check if user is the comment author or group admin
+            $isMember = GroupMember::where('group_id', $groupId)
+                ->where('user_id', $userId)
+                ->where('status', 'approved')
+                ->first();
+            
+            if (!$isMember) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You must be a member to delete comments'
+                ], 403);
+            }
+            
+            $post = GroupPost::findOrFail($postId);
+            
+            if ($post->group_id != $groupId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Post not found'
+                ], 404);
+            }
+            
+            // Check authorization - only comment author or group admin can delete
+            if ($comment->user_id !== $userId && $isMember->role !== 'admin' && !$post->group->isCreator($userId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only delete your own comments'
+                ], 403);
+            }
+            
+            $comment->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Comment deleted successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Delete comment error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete comment. Please try again.'
+            ], 500);
+        }
+    }    /**
      * Update group (admin/creator only)
      */
     public function update(Request $request, $id)

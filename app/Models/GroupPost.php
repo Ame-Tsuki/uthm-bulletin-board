@@ -42,6 +42,11 @@ class GroupPost extends Model
         return $this->hasMany(GroupPostLike::class, 'post_id');
     }
     
+    public function comments()
+    {
+        return $this->hasMany(GroupPostComment::class, 'post_id')->orderBy('created_at', 'desc');
+    }
+    
     /**
      * Check if a specific user has liked this post
      */

@@ -168,6 +168,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/student/community-hub/{groupId}/posts/{postId}', [CommunityHubController::class, 'deletePost'])->name('student.community-hub.post.delete');
         Route::post('/student/community-hub/{groupId}/posts/{postId}/pin', [CommunityHubController::class, 'pinPost'])->name('student.community-hub.post.pin');
         Route::post('/student/community-hub/{groupId}/posts/{postId}/like', [CommunityHubController::class, 'likePost'])->name('student.community-hub.post.like');
+        Route::post('/student/community-hub/{groupId}/posts/{postId}/comments', [CommunityHubController::class, 'createComment'])->name('student.community-hub.post.comment.create');
+        Route::delete('/student/community-hub/{groupId}/posts/{postId}/comments/{commentId}', [CommunityHubController::class, 'deleteComment'])->name('student.community-hub.post.comment.delete');
+        Route::post('/student/community-hub/check-group-name', [CommunityHubController::class, 'checkGroupName'])->name('student.community-hub.check-group-name');
+        // Community Group Routes
+
 
     })->name('student.dashboard');
     

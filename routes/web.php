@@ -12,13 +12,13 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CommunityHubController;
-use App\Http\Controllers\Admin\FeaturedPostController; // ADD THIS
+use App\Http\Controllers\Admin\FeaturedPostController;
+use App\Http\Controllers\GoogleCalendarController;
 
 // Public Routes (No Auth Required)
 Route::get('/', function () {
     return view('welcome');
 });
-
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {
@@ -55,14 +55,27 @@ Route::middleware('auth')->group(function () {
 // Authenticated Routes (Require Login)
 Route::middleware(['auth', 'verified'])->group(function () {
     
+    // Google Calendar Routes
+    Route::get('/google-calendar/connect', [GoogleCalendarController::class, 'connect'])
+        ->name('google.calendar.connect');
+    Route::get('/google-calendar/callback', [GoogleCalendarController::class, 'callback'])
+        ->name('google.calendar.callback');
+    Route::post('/google-calendar/disconnect', [GoogleCalendarController::class, 'disconnect'])
+        ->name('google.calendar.disconnect');
+    Route::get('/google-calendar/status', [GoogleCalendarController::class, 'status'])
+        ->name('google.calendar.status');
+    Route::post('/google-calendar/sync', [GoogleCalendarController::class, 'sync'])
+        ->name('google.calendar.sync');
+    
     // API Routes for Events
     Route::prefix('api')->group(function () {
-        Route::get('/events', [EventController::class, 'index']);
         Route::post('/events', [EventController::class, 'store']);
-        Route::put('/events/{event}', [EventController::class, 'update']);
-        Route::delete('/events/{event}', [EventController::class, 'destroy']);
+        Route::post('/events/sync-all-google', [EventController::class, 'syncAllToGoogle']);
+        Route::get('/events', [EventController::class, 'index']);
         Route::get('/events/upcoming', [EventController::class, 'getUpcomingEvents']);
         Route::get('/events/statistics', [EventController::class, 'getStatistics']);
+        Route::put('/events/{event}', [EventController::class, 'update']);
+        Route::delete('/events/{event}', [EventController::class, 'destroy']);
         
         Route::middleware('role:admin')->group(function () {
             Route::post('/events/public', [EventController::class, 'createPublicAnnouncement']);
@@ -117,34 +130,34 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::middleware('role:student')->group(function () {
         Route::get('/student/dashboard', function () {
-    $user = auth()->user();
+            $user = auth()->user();
 
-    $featuredAnnouncements = App\Models\Announcement::with('author')
-        ->where('is_featured', 1)
-        ->where('is_active', 1)
-        ->where('status', 'published')
-        ->where(function($query) {
-            $query->whereNull('published_at')
-                  ->orWhere('published_at', '<=', now());
-        })
-        ->orderBy('featured_order', 'asc')
-        ->orderBy('featured_at', 'desc')
-        ->take(10)
-        ->get();
+            $featuredAnnouncements = App\Models\Announcement::with('author')
+                ->where('is_featured', 1)
+                ->where('is_active', 1)
+                ->where('status', 'published')
+                ->where(function($query) {
+                    $query->whereNull('published_at')
+                          ->orWhere('published_at', '<=', now());
+                })
+                ->orderBy('featured_order', 'asc')
+                ->orderBy('featured_at', 'desc')
+                ->take(10)
+                ->get();
 
-    $announcements = App\Models\Announcement::with('author')
-        ->where('is_active', 1)
-        ->where('status', 'published')
-        ->where(function($query) {
-            $query->whereNull('published_at')
-                  ->orWhere('published_at', '<=', now());
-        })
-        ->orderBy('created_at', 'desc')
-        ->take(5)
-        ->get();
+            $announcements = App\Models\Announcement::with('author')
+                ->where('is_active', 1)
+                ->where('status', 'published')
+                ->where(function($query) {
+                    $query->whereNull('published_at')
+                          ->orWhere('published_at', '<=', now());
+                })
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
 
-    return view('student.dashboard', compact('user', 'announcements', 'featuredAnnouncements'));
-})->name('student.dashboard');
+            return view('student.dashboard', compact('user', 'announcements', 'featuredAnnouncements'));
+        })->name('student.dashboard');
         
         Route::get('/student/calendar', function () {
             $user = auth()->user();
@@ -171,11 +184,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/student/community-hub/{groupId}/posts/{postId}/comments', [CommunityHubController::class, 'createComment'])->name('student.community-hub.post.comment.create');
         Route::delete('/student/community-hub/{groupId}/posts/{postId}/comments/{commentId}', [CommunityHubController::class, 'deleteComment'])->name('student.community-hub.post.comment.delete');
         Route::post('/student/community-hub/check-group-name', [CommunityHubController::class, 'checkGroupName'])->name('student.community-hub.check-group-name');
-        // Community Group Routes
-
-
-    })->name('student.dashboard');
-    
     });
 
     // ============================================
@@ -210,8 +218,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/staff/community-hub/{groupId}/posts/{postId}', [CommunityHubController::class, 'deletePost'])->name('staff.community-hub.post.delete');
         Route::post('/staff/community-hub/{groupId}/posts/{postId}/pin', [CommunityHubController::class, 'pinPost'])->name('staff.community-hub.post.pin');
     });
-
-   
 
     // ============================================
     // GENERAL CALENDAR ROUTE (Role-based redirect)
@@ -302,7 +308,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/statistics', [AdminController::class, 'getStatistics'])->name('statistics');
         Route::get('/content-stats', [AdminController::class, 'getContentStats'])->name('content-stats');
         
-                // Featured Posts Management Routes - ADD THESE
+        // Featured Posts Management Routes
         Route::get('/featured-posts', [FeaturedPostController::class, 'index'])->name('featured-posts');
         Route::post('/featured-posts/toggle', [FeaturedPostController::class, 'toggle'])->name('featured-posts.toggle');
         Route::post('/featured-posts/update-image', [FeaturedPostController::class, 'updateImage'])->name('featured-posts.update-image');
@@ -339,7 +345,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/{id}', [AdminController::class, 'deleteUser'])->name('destroy');
             Route::patch('/{id}/toggle-verification', [AdminController::class, 'toggleUserVerification'])->name('toggle-verification');
             Route::get('/statistics', [AdminController::class, 'getUserStatistics'])->name('statistics');
-
         });
     });
 
@@ -388,4 +393,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return response()->json(['status' => 'ok']);
     });
     
- // End of authenticated routes group - ONLY ONE CLOSING BRACE HERE
+}); // END of authenticated routes group

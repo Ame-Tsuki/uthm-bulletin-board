@@ -24,7 +24,11 @@ class Event extends Model
         'visibility',
         'recurrence_pattern',
         'color',
-        'user_id'
+        'user_id',
+        'google_event_id',
+        'synced_with_google',
+        'last_synced_at',
+        'set_reminder',
     ];
 
     protected $casts = [

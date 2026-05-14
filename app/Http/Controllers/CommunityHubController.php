@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\CommunityGroup;
 use App\Models\GroupMember;
 use App\Models\GroupPost;
+use App\Models\GroupPostComment;
 use App\Models\GroupJoinRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -56,59 +57,75 @@ class CommunityHubController extends Controller
     }
     
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:100',
-                Rule::unique('community_groups')
-            ],
-            'description' => 'required|string|max:1000',
-            'category' => 'required|string',
-            'privacy' => 'required|in:public,private,by_approval',
-            'max_members' => 'nullable|integer|min:1|max:10000',
-        ], [
-            'name.unique' => 'A group with this name already exists. Please choose a different name.',
-            'name.required' => 'Group name is required.',
-            'name.max' => 'Group name cannot exceed 100 characters.',
+{
+    // Manual validation check
+    $existingGroup = CommunityGroup::where('name', $request->name)->first();
+    
+    if ($existingGroup) {
+        return redirect()->back()
+            ->with('error', 'A group named "' . $request->name . '" already exists. Please choose a different name.')
+            ->withInput();
+    }
+
+    $validated = $request->validate([
+        'name' => [
+            'required',
+            'string',
+            'max:100',
+            Rule::unique('community_groups', 'name')
+        ],
+        'description' => 'required|string|max:1000',
+        'category' => 'required|string',
+        'privacy' => 'required|in:public,private,by_approval',
+        'max_members' => 'nullable|integer|min:1|max:10000',
+    ], [
+        'name.unique' => 'A group with this name already exists. Please choose a different name.',
+        'name.required' => 'Group name is required.',
+        'name.max' => 'Group name cannot exceed 100 characters.',
+        'description.required' => 'Description is required.',
+        'category.required' => 'Category is required.',
+        'privacy.required' => 'Privacy setting is required.',
+    ]);
+    
+    DB::beginTransaction();
+    
+    try {
+        $group = CommunityGroup::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'],
+            'category' => $validated['category'],
+            'privacy' => $validated['privacy'],
+            'max_members' => $validated['max_members'] ?? null,
+            'created_by' => auth()->id(),
+            'member_count' => 1,
+            'allow_posts' => true,
+            'allow_events' => true,
+            'require_approval' => $validated['privacy'] === 'by_approval',
         ]);
         
-        DB::beginTransaction();
+        GroupMember::create([
+            'group_id' => $group->id,
+            'user_id' => auth()->id(),
+            'role' => 'admin',
+            'status' => 'approved',
+            'joined_at' => now()
+        ]);
         
-        try {
-            $group = CommunityGroup::create([
-                'name' => $validated['name'],
-                'description' => $validated['description'],
-                'category' => $validated['category'],
-                'privacy' => $validated['privacy'],
-                'max_members' => $validated['max_members'],
-                'created_by' => auth()->id(),
-                'member_count' => 1,
-                'allow_posts' => true,
-                'allow_events' => true,
-                'require_approval' => $validated['privacy'] === 'by_approval',
-            ]);
+        DB::commit();
+        
+        return redirect()->route('student.community-hub.show', $group->id)
+            ->with('success', 'Group "' . $group->name . '" created successfully!');
             
-            // Add creator as admin member
-            GroupMember::create([
-                'group_id' => $group->id,
-                'user_id' => auth()->id(),
-                'role' => 'admin',
-                'status' => 'approved',
-                'joined_at' => now()
-            ]);
-            
-            DB::commit();
-            
-            return redirect()->route('student.community-hub.show', $group->id)
-                ->with('success', 'Group "' . $group->name . '" created successfully!');
-                
-        } catch (\Exception $e) {
-            DB::rollback();
-            return back()->with('error', 'Failed to create group. Please try again.')->withInput();
-        }
+    } catch (\Exception $e) {
+        DB::rollback();
+        \Log::error('Group creation failed: ' . $e->getMessage());
+        
+        // IMPORTANT: Stay on the create page with error
+        return redirect()->back()
+            ->with('error', 'Failed to create group. Please try again.')
+            ->withInput();
     }
+}
     
     public function checkGroupName(Request $request)
 {
@@ -244,9 +261,10 @@ class CommunityHubController extends Controller
                 return $post;
             });
         
-        // Get pending join requests (for admin only)
+        // Get pending join requests (for creator and admins)
         $pendingRequests = collect();
-        if ($userMember && $userMember->role === 'admin' && $userMember->status === 'approved') {
+        $isCreator = $group->created_by === $user->id;
+        if ($userMember && ($userMember->role === 'admin' || $isCreator) && $userMember->status === 'approved') {
             $pendingRequests = GroupJoinRequest::where('group_id', $id)
                 ->where('status', 'pending')
                 ->with('user')
@@ -616,15 +634,17 @@ class CommunityHubController extends Controller
             return back()->with('error', 'Invalid request.');
         }
         
-        // Check authorization - only admin
-        $isAdmin = GroupMember::where('group_id', $groupId)
+        // Check authorization - admin or group creator
+        $isAuthorized = GroupMember::where('group_id', $groupId)
             ->where('user_id', $user->id)
             ->where('role', 'admin')
             ->where('status', 'approved')
             ->exists();
         
-        if (!$isAdmin) {
-            return back()->with('error', 'Only group admins can approve requests.');
+        $isCreator = $group->created_by === $user->id;
+        
+        if (!$isAuthorized && !$isCreator) {
+            return back()->with('error', 'Only group creator or admins can approve requests.');
         }
         
         // Check member limit
@@ -660,10 +680,11 @@ class CommunityHubController extends Controller
     }
 
     /**
-     * Reject a join request (admin only)
+     * Reject a join request (admin or creator only)
      */
     public function rejectJoinRequest($groupId, $requestId)
     {
+        $group = CommunityGroup::findOrFail($groupId);
         $user = auth()->user();
         $request = GroupJoinRequest::findOrFail($requestId);
         
@@ -672,15 +693,17 @@ class CommunityHubController extends Controller
             return back()->with('error', 'Invalid request.');
         }
         
-        // Check authorization - only admin
-        $isAdmin = GroupMember::where('group_id', $groupId)
+        // Check authorization - admin or group creator
+        $isAuthorized = GroupMember::where('group_id', $groupId)
             ->where('user_id', $user->id)
             ->where('role', 'admin')
             ->where('status', 'approved')
             ->exists();
         
-        if (!$isAdmin) {
-            return back()->with('error', 'Only group admins can reject requests.');
+        $isCreator = $group->created_by === $user->id;
+        
+        if (!$isAuthorized && !$isCreator) {
+            return back()->with('error', 'Only group creator or admins can reject requests.');
         }
         
         try {

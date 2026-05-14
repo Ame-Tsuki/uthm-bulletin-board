@@ -103,6 +103,15 @@ class CommunityGroup extends Model
         return $member ? $member->role : null;
     }
 
+    public function getPrivacyLabelAttribute()
+{
+    return [
+        'public' => 'Public',
+        'by_approval' => 'By Approval',
+        'private' => 'Private',
+    ][$this->privacy] ?? ucfirst($this->privacy);
+}
+
     /**
      * Get user's membership status
      */

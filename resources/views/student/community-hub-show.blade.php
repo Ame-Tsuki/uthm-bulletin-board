@@ -89,7 +89,7 @@
         </div>
         <div class="bg-white rounded-lg shadow p-4 text-center">
             <i class="fas fa-lock text-uthm-blue text-2xl mb-2"></i>
-            <p class="text-2xl font-bold">{{ ucfirst($group->privacy) }}</p>
+            <p class="text-2xl font-bold">{{ $group->privacy_label }}</p>
             <p class="text-gray-600">Privacy</p>
         </div>
         <div class="bg-white rounded-lg shadow p-4 text-center">
@@ -247,8 +247,8 @@
         
         <!-- Sidebar -->
         <div class="lg:col-span-1">
-            <!-- Pending Join Requests (Admin Only) -->
-            @if($userMember && $userMember->role === 'admin' && $pendingRequests->count() > 0)
+            <!-- Pending Join Requests (Creator & Admin Only) -->
+            @if($userMember && ($userMember->role === 'admin' || $group->isCreator(Auth::id())) && $pendingRequests->count() > 0)
                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                     <h3 class="font-bold text-yellow-900 mb-3">
                         <i class="fas fa-hourglass-half mr-2"></i> Pending Requests ({{ $pendingRequests->count() }})

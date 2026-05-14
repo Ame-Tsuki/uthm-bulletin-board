@@ -67,6 +67,19 @@ class CommunityHubController extends Controller
             ->withInput();
     }
 
+    $user = auth()->user();
+    
+    // Define the maximum number of groups a user can create
+    $maxGroupsPerUser = 5; // Change this number as needed
+    
+    // Check how many groups the user has already created
+    $userGroupsCount = CommunityGroup::where('created_by', $user->id)->count();
+    
+    if ($userGroupsCount >= $maxGroupsPerUser) {
+        return back()->with('error', "You have reached the maximum limit of {$maxGroupsPerUser} groups. You cannot create more groups.")
+                     ->withInput();
+    }
+
     $validated = $request->validate([
         'name' => [
             'required',
@@ -76,7 +89,7 @@ class CommunityHubController extends Controller
         ],
         'description' => 'required|string|max:1000',
         'category' => 'required|string',
-        'privacy' => 'required|in:public,private,by_approval',
+        'privacy' => 'required|in:public,by_approval',
         'max_members' => 'nullable|integer|min:1|max:10000',
     ], [
         'name.unique' => 'A group with this name already exists. Please choose a different name.',
@@ -522,7 +535,7 @@ class CommunityHubController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:100|unique:community_groups,name,' . $id,
             'description' => 'sometimes|string|max:1000',
-            'privacy' => 'sometimes|in:public,private,by_approval',
+            'privacy' => 'sometimes|in:public,by_approval',
             'max_members' => 'sometimes|nullable|integer|min:1|max:10000',
             'category' => 'sometimes|string',
         ]);

@@ -346,7 +346,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Privacy</label>
                     <select name="privacy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue">
                         <option value="public" {{ $group->privacy === 'public' ? 'selected' : '' }}>Public</option>
-                        <option value="private" {{ $group->privacy === 'private' ? 'selected' : '' }}>Private</option>
+                        
                         <option value="by_approval" {{ $group->privacy === 'by_approval' ? 'selected' : '' }}>By Approval</option>
                     </select>
                 </div>

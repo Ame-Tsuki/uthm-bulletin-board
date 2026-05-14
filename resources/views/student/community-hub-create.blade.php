@@ -36,22 +36,22 @@
             @csrf
             
             <!-- Debug: Display all errors -->
-    @if($errors->any())
-        <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            <strong class="font-bold">Validation Errors:</strong>
-            <ul class="mt-2 list-disc list-inside">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-    
-    @if(session('error'))
-        <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            {{ session('error') }}
-        </div>
-    @endif
+            @if($errors->any())
+                <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    <strong class="font-bold">Validation Errors:</strong>
+                    <ul class="mt-2 list-disc list-inside">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+            
+            @if(session('error'))
+                <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
 
             <div class="mb-4">
                 <label class="block text-gray-700 font-medium mb-2">Group Name *</label>
@@ -104,7 +104,7 @@
                 <select name="privacy" required class="w-full border-2 border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-uthm-blue">
                     <option value="public" {{ old('privacy') == 'public' ? 'selected' : '' }}>Public - Anyone can join</option>
                     <option value="by_approval" {{ old('privacy') == 'by_approval' ? 'selected' : '' }}>By Approval - Request to join</option>
-                    <option value="private" {{ old('privacy') == 'private' ? 'selected' : '' }}>Private - Invite only</option>
+                    
                 </select>
                 @error('privacy')
                     <p class="text-red-500 text-sm mt-1">{{ $message }}</p>

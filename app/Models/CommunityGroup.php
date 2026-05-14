@@ -112,6 +112,17 @@ class CommunityGroup extends Model
     ][$this->privacy] ?? ucfirst($this->privacy);
 }
 
+public static function getRemainingCreationSlots($userId, $maxLimit = 5)
+{
+    $userGroupsCount = self::where('created_by', $userId)->count();
+    return max(0, $maxLimit - $userGroupsCount);
+}
+
+public static function hasReachedCreationLimit($userId, $maxLimit = 5)
+{
+    return self::where('created_by', $userId)->count() >= $maxLimit;
+}
+
     /**
      * Get user's membership status
      */

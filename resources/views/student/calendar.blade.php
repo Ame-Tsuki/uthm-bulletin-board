@@ -288,15 +288,21 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="flex items-center p-3 rounded-lg bg-uthm-blue-light text-uthm-blue transition-colors">
+                    <a href="{{ route('announcements.my-announcements') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0"><i class="fas fa-file-alt w-5 h-5"></i></div>
+                        <span class="sidebar-text ml-3">My Announcements</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('calendar') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
                         <div class="shrink-0"><i class="fas fa-calendar-alt w-5 h-5"></i></div>
                         <span class="sidebar-text ml-3">Calendar</span>
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0"><i class="fas fa-calendar-check w-5 h-5"></i></div>
-                        <span class="sidebar-text ml-3">Events</span>
+                    <a href="{{ route('student.community-hub') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                        <div class="shrink-0"><i class="fas fa-users w-5 h-5"></i></div>
+                        <span class="sidebar-text ml-3">Community Hub</span>
                     </a>
                 </li>
                 <li>
@@ -307,6 +313,17 @@
                 </li>
             </ul>
         </nav>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+            <form action="{{ route('logout') }}" method="POST">
+                @csrf
+                <button type="submit" class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
+                    <div class="shrink-0"><i class="fas fa-sign-out-alt w-5 h-5"></i></div>
+                    <span class="sidebar-text ml-3">Logout</span>
+                </button>
+            </form>
+        </div>
+    </div>
 
         <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
             <form action="{{ route('logout') }}" method="POST">
@@ -330,10 +347,7 @@
                         <span id="current-month-year" class="text-gray-600">Loading...</span>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <div id="google-sync-status" class="hidden md:flex items-center space-x-2 px-3 py-1 bg-gray-100 rounded-full">
-                            <span id="sync-status-dot" class="w-2 h-2 bg-gray-400 rounded-full"></span>
-                            <span id="sync-status-text" class="text-sm text-gray-600">Checking sync status...</span>
-                        </div>
+                        
                         <button onclick="openEventModal()" class="bg-uthm-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center">
                             <i class="fas fa-plus mr-2"></i>
                             <span class="hidden md:inline">Add Event</span>

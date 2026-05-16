@@ -213,7 +213,7 @@
             <main class="p-6">
                 <!-- Search and Filter -->
                 <div class="bg-white rounded-lg shadow p-6 mb-8">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                             <input type="text" id="searchInput" placeholder="Search by name, email, or ID" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
@@ -236,6 +236,14 @@
                                 <option value="false">Unverified</option>
                             </select>
                         </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Account</label>
+                            <select id="bannedFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">All Accounts</option>
+                                <option value="false">Active</option>
+                                <option value="true">Banned</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="flex gap-2">
                         <button id="searchBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Search</button>
@@ -244,7 +252,7 @@
                 </div>
 
                 <!-- Users Table -->
-                <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b">
                         <div class="flex justify-between items-center">
                             <h2 class="text-xl font-bold text-gray-800">All Users</h2>
@@ -252,11 +260,10 @@
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full divide-y divide-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -264,7 +271,7 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200" id="usersList">
                                 <tr>
-                                    <td colspan="5" class="text-center py-8">
+                                    <td colspan="4" class="text-center py-8">
                                         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
                                         <p class="text-gray-500">Loading users...</p>
                                     </td>
@@ -382,18 +389,45 @@
             document.getElementById('userForm')?.addEventListener('submit', handleUserSubmit);
         });
 
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        function roleBadgeClass(role) {
+            if (role === 'admin') return 'bg-purple-100 text-purple-800';
+            if (role === 'staff') return 'bg-yellow-100 text-yellow-800';
+            if (role === 'club_admin') return 'bg-indigo-100 text-indigo-800';
+            return 'bg-blue-100 text-blue-800';
+        }
+
+        function formatRole(role) {
+            if (!role) return '';
+            return role.charAt(0).toUpperCase() + role.slice(1).replace('_', ' ');
+        }
+
+        function statusBadge(user) {
+            if (user.is_banned) {
+                return '<span class="badge bg-red-100 text-red-800"><i class="fas fa-ban mr-1"></i> Banned</span>';
+            }
+            if (user.is_verified) {
+                return '<span class="badge bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i> Verified</span>';
+            }
+            return '<span class="badge bg-yellow-100 text-yellow-800"><i class="fas fa-clock mr-1"></i> Pending</span>';
+        }
+
         function loadUsers() {
             const search = document.getElementById('searchInput')?.value || '';
             const role = document.getElementById('roleFilter')?.value || '';
             const verified = document.getElementById('verificationFilter')?.value || '';
+            const banned = document.getElementById('bannedFilter')?.value || '';
 
-            const url = new URL('/api/admin/users', window.location.origin);
-            if (search) url.searchParams.append('search', search);
-            if (role) url.searchParams.append('role', role);
-            if (verified === 'true') url.searchParams.append('verified', 'true');
-            if (verified === 'false') url.searchParams.append('verified', 'false');
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (role) params.append('role', role);
+            if (verified === 'true' || verified === 'false') params.append('verified', verified);
+            if (banned === 'true' || banned === 'false') params.append('banned', banned);
 
-            fetch(url)
+            fetch(`/admin/users/list?${params.toString()}`, {
+                headers: { 'Accept': 'application/json' },
+            })
                 .then(response => response.json())
                 .then(data => {
                     const usersList = document.getElementById('usersList');
@@ -402,16 +436,13 @@
                     usersList.innerHTML = '';
 
                     if (data.success && data.data && data.data.data && data.data.data.length > 0) {
-                        document.getElementById('userCount').textContent = data.data.data.length;
+                        document.getElementById('userCount').textContent = data.data.total ?? data.data.data.length;
                         
                         data.data.data.forEach(user => {
-                            const roleClass = user.role === 'admin' ? 'bg-red-100 text-red-800' :
-                                             user.role === 'staff' ? 'bg-blue-100 text-blue-800' :
-                                             user.role === 'student' ? 'bg-green-100 text-green-800' :
-                                             'bg-purple-100 text-purple-800';
-                            
-                            const statusClass = user.is_verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-                            const statusIcon = user.is_verified ? '<i class="fas fa-check-circle mr-1"></i> Verified' : '<i class="fas fa-clock mr-1"></i> Pending';
+                            const roleClass = roleBadgeClass(user.role);
+                            const banBtn = user.is_banned
+                                ? `<button onclick="toggleBan(${user.id})" class="text-green-600 hover:text-green-900" title="Unban user"><i class="fas fa-user-check"></i></button>`
+                                : `<button onclick="toggleBan(${user.id})" class="text-orange-600 hover:text-orange-900" title="Ban user"><i class="fas fa-user-slash"></i></button>`;
                             
                             const row = `
                                 <tr class="table-row-hover">
@@ -422,42 +453,39 @@
                                             </div>
                                             <div class="ml-4">
                                                 <div class="text-sm font-medium text-gray-900">${escapeHtml(user.name)}</div>
-                                                <div class="text-sm text-gray-500">${escapeHtml(user.uthm_id || 'N/A')}</div>
+                                                <div class="text-sm text-gray-500">${escapeHtml(user.email)}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(user.email)}</td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${roleClass}">${user.role}</span>
+                                        <span class="badge ${roleClass}">${escapeHtml(formatRole(user.role))}</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="badge ${statusClass}">${statusIcon}</span>
+                                        ${statusBadge(user)}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                         <div class="flex space-x-2">
-                                            <button onclick="viewUser(${user.id})" class="text-blue-600 hover:text-blue-900" title="View">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
                                             <button onclick="editUser(${user.id})" class="text-green-600 hover:text-green-900" title="Edit">
                                                 <i class="fas fa-edit"></i>
                                             </button>
+                                            ${banBtn}
                                             <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-900" title="Delete">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
                                     </td>
-                                th
+                                </tr>
                             `;
                             usersList.innerHTML += row;
                         });
                     } else {
                         document.getElementById('userCount').textContent = 0;
-                        usersList.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500"><i class="fas fa-users text-3xl mb-2 text-gray-300"></i><p>No users found</p></td></tr>';
+                        usersList.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500"><i class="fas fa-users text-3xl mb-2 text-gray-300"></i><p>No users found</p></td></tr>';
                     }
                 })
                 .catch(error => {
                     console.error('Error loading users:', error);
-                    document.getElementById('usersList').innerHTML = '<tr><td colspan="5" class="text-center py-8 text-red-500">Error loading users. Please try again.</td></tr>';
+                    document.getElementById('usersList').innerHTML = '<tr><td colspan="4" class="text-center py-8 text-red-500">Error loading users. Please try again.</td></tr>';
                 });
         }
 
@@ -469,19 +497,33 @@
             document.getElementById('userModal').classList.remove('hidden');
         }
 
-        function viewUser(userId) {
-            fetch(`/api/admin/users/${userId}`)
+        function toggleBan(userId) {
+            if (!confirm('Change ban status for this user?')) return;
+
+            fetch(`/admin/users/${userId}/toggle-ban`, {
+                method: 'PATCH',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert(`User Details:\nName: ${data.data.name}\nEmail: ${data.data.email}\nRole: ${data.data.role}\nStatus: ${data.data.is_verified ? 'Verified' : 'Unverified'}`);
+                        alert(data.message);
+                        loadUsers();
+                    } else {
+                        alert(data.message || 'Error updating ban status');
                     }
                 })
-                .catch(error => console.error('Error loading user:', error));
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error updating ban status');
+                });
         }
 
         function editUser(userId) {
-            fetch(`/api/admin/users/${userId}`)
+            fetch(`/admin/users/${userId}`, { headers: { 'Accept': 'application/json' } })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -520,14 +562,15 @@
                 userData.password = password;
             }
             
-            const url = isEdit ? `/api/admin/users/${userId}` : '/api/admin/users';
+            const url = isEdit ? `/admin/users/${userId}` : '/admin/users/create';
             const method = isEdit ? 'PUT' : 'POST';
             
             fetch(url, {
                 method: method,
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
                 },
                 body: JSON.stringify(userData)
             })
@@ -549,10 +592,11 @@
 
         function deleteUser(userId) {
             if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-                fetch(`/api/admin/users/${userId}`, {
+                fetch(`/admin/users/${userId}`, {
                     method: 'DELETE',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
                     }
                 })
                 .then(response => response.json())

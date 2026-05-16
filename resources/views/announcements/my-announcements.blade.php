@@ -446,6 +446,12 @@
             <i class="fas fa-times-circle mr-2"></i>Rejected
             <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'rejected' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $rejectedCount ?? 0 }}</span>
         </a>
+
+        <a href="{{ route('announcements.my-announcements') }}?status=banned" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'banned' ? 'bg-red-800 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+            <i class="fas fa-ban mr-2"></i>Banned
+            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'banned' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $bannedCount ?? 0 }}</span>
+        </a>
     </div>
 </div>
 
@@ -470,6 +476,9 @@
                                                     <div class="text-sm font-medium text-gray-900">
                                                         {{ $announcement->title }}
                                                     </div>
+                                                    @if(($announcement->status === 'banned' || $announcement->is_banned) && $announcement->ban_reason)
+                                                        <p class="text-xs text-red-600 mt-1">{{ \Illuminate\Support\Str::limit($announcement->ban_reason, 80) }}</p>
+                                                    @endif
                                                     <div class="text-sm text-gray-500">
                                                         @if($announcement->is_official)
                                                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs badge-official">
@@ -499,6 +508,10 @@
                                                         <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                                             <i class="fas fa-times-circle mr-1"></i> Rejected
                                                         </span>
+                                                    @elseif($announcement->status == 'banned' || $announcement->is_banned)
+                                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-200 text-red-900">
+                                                            <i class="fas fa-ban mr-1"></i> Banned
+                                                        </span>
                                                     @else
                                                         <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                                                             <i class="fas fa-question-circle mr-1"></i> {{ ucfirst($announcement->status) }}
@@ -519,10 +532,12 @@
                                                            class="inline-flex items-center px-3 py-1 border border-transparent text-xs rounded btn-view hover:bg-green-700">
                                                             <i class="fas fa-eye mr-1"></i> View
                                                         </a>
+                                                        @if($announcement->status !== 'banned' && !$announcement->is_banned)
                                                         <a href="{{ route('announcements.edit', $announcement) }}" 
                                                            class="inline-flex items-center px-3 py-1 border border-transparent text-xs rounded btn-edit hover:bg-blue-700">
                                                             <i class="fas fa-edit mr-1"></i> Edit
                                                         </a>
+                                                        @endif
                                                         @if($announcement->status === 'published' && in_array(auth()->user()->role, ['staff', 'club_admin']))
                                                             <form action="{{ route('announcements.toggle-featured', $announcement) }}" 
                                                                   method="POST" 

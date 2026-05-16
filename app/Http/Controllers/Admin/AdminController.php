@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AnnouncementReport;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -39,6 +40,7 @@ class AdminController extends Controller
         $search = $request->get('search', '');
         $role = $request->get('role', '');
         $verified = $request->get('verified', '');
+        $banned = $request->get('banned', '');
 
         $query = User::query();
 
@@ -56,6 +58,10 @@ class AdminController extends Controller
 
         if ($verified !== '') {
             $query->where('is_verified', $verified === 'true' || $verified === '1');
+        }
+
+        if ($banned !== '') {
+            $query->where('is_banned', $banned === 'true' || $banned === '1');
         }
 
         $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
@@ -85,7 +91,7 @@ class AdminController extends Controller
     public function createUser(Request $request)
     {
         $validated = $request->validate([
-            'uthm_id' => 'required|string|unique:users,uthm_id',
+            'uthm_id' => 'nullable|string|unique:users,uthm_id',
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|unique:users,email',
             'phone' => 'nullable|string|max:20',
@@ -97,6 +103,10 @@ class AdminController extends Controller
 
         $validated['password'] = Hash::make($validated['password']);
         $validated['is_verified'] = $validated['is_verified'] ?? false;
+
+        if (empty($validated['uthm_id'])) {
+            $validated['uthm_id'] = 'ADM-' . strtoupper(uniqid());
+        }
 
         $user = User::create($validated);
 
@@ -162,6 +172,30 @@ class AdminController extends Controller
     }
 
     /**
+     * Ban or unban a user
+     */
+    public function toggleUserBan($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->id == optional(auth()->guard('web')->user())->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot ban your own account',
+            ], 403);
+        }
+
+        $user->is_banned = !$user->is_banned;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => $user->is_banned ? 'User banned successfully' : 'User unbanned successfully',
+            'data' => $user,
+        ]);
+    }
+
+    /**
      * Verify/Unverify a user
      */
     public function toggleUserVerification($id)
@@ -183,7 +217,7 @@ class AdminController extends Controller
     public function bulkAction(Request $request)
     {
         $validated = $request->validate([
-            'action' => ['required', Rule::in(['verify', 'unverify', 'delete', 'change_role'])],
+            'action' => ['required', Rule::in(['verify', 'unverify', 'ban', 'unban', 'delete', 'change_role'])],
             'user_ids' => 'required|array',
             'user_ids.*' => 'exists:users,id',
             'role' => 'required_if:action,change_role|string',
@@ -192,11 +226,14 @@ class AdminController extends Controller
         $userIds = $validated['user_ids'];
         $action = $validated['action'];
 
-        // Prevent deleting yourself
-        if ($action === 'delete' && in_array(optional(auth()->guard('web')->user())->id, $userIds)) {
+        $currentUserId = optional(auth()->guard('web')->user())->id;
+
+        if (in_array($currentUserId, $userIds) && in_array($action, ['delete', 'ban'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'You cannot delete your own account'
+                'message' => $action === 'ban'
+                    ? 'You cannot ban your own account'
+                    : 'You cannot delete your own account',
             ], 403);
         }
 
@@ -210,6 +247,14 @@ class AdminController extends Controller
             case 'unverify':
                 $users->update(['is_verified' => false]);
                 $message = 'Users unverified successfully';
+                break;
+            case 'ban':
+                $users->where('id', '!=', $currentUserId)->update(['is_banned' => true]);
+                $message = 'Users banned successfully';
+                break;
+            case 'unban':
+                $users->update(['is_banned' => false]);
+                $message = 'Users unbanned successfully';
                 break;
             case 'delete':
                 $users->delete();
@@ -797,6 +842,144 @@ public function moderation()
         return response()->json([
             'success' => true,
             'message' => count($validated['announcement_ids']) . ' announcements removed from featured'
+        ]);
+    }
+
+    public function getReportStatistics()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'pending' => AnnouncementReport::where('status', 'pending')->count(),
+                'resolved' => AnnouncementReport::where('status', 'resolved')->count(),
+                'dismissed' => AnnouncementReport::where('status', 'dismissed')->count(),
+                'total' => AnnouncementReport::count(),
+            ],
+        ]);
+    }
+
+    public function getReports(Request $request)
+    {
+        $status = $request->get('status', 'all');
+        $priority = $request->get('priority', 'all');
+        $search = $request->get('search', '');
+
+        $query = AnnouncementReport::with(['announcement.author', 'reporter'])
+            ->latest();
+
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        if ($priority && $priority !== 'all') {
+            $query->where('priority', $priority);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('reason', 'like', "%{$search}%")
+                    ->orWhereHas('reporter', fn ($r) => $r->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('announcement', fn ($a) => $a->where('title', 'like', "%{$search}%"));
+            });
+        }
+
+        $reports = $query->get()->map(fn ($report) => $report->toModerationArray());
+
+        return response()->json([
+            'success' => true,
+            'data' => $reports,
+        ]);
+    }
+
+    public function getReport($id)
+    {
+        $report = AnnouncementReport::with(['announcement.author', 'reporter', 'resolver'])
+            ->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $report->toModerationArray(),
+        ]);
+    }
+
+    public function dismissReport(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $report = AnnouncementReport::findOrFail($id);
+
+        if ($report->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This report has already been processed.',
+            ], 422);
+        }
+
+        $report->update([
+            'status' => 'dismissed',
+            'resolution_note' => $validated['reason'] ?? 'Report dismissed by admin.',
+            'resolved_by' => auth()->id(),
+            'resolved_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Report dismissed. The announcement was not changed.',
+        ]);
+    }
+
+    public function banReportedAnnouncement(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $report = AnnouncementReport::with('announcement')->findOrFail($id);
+
+        if ($report->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This report has already been processed.',
+            ], 422);
+        }
+
+        $announcement = $report->announcement;
+
+        if (! $announcement) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Announcement not found.',
+            ], 404);
+        }
+
+        $banReason = $validated['reason'] ?? 'Removed due to community reports.';
+
+        DB::transaction(function () use ($announcement, $report, $banReason) {
+            $announcement->update([
+                'status' => 'banned',
+                'is_banned' => true,
+                'is_active' => false,
+                'is_featured' => false,
+                'banned_at' => now(),
+                'banned_by' => auth()->id(),
+                'ban_reason' => $banReason,
+            ]);
+
+            AnnouncementReport::where('announcement_id', $announcement->id)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'resolved',
+                    'resolution_note' => $banReason,
+                    'resolved_by' => auth()->id(),
+                    'resolved_at' => now(),
+                ]);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Announcement has been banned and hidden from users.',
         ]);
     }
 

@@ -51,6 +51,10 @@ class AnnouncementController extends Controller
                 // Regular users see only published announcements
                 $query->where('status', 'published');
             }
+
+            if (Schema::hasColumn('announcements', 'is_banned')) {
+                $query->notBanned();
+            }
             
             $announcements = $query->latest()->paginate(10);
         } else {
@@ -244,12 +248,26 @@ class AnnouncementController extends Controller
         if ($announcement->status === 'pending_verification' && !in_array($user->role, ['admin', 'staff'])) {
             abort(403, 'This announcement is pending verification.');
         }
+
+        if (($announcement->is_banned || $announcement->status === 'banned')
+            && $announcement->author_id !== $user->id
+            && $user->role !== 'admin') {
+            abort(404, 'Announcement not found');
+        }
         
         // Increment view count
         $announcement->increment('view_count');
+
+        $hasReported = \App\Models\AnnouncementReport::where('announcement_id', $announcement->id)
+            ->where('reporter_id', $user->id)
+            ->exists();
+        $canReport = $announcement->author_id !== $user->id
+            && ! $announcement->is_banned
+            && $announcement->status !== 'banned'
+            && in_array($announcement->status, ['published', 'pending_verification']);
         
         // Return view with single announcement
-        return view('announcements.show', compact('announcement', 'user'));
+        return view('announcements.show', compact('announcement', 'user', 'hasReported', 'canReport'));
     }
 
     /**
@@ -262,6 +280,11 @@ class AnnouncementController extends Controller
         // Check authorization
         if ($announcement->author_id !== $user->id && !in_array($user->role, ['admin', 'staff'])) {
             abort(403, 'Unauthorized to edit this announcement.');
+        }
+
+        if ($announcement->isBanned()) {
+            return redirect()->route('announcements.show', $announcement)
+                ->with('error', 'This announcement has been banned and cannot be edited.');
         }
         
         // Check if column exists
@@ -448,6 +471,7 @@ public function getFeatured(Request $request)
         $featured = Announcement::with('author')
             ->where('is_featured', 1)
             ->where('is_active', 1)
+            ->notBanned()
             ->where('status', 'published') // FIXED: Changed from 'approved' to 'published'
             ->where(function($query) {
                 $query->whereNull('published_at')
@@ -536,6 +560,7 @@ public function getFeatured(Request $request)
         $draftCount = Announcement::where('author_id', $user->id)->where('status', 'draft')->count();
         $pendingCount = Announcement::where('author_id', $user->id)->where('status', 'pending_verification')->count();
         $rejectedCount = Announcement::where('author_id', $user->id)->where('status', 'rejected')->count();
+        $bannedCount = Announcement::where('author_id', $user->id)->where('status', 'banned')->count();
         
         // Then apply status filter for the paginated results
         $query = Announcement::where('author_id', $user->id);
@@ -560,7 +585,8 @@ public function getFeatured(Request $request)
             'publishedCount',
             'draftCount',
             'pendingCount',
-            'rejectedCount'
+            'rejectedCount',
+            'bannedCount'
         ));
     }
 
@@ -786,6 +812,7 @@ public function getFeatured(Request $request)
     {
         $user = auth()->user();
         $announcements = Announcement::where('status', 'published')
+            ->notBanned()
             ->latest()
             ->paginate(10);
             

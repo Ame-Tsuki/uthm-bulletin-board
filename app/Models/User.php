@@ -20,6 +20,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'faculty',
         'profile_picture',
         'is_verified',
+        'is_banned',
         'password',
         'google_id',
         'google_token',
@@ -37,6 +38,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_verified' => 'boolean',
+        'is_banned' => 'boolean',
     ];
 
     public function isAdmin()
@@ -72,5 +74,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isVerifiedMember()
     {
         return $this->is_verified;
+    }
+
+    public function isBanned(): bool
+    {
+        return (bool) $this->is_banned;
     }
 }

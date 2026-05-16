@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Illuminate\Foundation\Configuration\Middleware $middleware) {
+    $middleware->web(append: [
+        \App\Http\Middleware\CheckNotBanned::class,
+    ]);
     $middleware->alias([
         'role' => \App\Http\Middleware\CheckRole::class,
     ]);

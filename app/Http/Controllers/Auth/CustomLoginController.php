@@ -31,6 +31,14 @@ class CustomLoginController extends Controller
         ];
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            if (Auth::user()->is_banned) {
+                Auth::logout();
+
+                throw ValidationException::withMessages([
+                    'login' => 'Your account has been banned. Please contact an administrator.',
+                ]);
+            }
+
             $request->session()->regenerate();
 
             return $this->redirectBasedOnRole();

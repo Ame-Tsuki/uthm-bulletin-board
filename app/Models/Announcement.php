@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class Announcement extends Model
@@ -35,6 +36,10 @@ class Announcement extends Model
         'department',           // Add this for categorization
         'moderation_flagged',   // Add this for content moderation
         'moderation_results',   // Add this for content moderation
+        'is_banned',
+        'banned_at',
+        'banned_by',
+        'ban_reason',
     ];
 
     protected $casts = [
@@ -50,6 +55,8 @@ class Announcement extends Model
         'moderation_flagged' => 'boolean', // Add this
         'needs_verification' => 'boolean', // Add this
         'view_count' => 'integer',        // Add this
+        'is_banned' => 'boolean',
+        'banned_at' => 'datetime',
     ];
 
     protected $appends = ['image_url', 'featured_image_url'];
@@ -57,6 +64,21 @@ class Announcement extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    public function reports(): HasMany
+    {
+        return $this->hasMany(AnnouncementReport::class);
+    }
+
+    public function scopeNotBanned($query)
+    {
+        return $query->where('is_banned', false)->where('status', '!=', 'banned');
+    }
+
+    public function isBanned(): bool
+    {
+        return $this->is_banned || $this->status === 'banned';
     }
 
     /**

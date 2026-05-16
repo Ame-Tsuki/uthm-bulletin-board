@@ -258,7 +258,7 @@
                     <div class="bg-white rounded-lg shadow p-6">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-sm text-gray-600">Resolved Reports</p>
+                                <p class="text-sm text-gray-600">Banned / Resolved</p>
                                 <p id="resolvedReportsStat" class="text-3xl font-bold text-green-600">0</p>
                             </div>
                             <div class="bg-green-100 p-3 rounded-full">
@@ -366,7 +366,7 @@
             <div class="flex justify-end gap-3 pt-4 border-t mt-4">
                 <button onclick="closeReviewModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
                 <button id="dismissBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">Dismiss Report</button>
-                <button id="resolveBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Approve & Resolve</button>
+                <button id="banBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Ban Post</button>
             </div>
         </div>
     </div>
@@ -499,8 +499,8 @@
                                                         <button onclick="takeAction(${report.id}, 'dismiss')" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-sm">
                                                             <i class="fas fa-times mr-1"></i> Dismiss
                                                         </button>
-                                                        <button onclick="takeAction(${report.id}, 'resolve')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
-                                                            <i class="fas fa-check mr-1"></i> Resolve
+                                                        <button onclick="takeAction(${report.id}, 'ban')" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm">
+                                                            <i class="fas fa-ban mr-1"></i> Ban Post
                                                         </button>
                                                     </div>
                                                 ` : `
@@ -550,7 +550,8 @@
                                     <h4 class="font-bold text-gray-900 mb-2">Announcement Details</h4>
                                     <p class="text-sm text-gray-700 mb-2"><strong>Title:</strong> ${escapeHtml(report.announcement_title)}</p>
                                     <p class="text-sm text-gray-700 mb-2"><strong>Content:</strong> ${escapeHtml(report.announcement_content?.substring(0, 500))}${report.announcement_content?.length > 500 ? '...' : ''}</p>
-                                    <p class="text-sm text-gray-700"><strong>Author:</strong> ${escapeHtml(report.announcement_author)}</p>
+                                    <p class="text-sm text-gray-700 mb-2"><strong>Author:</strong> ${escapeHtml(report.announcement_author)}</p>
+                                    ${report.announcement_is_banned ? '<p class="text-sm text-red-600 font-medium"><i class="fas fa-ban mr-1"></i>This post is already banned</p>' : ''}
                                 </div>
                                 
                                 <div class="bg-yellow-50 p-4 rounded-lg">
@@ -574,22 +575,22 @@
                         
                         // Set up action buttons
                         const dismissBtn = document.getElementById('dismissBtn');
-                        const resolveBtn = document.getElementById('resolveBtn');
+                        const banBtn = document.getElementById('banBtn');
                         
                         if (report.status === 'pending') {
                             dismissBtn.onclick = () => {
                                 closeReviewModal();
                                 takeAction(reportId, 'dismiss');
                             };
-                            resolveBtn.onclick = () => {
+                            banBtn.onclick = () => {
                                 closeReviewModal();
-                                takeAction(reportId, 'resolve');
+                                takeAction(reportId, 'ban');
                             };
                             dismissBtn.classList.remove('hidden');
-                            resolveBtn.classList.remove('hidden');
+                            banBtn.classList.remove('hidden');
                         } else {
                             dismissBtn.classList.add('hidden');
-                            resolveBtn.classList.add('hidden');
+                            banBtn.classList.add('hidden');
                         }
                     }
                 })
@@ -610,11 +611,11 @@
                 message.textContent = 'Are you sure you want to dismiss this report? The announcement will remain unchanged.';
                 confirmBtn.className = 'px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700';
                 confirmBtn.textContent = 'Dismiss Report';
-            } else if (action === 'resolve') {
-                title.textContent = 'Approve & Resolve Report';
-                message.textContent = 'Are you sure you want to approve this report and take action on the announcement?';
+            } else if (action === 'ban') {
+                title.textContent = 'Ban Announcement';
+                message.textContent = 'This will hide the announcement from all users. All pending reports for this post will be marked resolved.';
                 confirmBtn.className = 'px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700';
-                confirmBtn.textContent = 'Remove Announcement';
+                confirmBtn.textContent = 'Ban Post';
             }
             
             modal.classList.remove('hidden');

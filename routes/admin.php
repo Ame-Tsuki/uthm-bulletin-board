@@ -44,6 +44,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
         Route::put('/update/{id}', [AdminController::class, 'updateUser'])->name('update');
         Route::delete('/{id}', [AdminController::class, 'deleteUser'])->name('destroy');
         Route::patch('/{id}/toggle-verification', [AdminController::class, 'toggleUserVerification'])->name('toggle-verification');
+        Route::patch('/{id}/toggle-ban', [AdminController::class, 'toggleUserBan'])->name('toggle-ban');
         Route::post('/bulk-action', [AdminController::class, 'bulkAction'])->name('bulk-action');
     });
     

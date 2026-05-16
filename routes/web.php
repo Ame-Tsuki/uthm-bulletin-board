@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\CustomRegisterController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\AnnouncementReportController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EventController;
@@ -135,6 +136,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $featuredAnnouncements = App\Models\Announcement::with('author')
                 ->where('is_featured', 1)
                 ->where('is_active', 1)
+                ->where('is_banned', false)
                 ->where('status', 'published')
                 ->where(function($query) {
                     $query->whereNull('published_at')
@@ -147,6 +149,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             $announcements = App\Models\Announcement::with('author')
                 ->where('is_active', 1)
+                ->where('is_banned', false)
                 ->where('status', 'published')
                 ->where(function($query) {
                     $query->whereNull('published_at')
@@ -281,6 +284,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/announcements/{announcement}/publish', [AnnouncementController::class, 'publish'])->name('announcements.publish');
     Route::post('/announcements/{announcement}/toggle-official', [AnnouncementController::class, 'toggleOfficialStatus'])->name('announcements.toggle-official');
     Route::post('/announcements/{announcement}/toggle-featured', [AnnouncementController::class, 'toggleUserFeatured'])->name('announcements.toggle-featured');
+    Route::post('/announcements/{announcement}/report', [AnnouncementReportController::class, 'store'])->name('announcements.report');
 
     // Featured Announcements Route
     Route::get('/announcements/featured', [AnnouncementController::class, 'getFeatured'])->name('announcements.featured');
@@ -344,8 +348,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/{id}', [AdminController::class, 'updateUser'])->name('update');
             Route::delete('/{id}', [AdminController::class, 'deleteUser'])->name('destroy');
             Route::patch('/{id}/toggle-verification', [AdminController::class, 'toggleUserVerification'])->name('toggle-verification');
+            Route::patch('/{id}/toggle-ban', [AdminController::class, 'toggleUserBan'])->name('toggle-ban');
             Route::get('/statistics', [AdminController::class, 'getUserStatistics'])->name('statistics');
         });
+    });
+
+    // ============================================
+    // ADMIN MODERATION API (used by content moderation page)
+    // ============================================
+
+    Route::middleware('role:admin')->prefix('api/admin')->name('admin.api.')->group(function () {
+        Route::get('/reports/statistics', [AdminController::class, 'getReportStatistics'])->name('reports.statistics');
+        Route::get('/reports', [AdminController::class, 'getReports'])->name('reports.index');
+        Route::get('/reports/{id}', [AdminController::class, 'getReport'])->name('reports.show');
+        Route::post('/reports/{id}/dismiss', [AdminController::class, 'dismissReport'])->name('reports.dismiss');
+        Route::post('/reports/{id}/ban', [AdminController::class, 'banReportedAnnouncement'])->name('reports.ban');
     });
 
     // ============================================

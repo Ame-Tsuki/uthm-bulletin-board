@@ -362,7 +362,7 @@
                             <div class="px-6 py-4 border-b">
                                 <div class="flex justify-between items-center">
                                     <h2 class="text-xl font-bold text-gray-800">Recent Users</h2>
-                                    <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View All Users</a>
+                                    <a href="{{ url('/admin/users') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View All Users</a>
                                 </div>
                             </div>
                             <div class="overflow-x-auto">
@@ -395,7 +395,11 @@
                                                 </span>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                @if($user->is_verified)
+                                                @if($user->is_banned ?? false)
+                                                    <span class="badge bg-red-100 text-red-800">
+                                                        <i class="fas fa-ban mr-1"></i> Banned
+                                                    </span>
+                                                @elseif($user->is_verified)
                                                     <span class="badge bg-green-100 text-green-800">
                                                         <i class="fas fa-check-circle mr-1"></i> Verified
                                                     </span>

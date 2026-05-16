@@ -66,6 +66,13 @@ class GoogleCalendarController extends Controller
                 'google_token_expires_at' => isset($token['expires_in']) ? now()->addSeconds($token['expires_in']) : null,
             ]);
 
+            // Set up user's calendar after successful auth
+            try {
+                $calendar = $this->googleService->getUserCalendar($user);
+            } catch (\Exception $e) {
+                Log::warning('Failed to set up calendar: ' . $e->getMessage());
+            }
+
             return redirect()->route('calendar')->with('success', 'Google Calendar connected!');
         } catch (\Exception $e) {
             Log::error('Callback error: ' . $e->getMessage());

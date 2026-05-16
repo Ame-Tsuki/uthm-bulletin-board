@@ -51,18 +51,120 @@
                 width: 280px !important;
                 transform: translateX(-100%);
             }
-            .sidebar-expanded.mobile-open { transform: translateX(0); }
-            .content-collapsed, .content-expanded { margin-left: 0 !important; }
-        }
+            .sidebar-collapsed,
+            .sidebar-expanded {
+                width: 280px !important;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                }
+
+            .sidebar-expanded.mobile-open {
+                transform: translateX(0);
+                }
 
         .calendar-day {
-            min-height: 120px;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-        .calendar-day:hover { background-color: #f9fafb; }
-        .calendar-day.today { background-color: #e6f0fa; border: 2px solid #0056a6; }
-        .calendar-day.other-month { background-color: #f8f9fa; color: #6c757d; }
+    position: relative;
+    background: white;
+    border-right: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+    min-height: 140px;
+    padding: 8px;
+    overflow: hidden;
+    transition: background 0.2s ease;
+}
+}
+
+.calendar-day:hover {
+    background: #f8fafc;
+}
+
+.calendar-day.other-month {
+    background: #f9fafb;
+    color: #9ca3af;
+}
+
+.calendar-day.today .day-number {
+    background: #1a73e8;
+    color: white;
+}
+
+.day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.day-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.add-event-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    color: #6b7280;
+}
+
+.calendar-day:hover .add-event-btn {
+    opacity: 1;
+}
+
+.day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.calendar-event {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.calendar-event:hover {
+    opacity: 0.9;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: minmax(140px, auto);
+    width: 100%;
+}
+
+.calendar-day {
+    position: relative;
+    background: white;
+    border-right: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+    min-height: 140px;
+    padding: 8px;
+    overflow: hidden;
+    transition: background 0.2s ease;
+}
+
+
+.calendar-weekday {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 12px;
+    text-align: center;
+    font-weight: 500;
+    color: #5f6368;
+    font-size: 14px;
+}
         
         .event-dot {
             width: 8px;
@@ -126,7 +228,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-[#f6f8fc]">
     <!-- Mobile Menu Button -->
     <div class="md:hidden fixed top-4 left-4 z-50">
         <button id="mobile-menu-toggle" class="bg-uthm-blue text-white p-2 rounded-lg shadow-lg">
@@ -241,7 +343,7 @@
                             <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                         </button>
                         <div class="relative">
-                            <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100">
+                            <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
                                 <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                                     <span class="font-bold text-green-700">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
                                 </div>
@@ -251,7 +353,8 @@
                                 </div>
                                 <i class="fas fa-chevron-down text-gray-500"></i>
                             </button>
-                            <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden">
+                            
+                            <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50">
                                 <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-user mr-2"></i> My Profile
                                 </a>
@@ -321,17 +424,17 @@
                 </div>
 
                 <!-- Calendar Grid -->
-                <div class="bg-white rounded-xl shadow overflow-hidden">
-                    <div class="grid grid-cols-7 bg-gray-50 border-b">
-                        <div class="p-4 text-center font-medium text-gray-600">Sunday</div>
-                        <div class="p-4 text-center font-medium text-gray-600">Monday</div>
-                        <div class="p-4 text-center font-medium text-gray-600">Tuesday</div>
-                        <div class="p-4 text-center font-medium text-gray-600">Wednesday</div>
-                        <div class="p-4 text-center font-medium text-gray-600">Thursday</div>
-                        <div class="p-4 text-center font-medium text-gray-600">Friday</div>
-                        <div class="p-4 text-center font-medium text-gray-600">Saturday</div>
+                <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                    <div class="grid grid-cols-7 bg-white border-b">
+                        <div class="calendar-weekday">Sunday</div>
+                        <div class="calendar-weekday">Monday</div>
+                        <div class="calendar-weekday">Tuesday</div>
+                        <div class="calendar-weekday">Wednesday</div>
+                        <div class="calendar-weekday">Thursday</div>
+                        <div class="calendar-weekday">Friday</div>
+                        <div class="calendar-weekday">Saturday</div>
                     </div>
-                    <div id="calendar-grid" class="grid grid-cols-7">
+                    <div id="calendar-grid" class="calendar-grid">
                         <div class="col-span-7 p-8 text-center">
                             <div class="loading-spinner mx-auto mb-2"></div>
                             <p class="text-gray-500">Loading calendar...</p>
@@ -622,10 +725,82 @@
         loadEvents();
     });
     
-    // Sidebar initialization (same as your existing code)
-    function initializeSidebar() {
-        // ... keep your existing sidebar code ...
+    // Sidebar initialization
+function initializeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('main-content');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const toggleIcon = document.getElementById('toggle-icon');
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userMenu = document.getElementById('user-menu');
+
+    let isCollapsed = true;
+
+    // Desktop sidebar toggle
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function () {
+            isCollapsed = !isCollapsed;
+
+            if (isCollapsed) {
+                sidebar.classList.remove('sidebar-expanded');
+                sidebar.classList.add('sidebar-collapsed');
+
+                mainContent.classList.remove('content-expanded');
+                mainContent.classList.add('content-collapsed');
+
+                toggleIcon.style.transform = 'rotate(0deg)';
+            } else {
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('sidebar-expanded');
+
+                mainContent.classList.remove('content-collapsed');
+                mainContent.classList.add('content-expanded');
+
+                toggleIcon.style.transform = 'rotate(180deg)';
+            }
+        });
     }
+
+    // Mobile sidebar toggle
+    if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener('click', function () {
+            sidebar.classList.toggle('mobile-open');
+            sidebar.classList.toggle('sidebar-expanded');
+        });
+    }
+
+    // Close mobile sidebar when clicking outside
+    document.addEventListener('click', function (e) {
+        const isMobile = window.innerWidth <= 768;
+
+        if (
+            isMobile &&
+            !sidebar.contains(e.target) &&
+            !mobileMenuToggle.contains(e.target)
+        ) {
+            sidebar.classList.remove('mobile-open');
+        }
+    });
+
+    // User dropdown menu
+    if (userMenuButton && userMenu) {
+        userMenuButton.addEventListener('click', function (e) {
+            e.stopPropagation();
+            userMenu.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', function () {
+            userMenu.classList.add('hidden');
+        });
+    }
+
+    // Initial desktop state
+    if (window.innerWidth > 768) {
+        sidebar.classList.add('sidebar-collapsed');
+        mainContent.classList.add('content-collapsed');
+    }
+}
     
     // Setup navigation
     function setupNavigation() {
@@ -738,7 +913,7 @@
                 const eventsContainer = cell.querySelector('.day-events');
                 dayEvents.slice(0, 3).forEach(event => {
                     const eventEl = document.createElement('div');
-                    eventEl.className = `text-xs p-1 mb-1 rounded truncate cursor-pointer hover:opacity-90 ${getEventClass(event.type)}`;
+                    eventEl.className = `calendar-event ${getEventClass(event.type)}`;
                     eventEl.textContent = event.title;
                     eventEl.title = event.title;
                     eventEl.onclick = function(e) {
@@ -768,81 +943,132 @@
         }
     }
     
-    // Create day cell
     function createDayCell(day, additionalClasses = '') {
-        const cell = document.createElement('div');
-        cell.className = `calendar-day p-2 border border-gray-100 ${additionalClasses}`;
-        cell.innerHTML = `
-            <div class="flex justify-between items-start">
-                <span class="text-sm font-medium text-gray-700">${day}</span>
-                <button class="text-gray-400 hover:text-uthm-blue text-xs" onclick="event.stopPropagation(); openEventModal()">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
-            <div class="day-events mt-1"></div>
-        `;
-        return cell;
-    }
+    const cell = document.createElement('div');
+
+    cell.className = `calendar-day ${additionalClasses}`;
+
+    cell.innerHTML = `
+        <div class="day-header">
+            <div class="day-number">${day}</div>
+
+            <button
+                class="add-event-btn"
+                onclick="event.stopPropagation(); openEventModal()"
+            >
+                <i class="fas fa-plus text-xs"></i>
+            </button>
+        </div>
+
+        <div class="day-events"></div>
+    `;
+
+    return cell;
+}
     
     // Get event class based on type
     function getEventClass(type) {
-        const classes = {
-            'lecture': 'bg-blue-100 text-blue-800',
-            'deadline': 'bg-red-100 text-red-800',
-            'exam': 'bg-purple-100 text-purple-800',
-            'social': 'bg-green-100 text-green-800',
-            'workshop': 'bg-yellow-100 text-yellow-800',
-            'important': 'bg-pink-100 text-pink-800',
-            'other': 'bg-gray-100 text-gray-800'
-        };
-        return classes[type] || 'bg-gray-100 text-gray-800';
-    }
+    const classes = {
+        lecture: 'bg-blue-500 text-white',
+        deadline: 'bg-red-500 text-white',
+        exam: 'bg-purple-500 text-white',
+        social: 'bg-green-500 text-white',
+        workshop: 'bg-yellow-400 text-black',
+        important: 'bg-pink-500 text-white',
+        other: 'bg-gray-500 text-white'
+    };
+
+    return classes[type] || 'bg-gray-500 text-white';
+}
     
     // Render upcoming events
     function renderUpcomingEvents() {
-        const container = document.getElementById('upcoming-events');
-        if (!container) return;
-        
-        const upcoming = filteredEvents
-            .filter(event => new Date(event.start_date) >= new Date())
-            .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
-            .slice(0, 5);
-        
-        if (upcoming.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-8 text-gray-500">
-                    <i class="fas fa-calendar-times text-3xl mb-2"></i>
-                    <p>No upcoming events</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = '';
-        
-        upcoming.forEach(event => {
+    const container = document.getElementById('upcoming-events');
+
+    if (!container) return;
+
+    // Today's date without time
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Next 7 days
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+
+    const upcoming = filteredEvents
+        .filter(event => {
             const eventDate = new Date(event.start_date);
-            const div = document.createElement('div');
-            div.className = 'flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition cursor-pointer';
-            div.onclick = () => editEvent(event);
-            
-            div.innerHTML = `
-                <div class="mr-4 text-center">
-                    <div class="font-bold text-lg">${eventDate.getDate()}</div>
-                    <div class="text-xs uppercase text-gray-500">${eventDate.toLocaleDateString('en-US', { month: 'short' })}</div>
-                </div>
-                <div class="flex-1">
-                    <h4 class="font-bold text-gray-900">${event.title}</h4>
-                    <p class="text-sm text-gray-600">
-                        ${event.start_time ? `<i class="far fa-clock mr-1"></i> ${event.start_time}` : ''}
-                        ${event.location ? ` • ${event.location}` : ''}
-                    </p>
-                    <span class="inline-block mt-1 px-2 py-1 text-xs rounded ${getEventClass(event.type)}">${event.type}</span>
-                </div>
-            `;
-            container.appendChild(div);
+            eventDate.setHours(0, 0, 0, 0);
+
+            return eventDate >= today && eventDate <= nextWeek;
+        })
+        .sort((a, b) => {
+            return new Date(a.start_date) - new Date(b.start_date);
         });
+
+    if (upcoming.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-calendar-times text-3xl mb-2"></i>
+                <p>No upcoming events this week</p>
+            </div>
+        `;
+        return;
     }
+
+    container.innerHTML = '';
+
+    upcoming.forEach(event => {
+        const eventDate = new Date(event.start_date);
+
+        const div = document.createElement('div');
+
+        div.className =
+            'flex items-center p-4 bg-white border rounded-xl hover:shadow-md transition cursor-pointer';
+
+        div.onclick = () => editEvent(event);
+
+        div.innerHTML = `
+            <div class="mr-4 text-center min-w-[60px]">
+                <div class="font-bold text-xl text-gray-900">
+                    ${eventDate.getDate()}
+                </div>
+
+                <div class="text-xs uppercase text-gray-500">
+                    ${eventDate.toLocaleDateString('en-US', {
+                        month: 'short'
+                    })}
+                </div>
+            </div>
+
+            <div class="flex-1">
+                <h4 class="font-semibold text-gray-900">
+                    ${event.title}
+                </h4>
+
+                <p class="text-sm text-gray-500 mt-1">
+                    ${
+                        event.start_time
+                            ? `<i class="far fa-clock mr-1"></i>${event.start_time}`
+                            : ''
+                    }
+
+                    ${
+                        event.location
+                            ? ` • ${event.location}`
+                            : ''
+                    }
+                </p>
+
+                <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full ${getEventClass(event.type)}">
+                    ${event.type}
+                </span>
+            </div>
+        `;
+
+        container.appendChild(div);
+    });
+}
     
     // Google Calendar functions
     function checkGoogleStatus() {
@@ -1050,3 +1276,4 @@
 </script>
 </body>
 </html>
+

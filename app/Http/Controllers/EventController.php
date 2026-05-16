@@ -248,24 +248,36 @@ class EventController extends Controller
             Log::info('Event updated successfully. ID: ' . $event->id);
 
             // Sync to Google Calendar if applicable
-            if ($user->google_token && $request->boolean('sync_to_google', true)) {
-                try {
-                    $googleEvent = $this->googleCalendarService->syncEvent($event);
-                    
-                    if ($googleEvent) {
-                        $event->update([
-                            'google_event_id' => $googleEvent->getId(),
-                            'synced_with_google' => true,
-                            'last_synced_at' => now(),
-                        ]);
-                        
-                        Log::info('Updated event synced to Google Calendar: ' . $event->google_event_id);
-                    } else {
-                        Log::warning('Failed to sync updated event to Google Calendar');
+            if ($user->google_token) {
+                if ($request->boolean('sync_to_google', true)) {
+                    try {
+                        $googleEvent = $this->googleCalendarService->syncEvent($event);
+
+                        if ($googleEvent) {
+                            $event->update([
+                                'google_event_id' => $googleEvent->getId(),
+                                'synced_with_google' => true,
+                                'last_synced_at' => now(),
+                            ]);
+
+                            Log::info('Updated event synced to Google Calendar: ' . $event->google_event_id);
+                        } else {
+                            Log::warning('Failed to sync updated event to Google Calendar');
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Google Calendar sync error during update: ' . $e->getMessage());
                     }
-                } catch (\Exception $e) {
-                    Log::error('Google Calendar sync error during update: ' . $e->getMessage());
-                    // Don't fail the whole operation if sync fails
+                } elseif ($event->google_event_id) {
+                    try {
+                        $this->googleCalendarService->deleteEvent($event);
+                        $event->update([
+                            'google_event_id' => null,
+                            'synced_with_google' => false,
+                            'last_synced_at' => null,
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Google Calendar unsync error during update: ' . $e->getMessage());
+                    }
                 }
             }
 

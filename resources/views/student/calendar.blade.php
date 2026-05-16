@@ -680,10 +680,10 @@
                 <div class="flex justify-between items-start mb-4">
                     <h3 id="detail-title" class="text-lg font-bold text-gray-900"></h3>
                     <div class="flex space-x-2">
-                        <button onclick="editEventFromDetail()" class="text-blue-600 hover:text-blue-800">
+                        <button id="detail-edit-btn" onclick="editEventFromDetail()" class="text-blue-600 hover:text-blue-800" title="Edit event">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button onclick="deleteEventFromDetail()" class="text-red-600 hover:text-red-800">
+                        <button id="detail-delete-btn" onclick="deleteEventFromDetail()" class="text-red-600 hover:text-red-800">
                             <i class="fas fa-trash"></i>
                         </button>
                         <button onclick="closeEventDetailModal()" class="text-gray-400 hover:text-gray-600">
@@ -711,10 +711,14 @@
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     
     // Global variables
+    const authUserId = {{ Auth::id() }};
+    const isAdmin = {{ Auth::user()->role === 'admin' ? 'true' : 'false' }};
     let currentDate = new Date();
     let allEvents = [];
     let filteredEvents = [];
     let currentFilter = 'all';
+    let currentDetailEvent = null;
+    let googleConnected = false;
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -857,12 +861,50 @@ function initializeSidebar() {
             .then(events => {
                 allEvents = events;
                 applyFilter();
+                updateStatistics();
+                updateCategories();
             })
             .catch(error => {
                 console.error('Error loading events:', error);
                 allEvents = [];
                 applyFilter();
             });
+    }
+
+    function formatEventDate(dateStr) {
+        if (!dateStr) return '';
+        return dateStr.includes('T') ? dateStr.split('T')[0] : String(dateStr).substring(0, 10);
+    }
+
+    function canManageEvent(event) {
+        if (isAdmin) return true;
+        if (event.visibility === 'public') return false;
+        return event.user_id === authUserId;
+    }
+
+    function updateStatistics() {
+        fetch('/api/events/statistics')
+            .then(res => res.json())
+            .then(data => {
+                const lectures = document.getElementById('stat-lectures');
+                const deadlines = document.getElementById('stat-deadlines');
+                const exams = document.getElementById('stat-exams');
+                if (lectures) lectures.textContent = data.lectures ?? 0;
+                if (deadlines) deadlines.textContent = data.deadlines ?? 0;
+                if (exams) exams.textContent = data.exams ?? 0;
+            })
+            .catch(err => console.error('Stats error:', err));
+    }
+
+    function updateCategories() {
+        const categories = {};
+        allEvents.forEach(event => {
+            categories[event.type] = (categories[event.type] || 0) + 1;
+        });
+        ['lecture', 'deadline', 'exam', 'social', 'workshop'].forEach(type => {
+            const el = document.getElementById(`cat-${type}`);
+            if (el) el.textContent = categories[type] || 0;
+        });
     }
     
     // Render calendar
@@ -918,7 +960,7 @@ function initializeSidebar() {
                     eventEl.title = event.title;
                     eventEl.onclick = function(e) {
                         e.stopPropagation();
-                        editEvent(event);
+                        showEventDetail(event);
                     };
                     eventsContainer.appendChild(eventEl);
                 });
@@ -1026,7 +1068,7 @@ function initializeSidebar() {
         div.className =
             'flex items-center p-4 bg-white border rounded-xl hover:shadow-md transition cursor-pointer';
 
-        div.onclick = () => editEvent(event);
+        div.onclick = () => showEventDetail(event);
 
         div.innerHTML = `
             <div class="mr-4 text-center min-w-[60px]">
@@ -1043,7 +1085,7 @@ function initializeSidebar() {
 
             <div class="flex-1">
                 <h4 class="font-semibold text-gray-900">
-                    ${event.title}
+                    ${event.title}${event.synced_with_google ? ' <i class="fab fa-google text-blue-500 text-xs ml-1" title="Synced with Google Calendar"></i>' : ''}
                 </h4>
 
                 <p class="text-sm text-gray-500 mt-1">
@@ -1083,44 +1125,52 @@ function initializeSidebar() {
     }
     
     function updateGoogleUI(status) {
+        googleConnected = !!status.connected;
         const connectBtn = document.getElementById('connect-google-btn');
         const disconnectBtn = document.getElementById('disconnect-google-btn');
         const statusText = document.getElementById('google-status-text');
-        const statusDot = document.getElementById('sync-status-dot');
-        const syncStatusText = document.getElementById('sync-status-text');
         const syncOption = document.getElementById('google-sync-option');
-        
+        const syncAllBtn = document.getElementById('sync-all-btn');
+        const syncCheckbox = document.getElementById('event-sync-google');
+
         if (status.connected) {
             if (connectBtn) connectBtn.classList.add('hidden');
             if (disconnectBtn) disconnectBtn.classList.remove('hidden');
+            if (syncAllBtn) syncAllBtn.classList.remove('hidden');
             if (statusText) statusText.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i> Connected to Google Calendar';
-            if (statusDot) statusDot.className = 'w-2 h-2 bg-green-500 rounded-full';
-            if (syncStatusText) syncStatusText.textContent = 'Synced with Google';
             if (syncOption) syncOption.classList.remove('hidden');
+            if (syncCheckbox && !document.getElementById('event-id').value) syncCheckbox.checked = true;
         } else {
             if (connectBtn) connectBtn.classList.remove('hidden');
             if (disconnectBtn) disconnectBtn.classList.add('hidden');
+            if (syncAllBtn) syncAllBtn.classList.add('hidden');
             if (statusText) statusText.innerHTML = '<i class="fas fa-times-circle text-red-500 mr-1"></i> Not Connected';
-            if (statusDot) statusDot.className = 'w-2 h-2 bg-gray-400 rounded-full';
-            if (syncStatusText) syncStatusText.textContent = 'Not connected to Google Calendar';
             if (syncOption) syncOption.classList.add('hidden');
         }
     }
-    
+
     async function connectGoogle() {
         try {
             const response = await fetch('/google-calendar/connect');
             const data = await response.json();
-            
+
             if (data.success && data.auth_url) {
-                window.open(data.auth_url, 'GoogleAuth', 'width=600,height=600');
-                
-                // Check status after popup closes
-                setTimeout(() => {
-                    checkGoogleStatus();
-                    showToast('Google Calendar connected! Reloading...', 'success');
-                    setTimeout(() => location.reload(), 2000);
-                }, 5000);
+                const width = 600, height = 600;
+                const left = (screen.width - width) / 2;
+                const top = (screen.height - height) / 2;
+                const popup = window.open(data.auth_url, 'GoogleAuth',
+                    `width=${width},height=${height},left=${left},top=${top}`);
+
+                const checkPopup = setInterval(() => {
+                    if (popup.closed) {
+                        clearInterval(checkPopup);
+                        showToast('Checking Google Calendar connection...', 'info');
+                        setTimeout(() => {
+                            checkGoogleStatus();
+                            loadEvents();
+                        }, 1500);
+                    }
+                }, 500);
             } else {
                 showToast('Failed to connect: ' + (data.message || 'Unknown error'), 'error');
             }
@@ -1129,10 +1179,10 @@ function initializeSidebar() {
             showToast('Failed to connect to Google Calendar', 'error');
         }
     }
-    
+
     async function disconnectGoogle() {
-        if (!confirm('Disconnect Google Calendar?')) return;
-        
+        if (!confirm('Disconnect Google Calendar? Your events will remain in the system.')) return;
+
         try {
             const response = await fetch('/google-calendar/disconnect', {
                 method: 'POST',
@@ -1144,7 +1194,8 @@ function initializeSidebar() {
             const data = await response.json();
             if (data.success) {
                 showToast('Google Calendar disconnected', 'success');
-                setTimeout(() => location.reload(), 1000);
+                checkGoogleStatus();
+                loadEvents();
             }
         } catch (error) {
             console.error('Disconnect error:', error);
@@ -1159,18 +1210,20 @@ function initializeSidebar() {
         document.getElementById('event-id').value = '';
         document.getElementById('event-form').reset();
         document.getElementById('event-start-date').value = new Date().toISOString().split('T')[0];
+        const syncCheckbox = document.getElementById('event-sync-google');
+        if (syncCheckbox) syncCheckbox.checked = googleConnected;
     }
-    
+
     function closeEventModal() {
         document.getElementById('event-modal').classList.add('hidden');
     }
-    
-    function editEvent(event) {
+
+    function populateEventForm(event) {
         document.getElementById('modal-title').textContent = 'Edit Event';
         document.getElementById('event-id').value = event.id;
         document.getElementById('event-title').value = event.title;
-        document.getElementById('event-start-date').value = event.start_date.split('T')[0];
-        document.getElementById('event-end-date').value = event.end_date.split('T')[0];
+        document.getElementById('event-start-date').value = formatEventDate(event.start_date);
+        document.getElementById('event-end-date').value = formatEventDate(event.end_date);
         document.getElementById('event-start-time').value = event.start_time || '';
         document.getElementById('event-end-time').value = event.end_time || '';
         document.getElementById('event-type').value = event.type;
@@ -1178,8 +1231,88 @@ function initializeSidebar() {
         document.getElementById('event-description').value = event.description || '';
         document.getElementById('event-all-day').checked = event.all_day || false;
         document.getElementById('event-reminder').checked = event.set_reminder || false;
-        
+        const syncCheckbox = document.getElementById('event-sync-google');
+        if (syncCheckbox) syncCheckbox.checked = event.synced_with_google || googleConnected;
+    }
+
+    function showEventDetail(event) {
+        currentDetailEvent = event;
+        document.getElementById('detail-title').textContent = event.title;
+        document.getElementById('detail-date').innerHTML =
+            `<i class="far fa-calendar mr-2"></i> ${formatEventDate(event.start_date)}` +
+            (event.end_date && formatEventDate(event.end_date) !== formatEventDate(event.start_date)
+                ? ' - ' + formatEventDate(event.end_date) : '');
+        document.getElementById('detail-time').innerHTML = event.start_time
+            ? `<i class="far fa-clock mr-2"></i> ${event.start_time}${event.end_time ? ' - ' + event.end_time : ''}`
+            : '';
+        document.getElementById('detail-location').innerHTML = event.location
+            ? `<i class="fas fa-map-marker-alt mr-2"></i> ${event.location}` : '';
+        document.getElementById('detail-type').innerHTML =
+            `<span class="inline-block px-2 py-1 text-xs rounded-full ${getEventClass(event.type)}">${event.type}</span>` +
+            (event.visibility === 'public' ? '<span class="ml-2 px-2 py-1 bg-blue-100 text-uthm-blue text-xs rounded">Public</span>' : '');
+        document.getElementById('detail-description').textContent = event.description || 'No description';
+
+        const syncStatus = document.getElementById('detail-sync-status');
+        if (event.synced_with_google) {
+            syncStatus.innerHTML = '<span class="text-sm text-green-600"><i class="fab fa-google mr-1"></i> Synced with Google Calendar</span>';
+        } else {
+            syncStatus.innerHTML = '<span class="text-sm text-gray-500"><i class="fas fa-cloud-upload-alt mr-1"></i> Not synced to Google</span>';
+        }
+
+        const canManage = canManageEvent(event);
+        document.getElementById('detail-edit-btn').classList.toggle('hidden', !canManage);
+        document.getElementById('detail-delete-btn').classList.toggle('hidden', !canManage);
+
+        document.getElementById('event-detail-modal').classList.remove('hidden');
+    }
+
+    function closeEventDetailModal() {
+        document.getElementById('event-detail-modal').classList.add('hidden');
+        currentDetailEvent = null;
+    }
+
+    function editEventFromDetail() {
+        if (!currentDetailEvent) return;
+        if (!canManageEvent(currentDetailEvent)) {
+            showToast('You can only edit your own events', 'error');
+            return;
+        }
+        populateEventForm(currentDetailEvent);
+        closeEventDetailModal();
         document.getElementById('event-modal').classList.remove('hidden');
+    }
+
+    function deleteEventFromDetail() {
+        if (!currentDetailEvent) return;
+        if (!canManageEvent(currentDetailEvent)) {
+            showToast('You can only delete your own events', 'error');
+            return;
+        }
+        if (!confirm('Are you sure you want to delete this event? It will also be removed from Google Calendar if synced.')) return;
+
+        const eventId = currentDetailEvent.id;
+        closeEventDetailModal();
+
+        fetch(`/api/events/${eventId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                loadEvents();
+            } else {
+                showToast(data.message || 'Failed to delete event', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Delete error:', err);
+            showToast('Failed to delete event', 'error');
+        });
     }
     
     // Save event
@@ -1200,17 +1333,22 @@ function initializeSidebar() {
             description: document.getElementById('event-description').value,
             all_day: document.getElementById('event-all-day').checked,
             set_reminder: document.getElementById('event-reminder').checked,
-            sync_to_google: document.getElementById('event-sync-google')?.checked || false,
+            sync_to_google: googleConnected && (document.getElementById('event-sync-google')?.checked ?? false),
         };
-        
+
         const url = isEdit ? `/api/events/${eventId}` : '/api/events';
         const method = isEdit ? 'PUT' : 'POST';
-        
+        const submitBtn = document.getElementById('event-submit-btn');
+        const originalHtml = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+
         fetch(url, {
             method: method,
             headers: {
                 'X-CSRF-TOKEN': csrfToken,
                 'Content-Type': 'application/json',
+                'Accept': 'application/json',
             },
             body: JSON.stringify(eventData)
         })
@@ -1221,33 +1359,48 @@ function initializeSidebar() {
                 closeEventModal();
                 loadEvents();
             } else {
-                showToast(data.message || 'Error saving event', 'error');
+                const msg = data.message || (data.errors ? Object.values(data.errors).flat().join(' ') : 'Error saving event');
+                showToast(msg, 'error');
             }
         })
         .catch(err => {
             console.error('Save error:', err);
             showToast('Failed to save event', 'error');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHtml;
         });
     }
-    
-    // Sync with Google
-    function syncWithGoogle() {
-        fetch('/api/events/sync-all-google', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
+
+    async function syncWithGoogle() {
+        if (!googleConnected) {
+            showToast('Connect Google Calendar first', 'error');
+            return;
+        }
+        const btn = document.getElementById('sync-all-btn');
+        const originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Syncing...';
+
+        try {
+            const response = await fetch('/api/events/sync-all-google', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json',
+                }
+            });
+            const data = await response.json();
             showToast(data.message, data.success ? 'success' : 'error');
             if (data.success) loadEvents();
-        })
-        .catch(err => {
+        } catch (err) {
             console.error('Sync error:', err);
             showToast('Sync failed', 'error');
-        });
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
     }
     
     // Toast notification

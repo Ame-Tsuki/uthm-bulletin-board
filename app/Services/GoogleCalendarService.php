@@ -15,21 +15,21 @@ class GoogleCalendarService
     protected $client;
 
     public function __construct()
-{
-    $this->client = new Client();
-    $this->client->setClientId(config('services.google.client_id'));
-    $this->client->setClientSecret(config('services.google.client_secret'));
-    $this->client->setRedirectUri(config('services.google.redirect_uri'));
-    $this->client->setAccessType('offline');
-    $this->client->setPrompt('consent');
-    $this->client->setIncludeGrantedScopes(true);
-    
-    // IMPORTANT: Set ALL required scopes
-    $this->client->setScopes([
-        'https://www.googleapis.com/auth/calendar',
-        'https://www.googleapis.com/auth/calendar.events',
-    ]);
-}
+    {
+        $this->client = new Client();
+        $this->client->setClientId(config('services.google.client_id'));
+        $this->client->setClientSecret(config('services.google.client_secret'));
+        $this->client->setRedirectUri(config('services.google.redirect_uri'));
+        $this->client->setAccessType('offline');
+        $this->client->setPrompt('consent');
+        $this->client->setIncludeGrantedScopes(true);
+        
+        // IMPORTANT: Set ALL required scopes
+        $this->client->setScopes([
+            'https://www.googleapis.com/auth/calendar',
+            'https://www.googleapis.com/auth/calendar.events',
+        ]);
+    }
 
     /**
      * Get authorization URL
@@ -63,43 +63,43 @@ class GoogleCalendarService
      * Set user token
      */
     public function setUserToken(User $user)
-{
-    if (!$user->google_token) {
-        throw new \Exception('User has no Google token');
-    }
-
-    // Calculate a safe "created" timestamp back-calculated from your expires_at column
-    $createdTime = $user->google_token_expires_at 
-        ? strtotime($user->google_token_expires_at) - 3600 
-        : strtotime($user->updated_at);
-
-    $token = [
-        'access_token' => $user->google_token,
-        'refresh_token' => $user->google_refresh_token,
-        'created' => $createdTime,
-        'expires_in' => 3600,
-    ];
-
-    $this->client->setAccessToken($token);
-
-    if ($this->client->isAccessTokenExpired()) {
-        if (!$user->google_refresh_token) {
-            throw new \Exception('Refresh token missing');
+    {
+        if (!$user->google_token) {
+            throw new \Exception('User has no Google token');
         }
 
-        $newToken = $this->client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
+        // Calculate a safe "created" timestamp back-calculated from your expires_at column
+        $createdTime = $user->google_token_expires_at 
+            ? strtotime($user->google_token_expires_at) - 3600 
+            : strtotime($user->updated_at);
 
-        if (isset($newToken['access_token'])) {
-            $user->update([
-                'google_token' => $newToken['access_token'],
-                // Update the real expiration time based on what Google returns
-                'google_token_expires_at' => now()->addSeconds($newToken['expires_in'] ?? 3600),
-            ]);
+        $token = [
+            'access_token' => $user->google_token,
+            'refresh_token' => $user->google_refresh_token,
+            'created' => $createdTime,
+            'expires_in' => 3600,
+        ];
 
-            $this->client->setAccessToken($newToken);
+        $this->client->setAccessToken($token);
+
+        if ($this->client->isAccessTokenExpired()) {
+            if (!$user->google_refresh_token) {
+                throw new \Exception('Refresh token missing');
+            }
+
+            $newToken = $this->client->fetchAccessTokenWithRefreshToken($user->google_refresh_token);
+
+            if (isset($newToken['access_token'])) {
+                $user->update([
+                    'google_token' => $newToken['access_token'],
+                    // Update the real expiration time based on what Google returns
+                    'google_token_expires_at' => now()->addSeconds($newToken['expires_in'] ?? 3600),
+                ]);
+
+                $this->client->setAccessToken($newToken);
+            }
         }
     }
-}
 
     /**
      * Get or create user calendar
@@ -132,7 +132,7 @@ class GoogleCalendarService
         return $createdCalendar;
     }
 
-   /**
+    /**
      * Sync event to Google Calendar
      */
     public function syncEvent(Event $event)
@@ -212,14 +212,16 @@ class GoogleCalendarService
             Log::error('Google Calendar sync error: ' . $e->getMessage());
             return false;
         }
-    } // Ends syncEvent cleanly. Other class methods can follow right below this.
+    }
+
     /**
      * Delete event from Google Calendar
      */
     public function deleteEvent(Event $event)
     {
         try {
-            $user = $event->creator;
+            // Note: Changed from $event->creator to standard user_id relationship matching syncEvent
+            $user = User::find($event->user_id);
             
             if (!$user || !$user->google_token || !$event->google_event_id) {
                 return false;
@@ -228,7 +230,10 @@ class GoogleCalendarService
             $this->setUserToken($user);
             $calendarService = new Calendar($this->client);
             
-            $calendarService->events->delete('primary', $event->google_event_id);
+            // FIX: Use the custom calendar ID instead of hardcoded 'primary'
+            $calendarId = $user->google_calendar_id ?? 'primary';
+
+            $calendarService->events->delete($calendarId, $event->google_event_id);
 
             return true;
         } catch (\Exception $e) {
@@ -245,7 +250,9 @@ class GoogleCalendarService
         try {
             $this->setUserToken($user);
             $calendarService = new Calendar($this->client);
-            $calendarId = 'primary';
+            
+            // FIX: Pull details from custom board instead of personal 'primary' list
+            $calendarId = $user->google_calendar_id ?? 'primary';
 
             if (!$calendarId) {
                 return [];
@@ -256,6 +263,7 @@ class GoogleCalendarService
                 'maxResults' => 100,
                 'orderBy' => 'updated',
                 'showDeleted' => true,
+                'singleEvents' => true, // Recommended to expand recurring occurrences cleanly
             ];
 
             $googleEvents = $calendarService->events->listEvents($calendarId, $optParams);

@@ -321,8 +321,8 @@ class EventController extends Controller
         }
 
         try {
-            // Delete from Google Calendar first if synced
-            if ($event->synced_with_google && $event->google_event_id) {
+            // FIX: Rely entirely on the presence of the ID string to avoid tracking bugs
+            if ($event->google_event_id) {
                 try {
                     $this->googleCalendarService->deleteEvent($event);
                     Log::info('Event deleted from Google Calendar: ' . $event->google_event_id);

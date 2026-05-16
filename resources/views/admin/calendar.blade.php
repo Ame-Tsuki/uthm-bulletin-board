@@ -330,12 +330,45 @@
                 </div>
 
                 <!-- Upcoming Events -->
-                <div class="mt-6 bg-white rounded-lg shadow">
-                    <div class="p-6 border-b">
-                        <h3 class="text-lg font-bold">Upcoming Important Dates</h3>
+                <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white rounded-lg shadow">
+                        <div class="p-6 border-b">
+                            <h3 class="text-lg font-bold">Upcoming Important Dates</h3>
+                        </div>
+                        <div id="upcomingEvents" class="divide-y">
+                            <div class="p-8 text-center text-gray-500">Loading...</div>
+                        </div>
                     </div>
-                    <div id="upcomingEvents" class="divide-y">
-                        <div class="p-8 text-center text-gray-500">Loading...</div>
+
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
+                            <div class="space-y-3">
+                                <button type="button" onclick="openEventModal()" class="w-full bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition flex items-center justify-center">
+                                    <i class="fas fa-plus mr-2"></i> Post Important Date
+                                </button>
+                                <button type="button" onclick="syncWithGoogle()" id="sync-all-btn" class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition flex items-center justify-center hidden">
+                                    <i class="fas fa-sync-alt mr-2"></i> Sync All to Google
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">Google Calendar</h3>
+                            <p id="google-status-text" class="text-sm text-gray-600 mb-4">
+                                <i class="fas fa-circle text-gray-400 mr-1"></i> Checking status...
+                            </p>
+                            <div class="space-y-3">
+                                <button id="connect-google-btn" type="button"
+                                        class="w-full bg-gray-800 text-white px-4 py-3 rounded-lg hover:bg-gray-900 transition flex items-center justify-center">
+                                    <i class="fab fa-google mr-2"></i> Connect Google Calendar
+                                </button>
+                                <button id="disconnect-google-btn" type="button"
+                                        class="w-full bg-red-50 text-red-600 px-4 py-3 rounded-lg hover:bg-red-100 transition flex items-center justify-center text-sm hidden">
+                                    <i class="fas fa-unlink mr-2"></i> Disconnect Google Calendar
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -386,6 +419,13 @@
                     <label class="block text-sm font-medium mb-1">Description</label>
                     <textarea id="description" name="description" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea>
                 </div>
+
+                <div class="mb-4" id="google-sync-option">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="event-sync-google" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500" checked>
+                        <span class="ml-2 text-sm text-gray-700">Sync to Google Calendar</span>
+                    </label>
+                </div>
                 
                 <div class="flex justify-end space-x-2">
                     <button type="button" onclick="closeModal()" class="px-4 py-2 border rounded-lg">Cancel</button>
@@ -416,6 +456,8 @@
     </div>
 
     <script>
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        let googleConnected = false;
         let currentDate = new Date();
         let allEvents = [];
         let deleteEventId = null;
@@ -447,11 +489,123 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadAllData();
             setupFormSubmit();
-            
+            checkGoogleStatus();
+            document.getElementById('connect-google-btn')?.addEventListener('click', connectGoogle);
+            document.getElementById('disconnect-google-btn')?.addEventListener('click', disconnectGoogle);
+
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('startDate').value = today;
         });
         
+
+        function formatEventDate(dateStr) {
+            if (!dateStr) return '';
+            return dateStr.includes('T') ? dateStr.split('T')[0] : String(dateStr).substring(0, 10);
+        }
+
+        async function checkGoogleStatus() {
+            try {
+                const response = await fetch('/google-calendar/status');
+                const data = await response.json();
+                updateGoogleUI(data);
+            } catch (error) {
+                console.error('Status check error:', error);
+            }
+        }
+
+        function updateGoogleUI(status) {
+            googleConnected = !!status.connected;
+            const connectBtn = document.getElementById('connect-google-btn');
+            const disconnectBtn = document.getElementById('disconnect-google-btn');
+            const statusText = document.getElementById('google-status-text');
+            const syncOption = document.getElementById('google-sync-option');
+            const syncAllBtn = document.getElementById('sync-all-btn');
+            const syncCheckbox = document.getElementById('event-sync-google');
+
+            if (status.connected) {
+                connectBtn?.classList.add('hidden');
+                disconnectBtn?.classList.remove('hidden');
+                syncAllBtn?.classList.remove('hidden');
+                if (statusText) statusText.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-1"></i> Connected to Google Calendar';
+                syncOption?.classList.remove('hidden');
+                if (syncCheckbox && !document.getElementById('eventId').value) syncCheckbox.checked = true;
+            } else {
+                connectBtn?.classList.remove('hidden');
+                disconnectBtn?.classList.add('hidden');
+                syncAllBtn?.classList.add('hidden');
+                if (statusText) statusText.innerHTML = '<i class="fas fa-times-circle text-red-500 mr-1"></i> Not Connected';
+                syncOption?.classList.add('hidden');
+            }
+        }
+
+        async function connectGoogle() {
+            try {
+                const response = await fetch('/google-calendar/connect');
+                const data = await response.json();
+                if (data.success && data.auth_url) {
+                    const width = 600, height = 600;
+                    const left = (screen.width - width) / 2;
+                    const top = (screen.height - height) / 2;
+                    const popup = window.open(data.auth_url, 'GoogleAuth',
+                        `width=${width},height=${height},left=${left},top=${top}`);
+                    const checkPopup = setInterval(() => {
+                        if (popup.closed) {
+                            clearInterval(checkPopup);
+                            showToast('Checking Google Calendar connection...');
+                            setTimeout(() => { checkGoogleStatus(); loadAllData(); }, 1500);
+                        }
+                    }, 500);
+                } else {
+                    showToast(data.message || 'Failed to connect', true);
+                }
+            } catch (error) {
+                showToast('Failed to connect to Google Calendar', true);
+            }
+        }
+
+        async function disconnectGoogle() {
+            if (!confirm('Disconnect Google Calendar? Your events will remain in the system.')) return;
+            try {
+                const response = await fetch('/google-calendar/disconnect', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json' },
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showToast('Google Calendar disconnected');
+                    checkGoogleStatus();
+                    loadAllData();
+                }
+            } catch (error) {
+                showToast('Failed to disconnect', true);
+            }
+        }
+
+        async function syncWithGoogle() {
+            if (!googleConnected) {
+                showToast('Connect Google Calendar first', true);
+                return;
+            }
+            const btn = document.getElementById('sync-all-btn');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Syncing...';
+            try {
+                const response = await fetch('/api/events/sync-all-google', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json' },
+                });
+                const data = await response.json();
+                showToast(data.message, !data.success);
+                if (data.success) loadAllData();
+            } catch (error) {
+                showToast('Sync failed', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        }
+
         async function loadAllData() {
             await loadEvents();
             await loadUpcomingEvents();
@@ -529,7 +683,8 @@
                     dayEvents.forEach(event => {
                         const eventEl = document.createElement('div');
                         eventEl.className = `event-item event-${event.type}`;
-                        eventEl.textContent = event.title.length > 30 ? event.title.substring(0, 30) + '...' : event.title;
+                        const titleText = event.title.length > 28 ? event.title.substring(0, 28) + '...' : event.title;
+                        eventEl.innerHTML = escapeHtml(titleText) + (event.synced_with_google ? ' <i class="fab fa-google text-xs"></i>' : '');
                         eventEl.onclick = () => showEventDetails(event);
                         eventsContainer.appendChild(eventEl);
                     });
@@ -592,7 +747,7 @@
                         div.innerHTML = `
                             <div class="flex justify-between items-center">
                                 <div class="flex-1">
-                                    <h4 class="font-semibold">${escapeHtml(event.title)}</h4>
+                                    <h4 class="font-semibold">${escapeHtml(event.title)}${event.synced_with_google ? ' <i class="fab fa-google text-blue-500 text-xs ml-1" title="Synced with Google"></i>' : ''}</h4>
                                     <p class="text-sm text-gray-600">${eventDate.toLocaleDateString()}</p>
                                     ${event.location ? `<p class="text-xs text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i>${escapeHtml(event.location)}</p>` : ''}
                                     <span class="inline-block mt-1 text-xs text-purple-600"><i class="fas fa-globe mr-1"></i> Visible to all users</span>
@@ -680,6 +835,7 @@
                                 <i class="fas fa-user-circle mr-2"></i> 
                                 Created by: <span class="font-medium text-gray-700">Admin</span>
                             </p>
+                            <p class="text-sm mt-2">${event.synced_with_google ? '<span class="text-green-600"><i class="fab fa-google mr-1"></i> Synced with Google Calendar</span>' : '<span class="text-gray-500"><i class="fas fa-cloud-upload-alt mr-1"></i> Not synced to Google</span>'}</p>
                         </div>
                     </div>
                     <div class="flex justify-end space-x-2 mt-6 pt-4 border-t">
@@ -699,10 +855,12 @@
             document.getElementById('location').value = '';
             document.getElementById('description').value = '';
             document.getElementById('type').value = 'important';
-            
+            const syncCheckbox = document.getElementById('event-sync-google');
+            if (syncCheckbox) syncCheckbox.checked = googleConnected;
+
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('startDate').value = today;
-            
+
             document.getElementById('eventModal').classList.remove('hidden');
         }
         
@@ -713,11 +871,13 @@
             document.getElementById('modalTitle').textContent = 'Edit Important Date';
             document.getElementById('eventId').value = event.id;
             document.getElementById('title').value = event.title;
-            document.getElementById('startDate').value = event.start_date;
+            document.getElementById('startDate').value = formatEventDate(event.start_date);
             document.getElementById('type').value = event.type || 'important';
             document.getElementById('location').value = event.location || '';
             document.getElementById('description').value = event.description || '';
-            
+            const syncCheckbox = document.getElementById('event-sync-google');
+            if (syncCheckbox) syncCheckbox.checked = event.synced_with_google || googleConnected;
+
             document.getElementById('eventModal').classList.remove('hidden');
         }
         
@@ -766,7 +926,8 @@
                     location: document.getElementById('location').value,
                     description: document.getElementById('description').value,
                     all_day: true,
-                    visibility: 'public'
+                    visibility: 'public',
+                    sync_to_google: googleConnected && (document.getElementById('event-sync-google')?.checked ?? false)
                 };
                 
                 const submitBtn = form.querySelector('button[type="submit"]');
@@ -776,9 +937,9 @@
                 }
                 
                 try {
-                    await saveEvent(formData, isEdit, eventId);
+                    const result = await saveEvent(formData, isEdit, eventId);
                     closeModal();
-                    showToast(isEdit ? 'Event updated!' : 'Event created!');
+                    showToast(result.message || (isEdit ? 'Event updated!' : 'Event created!'));
                     await loadAllData();
                 } catch (error) {
                     showToast(error.message, true);

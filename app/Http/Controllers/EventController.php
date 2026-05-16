@@ -530,7 +530,9 @@ class EventController extends Controller
         
         try {
             $events = Event::where('user_id', $user->id)
-                ->where('visibility', 'private')
+                ->when($user->role !== 'admin', function ($query) {
+                    $query->where('visibility', 'private');
+                })
                 ->get();
             
             $syncedCount = 0;

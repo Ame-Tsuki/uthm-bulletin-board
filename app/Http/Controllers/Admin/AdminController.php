@@ -21,11 +21,9 @@ class AdminController extends Controller
             'total_users' => User::count(),
             'students' => User::where('role', 'student')->count(),
             'staff' => User::where('role', 'staff')->count(),
-            'admins' => User::where('role', 'admin')->count(),
-            'club_admins' => User::where('role', 'club_admin')->count(),
             'verified_users' => User::where('is_verified', true)->count(),
             'unverified_users' => User::where('is_verified', false)->count(),
-            'recent_users' => User::latest()->take(10)->get(),
+            'recent_users'     => User::orderBy('created_at', 'desc')->take(10)->get(),
         ];
 
         return view('admin.admin', compact('stats'));
@@ -521,39 +519,35 @@ class AdminController extends Controller
         ]);
     }
 
-   /**
- * Show moderation page for reported announcements
+  /**
+ * Show moderation page with hydrated data queues
  */
 public function moderation()
 {
     $user = auth()->user();
-    return view('admin.moderation', compact('user'));
+
+    // 1. Fetch announcements waiting for initial verification
+    $pendingAnnouncements = \App\Models\Announcement::with('author')
+        ->where('status', 'pending_verification')
+        ->latest()
+        ->get();
+
+    // 2. Fetch pending user reports 
+    $pendingReports = AnnouncementReport::with(['announcement.author', 'reporter'])
+        ->where('status', 'pending')
+        ->latest()
+        ->get();
+
+    // 3. Fetch current status summary counters
+    $reportStats = [
+        'pending'   => AnnouncementReport::where('status', 'pending')->count(),
+        'resolved'  => AnnouncementReport::where('status', 'resolved')->count(),
+        'dismissed' => AnnouncementReport::where('status', 'dismissed')->count(),
+        'total'     => AnnouncementReport::count(),
+    ];
+
+    return view('admin.moderation', compact('user', 'pendingAnnouncements', 'pendingReports', 'reportStats'));
 }
-
-    /**
-     * Get events for management
-     */
-    public function getEvents(Request $request)
-    {
-        $perPage = $request->get('per_page', 15);
-        $search = $request->get('search', '');
-
-        $query = \App\Models\Event::query();
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        $events = $query->orderBy('event_date', 'desc')->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => $events
-        ]);
-    }
 
     /**
      * Delete an event

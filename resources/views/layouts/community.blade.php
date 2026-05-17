@@ -116,27 +116,25 @@
         .modal { 
             transition: all 0.3s ease; 
         }
-        /* Line clamp for consistent description height */
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
+        
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            -webkit-overflow: hidden;
+        }
 
-/* Ensure grid items are same height */
-.grid > a {
-    display: flex;
-}
+        .grid > a {
+            display: flex;
+        }
 
-.grid > a > div {
-    width: 100%;
-}
+        .grid > a > div {
+            width: 100%;
+        }
     </style>
     @stack('styles')
 </head>
 <body class="bg-gray-50">
-    <!-- Mobile Menu Button -->
     <div class="md:hidden fixed top-4 left-4 z-50">
         <button id="mobile-menu-toggle" class="bg-uthm-blue text-white p-2 rounded-lg shadow-lg">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +143,6 @@
         </button>
     </div>
 
-    <!-- Sidebar -->
     <div id="sidebar" class="sidebar-collapsed bg-white shadow-lg h-screen fixed left-0 top-0 overflow-y-auto z-40 sidebar-transition">
         <div class="p-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
@@ -238,9 +235,7 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div id="main-content" class="content-collapsed min-h-screen content-transition">
-        <!-- Top Navigation Bar -->
         <nav class="bg-white shadow">
             <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
@@ -253,13 +248,52 @@
                     </div>
                     
                     <div class="flex items-center space-x-4">
-                        <!-- Notification Bell -->
-                        <button class="relative p-2 text-gray-600 hover:text-uthm-blue transition-colors">
-                            <i class="fas fa-bell text-lg"></i>
-                            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        <div class="relative">
+                            <button id="notification-menu-button" class="relative p-2 text-gray-600 hover:text-uthm-blue transition-colors focus:outline-none">
+                                <i class="fas fa-bell text-lg"></i>
+                                @if(Auth::user()->unreadNotifications->count() > 0)
+                                    <span class="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold font-sans">
+                                        {{ Auth::user()->unreadNotifications->count() }}
+                                    </span>
+                                @endif
+                            </button>
+                            
+                            <div id="notification-menu" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl py-2 hidden border border-gray-100 z-50 max-h-[450px] overflow-y-auto">
+                                <div class="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
+                                    <span class="font-bold text-sm text-gray-800">Notifications</span>
+                                    @if(Auth::user()->unreadNotifications->count() > 0)
+                                        <form action="{{ route('notifications.markAllRead') }}" method="POST" class="inline m-0">
+                                            @csrf
+                                            <button type="submit" class="text-xs text-uthm-blue hover:underline font-medium focus:outline-none">
+                                                Mark all as read
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                                
+                                <div class="divide-y divide-gray-50">
+                                    @forelse(Auth::user()->unreadNotifications as $notification)
+                                        <a href="{{ route('notifications.read', $notification->id) }}" class="block px-4 py-3 hover:bg-gray-50 transition-colors">
+                                            <p class="text-sm font-semibold text-gray-900 mb-0.5">
+                                                {{ $notification->data['title'] ?? 'System Update' }}
+                                            </p>
+                                            <p class="text-xs text-gray-600 line-clamp-2">
+                                                {{ $notification->data['message'] ?? '' }}
+                                            </p>
+                                            <span class="text-[10px] text-gray-400 mt-1 block">
+                                                {{ $notification->created_at->diffForHumans() }}
+                                            </span>
+                                        </a>
+                                    @empty
+                                        <div class="px-4 py-8 text-center text-gray-400">
+                                            <i class="fas fa-bell-slash text-2xl mb-2 block"></i>
+                                            <p class="text-xs">All caught up! No unread notifications.</p>
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
                         
-                        <!-- User Menu Dropdown -->
                         <div class="relative">
                             <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
                                 <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -289,17 +323,14 @@
                             </div>
                         </div>
 
-                        <!-- Header Actions (Custom buttons) -->
                         @yield('header-actions')
                     </div>
                 </div>
             </div>
         </nav>
 
-        <!-- Page Content -->
         <div class="py-8">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <!-- Success/Error Messages -->
                 @if(session('success'))
                     <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
                         <i class="fas fa-check-circle mr-2"></i>
@@ -336,6 +367,9 @@
             const userMenuButton = document.getElementById('user-menu-button');
             const userMenu = document.getElementById('user-menu');
             
+            const notificationMenuButton = document.getElementById('notification-menu-button');
+            const notificationMenu = document.getElementById('notification-menu');
+            
             // Initialize sidebar state from localStorage
             const isSidebarExpanded = localStorage.getItem('sidebarExpanded') === 'true';
             if (isSidebarExpanded) {
@@ -346,11 +380,10 @@
                 if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
             }
             
-            // Sidebar toggle button
+            // Sidebar toggle button listener
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
                     if (sidebar.classList.contains('sidebar-expanded')) {
-                        // Collapse sidebar
                         sidebar.classList.remove('sidebar-expanded');
                         sidebar.classList.add('sidebar-collapsed');
                         mainContent.classList.remove('content-expanded');
@@ -358,7 +391,6 @@
                         if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
                         localStorage.setItem('sidebarExpanded', 'false');
                     } else {
-                        // Expand sidebar
                         sidebar.classList.remove('sidebar-collapsed');
                         sidebar.classList.add('sidebar-expanded');
                         mainContent.classList.remove('content-collapsed');
@@ -369,27 +401,38 @@
                 });
             }
             
-            // Mobile menu toggle
+            // Mobile toggle handler
             if (mobileMenuToggle) {
                 mobileMenuToggle.addEventListener('click', function() {
                     sidebar.classList.toggle('mobile-open');
                 });
             }
             
-            // User menu dropdown
+            // Toggle Profile Dropdown
             if (userMenuButton && userMenu) {
                 userMenuButton.addEventListener('click', function(e) {
                     e.stopPropagation();
+                    if (notificationMenu) notificationMenu.classList.add('hidden');
                     userMenu.classList.toggle('hidden');
-                });
-                
-                // Close user menu when clicking outside
-                document.addEventListener('click', function() {
-                    userMenu.classList.add('hidden');
                 });
             }
 
-            // Close sidebar on mobile when clicking outside
+            // Toggle Notification Dropdown
+            if (notificationMenuButton && notificationMenu) {
+                notificationMenuButton.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (userMenu) userMenu.classList.add('hidden');
+                    notificationMenu.classList.toggle('hidden');
+                });
+            }
+            
+            // Global outside click document closer for menus
+            document.addEventListener('click', function() {
+                if (userMenu) userMenu.classList.add('hidden');
+                if (notificationMenu) notificationMenu.classList.add('hidden');
+            });
+
+            // Mobile-centric click outside layout backdrop dismiss rule
             if (window.innerWidth <= 768) {
                 document.addEventListener('click', function(e) {
                     if (!sidebar.contains(e.target) && 

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use App\Notifications\AnnouncementNotification;
 
 class AnnouncementController extends Controller
 {
@@ -83,192 +84,235 @@ class AnnouncementController extends Controller
      * Store a newly created announcement in storage with MODERATION.
      */
     public function store(Request $request): RedirectResponse
-    {
-        // Check if is_official column exists
-        $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
+{
+    // Check if is_official column exists
+    $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
+    
+    // Create validation rules
+    $validationRules = [
+        'title' => 'required|string|max:255',
+        'content' => 'required|string',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        'category' => 'required|in:urgent,academic,events,general,important',
+        'priority' => 'nullable|in:urgent,important,normal',
+        'department' => 'nullable|string|max:100',
+        'publish_date' => 'nullable|date',
+        'expiry_date' => 'nullable|date|after_or_equal:publish_date',
+        'announcement_type' => 'required|in:official,unofficial',
+        'status' => 'required|in:draft,published',
+    ];
+    
+    // Validate all fields at once
+    $validated = $request->validate($validationRules);
+    
+    // ============================================
+    // MODERATION CHECK - Check title and content
+    // ============================================
+    $titleModeration = $this->localMod->analyzeText($validated['title'], ['toxicity', 'pii', 'spam']);
+    $contentModeration = $this->localMod->analyzeText($validated['content'], ['toxicity', 'pii', 'spam']);
+    
+    // If moderation fails, block the announcement
+    if (($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false)) {
+        $violations = [];
         
-        // Create validation rules
-        $validationRules = [
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-            'category' => 'required|in:urgent,academic,events,general,important',
-            'priority' => 'nullable|in:urgent,important,normal',
-            'department' => 'nullable|string|max:100',
-            'publish_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date|after_or_equal:publish_date',
-            'announcement_type' => 'required|in:official,unofficial',
-            'status' => 'required|in:draft,published',
-        ];
-        
-        // Validate all fields at once
-        $validated = $request->validate($validationRules);
-        
-        // ============================================
-        // MODERATION CHECK - Check title and content
-        // ============================================
-        $titleModeration = $this->localMod->analyzeText($validated['title'], ['toxicity', 'pii', 'spam']);
-        $contentModeration = $this->localMod->analyzeText($validated['content'], ['toxicity', 'pii', 'spam']);
-        
-        // If moderation fails, block the announcement
-        if (($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false)) {
-            $violations = [];
-            
-            if ($titleModeration['flagged'] ?? false) {
-                foreach ($titleModeration['results'] ?? [] as $v) {
-                    if ($v['flagged'] ?? false) {
-                        $violations[] = "Title contains {$v['classifier']}";
-                    }
+        if ($titleModeration['flagged'] ?? false) {
+            foreach ($titleModeration['results'] ?? [] as $v) {
+                if ($v['flagged'] ?? false) {
+                    $violations[] = "Title contains {$v['classifier']}";
                 }
             }
-            
-            if ($contentModeration['flagged'] ?? false) {
-                foreach ($contentModeration['results'] ?? [] as $v) {
-                    if ($v['flagged'] ?? false) {
-                        $violations[] = "Content contains {$v['classifier']}";
-                    }
-                }
-            }
-            
-            $violationText = implode(', ', $violations);
-            $errorMessage = "Your announcement was blocked by our content moderation system. " .
-                           "Please remove inappropriate language. " .
-                           "Detected: {$violationText}";
-            
-            return back()->withErrors(['moderation' => $errorMessage])->withInput();
-        }
-        // ============================================
-        // END MODERATION CHECK
-        // ============================================
-        
-        // Add author_id to the validated data
-        $validated['author_id'] = auth()->id();
-        
-        // Set default priority if not provided
-        if (!isset($validated['priority'])) {
-            $validated['priority'] = 'normal';
         }
         
-        // Determine announcement type and verification status
-        $announcementType = $validated['announcement_type'];
-        $user = auth()->user();
-        $isAdminOrStaff = in_array($user->role, ['admin', 'staff']);
-        $status = $validated['status'];
-        
-        if ($announcementType === 'official') {
-            // Official announcement
-            $validated['is_official'] = true;
-            
-            if ($isAdminOrStaff) {
-                // Admin/staff can publish official announcements immediately
-                if ($status === 'published') {
-                    $validated['status'] = 'published';
-                    $validated['needs_verification'] = false;
-                    $validated['verified_at'] = now();
-                    $validated['verified_by'] = $user->id;
-                } else {
-                    $validated['needs_verification'] = false;
-                }
-            } else {
-                // Regular users need verification for official announcements
-                if ($status === 'published') {
-                    $validated['status'] = 'pending_verification';
-                    $validated['needs_verification'] = true;
-                } else {
-                    $validated['needs_verification'] = true;
+        if ($contentModeration['flagged'] ?? false) {
+            foreach ($contentModeration['results'] ?? [] as $v) {
+                if ($v['flagged'] ?? false) {
+                    $violations[] = "Content contains {$v['classifier']}";
                 }
             }
-        } else {
-            // Unofficial announcement
-            $validated['is_official'] = false;
-            $validated['needs_verification'] = false;
-            
-            // Unofficial announcements can be published immediately by anyone
+        }
+        
+        $violationText = implode(', ', $violations);
+        $errorMessage = "Your announcement was blocked by our content moderation system. " .
+                       "Please remove inappropriate language. " .
+                       "Detected: {$violationText}";
+        
+        return back()->withErrors(['moderation' => $errorMessage])->withInput();
+    }
+    // ============================================
+    // END MODERATION CHECK
+    // ============================================
+    
+    // Add author_id to the validated data
+    $validated['author_id'] = auth()->id();
+    
+    // Set default priority if not provided
+    if (!isset($validated['priority'])) {
+        $validated['priority'] = 'normal';
+    }
+    
+    // Determine announcement type and verification status
+    $announcementType = $validated['announcement_type'];
+    $user = auth()->user();
+    $isAdminOrStaff = in_array($user->role, ['admin', 'staff']);
+    $status = $validated['status'];
+    
+    if ($announcementType === 'official') {
+        // Official announcement
+        $validated['is_official'] = true;
+        
+        if ($isAdminOrStaff) {
+            // Admin/staff can publish official announcements immediately
             if ($status === 'published') {
                 $validated['status'] = 'published';
+                $validated['needs_verification'] = false;
+                $validated['verified_at'] = now();
+                $validated['verified_by'] = $user->id;
+            } else {
+                $validated['needs_verification'] = false;
             }
-        }
-        
-        // Remove announcement_type from data as it's not a database column
-        unset($validated['announcement_type']);
-        
-        // Handle image upload
-        if ($request->hasFile('image')) {
-            try {
-                $image = $request->file('image');
-                $imagePath = $image->store('announcements', 'public');
-                $validated['image'] = $imagePath;
-            } catch (\Exception $e) {
-                Log::error('Image upload failed: ' . $e->getMessage());
-            }
-        }
-        
-        // Save moderation results (optional - for audit)
-        $validated['moderation_flagged'] = ($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false);
-        $validated['moderation_results'] = json_encode([
-            'title' => $titleModeration,
-            'content' => $contentModeration,
-            'checked_at' => now()->toDateTimeString()
-        ]);
-        
-        // Create the announcement
-        $announcement = Announcement::create($validated);
-        
-        // Redirect with appropriate message
-        if ($validated['status'] === 'draft') {
-            return redirect()->route('announcements.my-announcements', ['status' => 'draft'])
-                ->with('success', 'Announcement saved as draft successfully.');
-        } elseif ($announcementType === 'official' && isset($validated['needs_verification']) && $validated['needs_verification']) {
-            return redirect()->route('announcements.index')
-                ->with('success', 'Official announcement submitted for verification. It will be published after admin/staff review.');
         } else {
-            return redirect()->route('announcements.show', $announcement)
-                ->with('success', 'Announcement published successfully.');
+            // Regular users need verification for official announcements
+            if ($status === 'published') {
+                $validated['status'] = 'pending_verification';
+                $validated['needs_verification'] = true;
+            } else {
+                $validated['needs_verification'] = true;
+            }
+        }
+    } else {
+        // Unofficial announcement
+        $validated['is_official'] = false;
+        $validated['needs_verification'] = false;
+        
+        // Unofficial announcements can be published immediately by anyone
+        if ($status === 'published') {
+            $validated['status'] = 'published';
         }
     }
+    
+    // Remove announcement_type from data as it's not a database column
+    unset($validated['announcement_type']);
+    
+    // Handle image upload
+    if ($request->hasFile('image')) {
+        try {
+            $image = $request->file('image');
+            $imagePath = $image->store('announcements', 'public');
+            $validated['image'] = $imagePath;
+        } catch (\Exception $e) {
+            Log::error('Image upload failed: ' . $e->getMessage());
+        }
+    }
+    
+    // Save moderation results (optional - for audit)
+    $validated['moderation_flagged'] = ($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false);
+    $validated['moderation_results'] = json_encode([
+        'title' => $titleModeration,
+        'content' => $contentModeration,
+        'checked_at' => now()->toDateTimeString()
+    ]);
+    
+    // Create the announcement
+    $announcement = Announcement::create($validated);
+    
+    // =========================================================================
+    // NOTIFICATION LOGIC SYSTEM
+    // =========================================================================
+    if ($announcement->status === 'published') {
+        
+        // Scenario 1: It is an Official OR Important post, blast it to all system users
+        if ($announcement->is_official || in_array($announcement->category, ['important', 'urgent'])) {
+            
+            $allUsers = User::where('id', '!=', auth()->id())->get();
+            $title = "🚨 New Official Announcement";
+            $message = "A brand new official post has been listed: '" . $announcement->title . "'";
+            $url = route('announcements.show', $announcement->id);
+            
+            Notification::send($allUsers, new AnnouncementNotification($title, $message, $url));
+        } 
+        
+    } elseif ($announcement->status === 'pending_verification') {
+        
+        // Scenario 2: Student/Regular user submitted an Official request -> Notify Admin/Staff
+        $moderators = User::whereIn('role', ['admin', 'staff'])->get();
+        $title = "📋 Verification Required";
+        $message = "A new official notice titled '{$announcement->title}' requires review.";
+        
+        // Point this URL to your admin moderation queue dashboard route
+        $url = route('announcements.index'); 
+
+        Notification::send($moderators, new AnnouncementNotification($title, $message, $url));
+    }
+    // =========================================================================
+    
+    // Redirect with appropriate message
+    if ($announcement->status === 'draft') {
+        return redirect()->route('announcements.my-announcements', ['status' => 'draft'])
+            ->with('success', 'Announcement saved as draft successfully.');
+    } elseif ($announcement->status === 'pending_verification') {
+        return redirect()->route('announcements.index')
+            ->with('success', 'Official announcement submitted for verification. It will be published after admin/staff review.');
+    } else {
+        return redirect()->route('announcements.show', $announcement)
+            ->with('success', 'Announcement published successfully.');
+    }
+}
 
     /**
      * Display a single announcement.
      */
     public function show($id): View
-    {
-        // Manually resolve the announcement since route uses {id} instead of {announcement}
-        $announcement = Announcement::with('author')->find($id);
-        
-        if (!$announcement) {
-            abort(404, 'Announcement not found');
-        }
-        
-        // Check if user can view this announcement
-        $user = auth()->user();
-        if ($announcement->status === 'draft' && $announcement->author_id !== $user->id) {
-            abort(403, 'Unauthorized to view this draft.');
-        }
-        
-        if ($announcement->status === 'pending_verification' && !in_array($user->role, ['admin', 'staff'])) {
-            abort(403, 'This announcement is pending verification.');
-        }
-
-        if (($announcement->is_banned || $announcement->status === 'banned')
-            && $announcement->author_id !== $user->id
-            && $user->role !== 'admin') {
-            abort(404, 'Announcement not found');
-        }
-        
-        // Increment view count
-        $announcement->increment('view_count');
-
-        $hasReported = \App\Models\AnnouncementReport::where('announcement_id', $announcement->id)
-            ->where('reporter_id', $user->id)
-            ->exists();
-        $canReport = $announcement->author_id !== $user->id
-            && ! $announcement->is_banned
-            && $announcement->status !== 'banned'
-            && in_array($announcement->status, ['published', 'pending_verification']);
-        
-        // Return view with single announcement
-        return view('announcements.show', compact('announcement', 'user', 'hasReported', 'canReport'));
+{
+    // Manually resolve the announcement since route uses {id} instead of {announcement}
+    $announcement = Announcement::with('author')->find($id);
+    
+    if (!$announcement) {
+        abort(404, 'Announcement not found');
     }
+    
+    // Check if user can view this announcement
+    $user = auth()->user();
+    if ($announcement->status === 'draft' && $announcement->author_id !== $user->id) {
+        abort(403, 'Unauthorized to view this draft.');
+    }
+    
+    if ($announcement->status === 'pending_verification' && !in_array($user->role, ['admin', 'staff'])) {
+        abort(403, 'This announcement is pending verification.');
+    }
+
+    if (($announcement->is_banned || $announcement->status === 'banned')
+        && $announcement->author_id !== $user->id
+        && $user->role !== 'admin') {
+        abort(404, 'Announcement not found');
+    }
+    
+    // Increment view count
+    $announcement->increment('view_count');
+
+    // =========================================================================
+    // AUTOMATICALLY MARK NOTIFICATION AS READ
+    // =========================================================================
+    if ($user) {
+        // Look through the user's unread notifications for any entry containing this announcement's ID in the stored URL
+        $user->unreadNotifications()
+            ->where('data->url', 'like', '%' . route('announcements.show', $announcement->id) . '%')
+            ->get()
+            ->markAsRead();
+    }
+    // =========================================================================
+
+    $hasReported = \App\Models\AnnouncementReport::where('announcement_id', $announcement->id)
+        ->where('reporter_id', $user->id)
+        ->exists();
+        
+    $canReport = $announcement->author_id !== $user->id
+        && ! $announcement->is_banned
+        && $announcement->status !== 'banned'
+        && in_array($announcement->status, ['published', 'pending_verification']);
+    
+    // Return view with single announcement
+    return view('announcements.show', compact('announcement', 'user', 'hasReported', 'canReport'));
+}
 
     /**
      * Show the form for editing the specified announcement.

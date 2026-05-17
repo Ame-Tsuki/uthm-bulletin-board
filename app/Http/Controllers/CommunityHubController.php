@@ -8,7 +8,10 @@ use App\Models\GroupMember;
 use App\Models\GroupPost;
 use App\Models\GroupPostComment;
 use App\Models\GroupJoinRequest;
+use App\Models\User; // <-- Added for Notification targeting
+use App\Notifications\CommunityNotification; // <-- Added for notification dispatching
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification; // <-- Added for multi-user notifications
 use Illuminate\Validation\Rule;
 
 class CommunityHubController extends Controller
@@ -208,6 +211,18 @@ class CommunityHubController extends Controller
                     'status' => 'pending'
                 ]);
                 DB::commit();
+
+                // 🔔 NOTIFICATION 1: Join Request Sent -> Alert Group Admins & Creator
+                $groupAdmins = User::whereHas('groupMemberships', function($q) use ($id) {
+                    $q->where('group_id', $id)->where('role', 'admin')->where('status', 'approved');
+                })->get();
+
+                $title = "📥 New Group Join Request";
+                $message = "{$user->name} has requested to join your group '{$group->name}'.";
+                $url = route('student.community-hub.show', $group->id);
+
+                Notification::send($groupAdmins, new CommunityNotification($title, $message, $url));
+
                 return back()->with('info', 'Join request sent to "' . $group->name . '". Admin will review it.');
             }
         } catch (\Exception $e) {
@@ -282,6 +297,13 @@ class CommunityHubController extends Controller
                 ->where('status', 'pending')
                 ->with('user')
                 ->get();
+
+            // 💡 OPTIONAL: Automatically flush matching request items when viewing the queue page
+            $user->unreadNotifications()
+                ->where('data->title', '📥 New Group Join Request')
+                ->where('data->url', 'like', '%' . route('student.community-hub.show', $group->id) . '%')
+                ->get()
+                ->markAsRead();
         }
         
         // Get group members
@@ -320,6 +342,18 @@ class CommunityHubController extends Controller
             'is_pinned' => false,
             'likes_count' => 0
         ]);
+
+        // 🔔 NOTIFICATION 2: Post Created -> Notify Everyone In Group (excluding the author)
+        $group = CommunityGroup::find($groupId);
+        $groupMembers = User::whereHas('groupMemberships', function($q) use ($groupId) {
+            $q->where('group_id', $groupId)->where('status', 'approved');
+        })->where('id', '!=', auth()->id())->get();
+
+        $title = "✍️ New Post in {$group->name}";
+        $message = auth()->user()->name . " started a new conversation thread.";
+        $url = route('student.community-hub.show', $groupId);
+
+        Notification::send($groupMembers, new CommunityNotification($title, $message, $url));
         
         return back()->with('success', 'Your post has been published!');
     }
@@ -339,6 +373,19 @@ class CommunityHubController extends Controller
             ->exists();
             
         if ($post->user_id === auth()->id() || $isAdmin) {
+
+            // 🔔 NOTIFICATION 3: Admin Deletes Post -> Inform Post Owner
+            if ($post->user_id !== auth()->id() && $isAdmin) {
+                $postOwner = User::find($post->user_id);
+                if ($postOwner) {
+                    $title = "🗑️ Post Removed by Admin";
+                    $message = "Your post inside the group has been deleted by a group administrator.";
+                    $url = route('student.community-hub.show', $groupId);
+                    
+                    $postOwner->notify(new CommunityNotification($title, $message, $url));
+                }
+            }
+
             $post->delete();
             return back()->with('success', 'Post deleted.');
         }
@@ -373,6 +420,18 @@ class CommunityHubController extends Controller
             
             // Refresh the post to get updated likes count
             $post->refresh();
+
+            // 🔔 NOTIFICATION 4: Post Liked -> Inform Thread Owner (Ignore if self-like)
+            if ($liked && $post->user_id !== $userId) {
+                $postOwner = User::find($post->user_id);
+                if ($postOwner) {
+                    $title = "❤️ Post Liked";
+                    $message = auth()->user()->name . " liked your community post thread.";
+                    $url = route('student.community-hub.show', $groupId);
+
+                    $postOwner->notify(new CommunityNotification($title, $message, $url));
+                }
+            }
             
             return response()->json([
                 'success' => true,
@@ -430,6 +489,18 @@ class CommunityHubController extends Controller
             
             // Load the user relationship
             $comment->load('user');
+
+            // 🔔 NOTIFICATION 5: New Comment -> Inform Thread Owner (Ignore if self-comment)
+            if ($post->user_id !== $userId) {
+                $postOwner = User::find($post->user_id);
+                if ($postOwner) {
+                    $title = "💬 New Comment Received";
+                    $message = auth()->user()->name . " commented: \"" . \Str::limit($comment->content, 40) . "\"";
+                    $url = route('student.community-hub.show', $groupId);
+
+                    $postOwner->notify(new CommunityNotification($title, $message, $url));
+                }
+            }
             
             return response()->json([
                 'success' => true,
@@ -684,6 +755,16 @@ class CommunityHubController extends Controller
             $group->increment('member_count');
             
             DB::commit();
+
+            // 🔔 NOTIFICATION 6: Join Request Approved -> Inform Requesting User
+            $targetUser = User::find($request->user_id);
+            if ($targetUser) {
+                $title = "🎉 Request Approved!";
+                $message = "Your request to join the group '{$group->name}' has been approved.";
+                $url = route('student.community-hub.show', $groupId);
+
+                $targetUser->notify(new CommunityNotification($title, $message, $url));
+            }
             
             return back()->with('success', 'Join request approved!');
         } catch (\Exception $e) {
@@ -721,6 +802,17 @@ class CommunityHubController extends Controller
         
         try {
             $request->update(['status' => 'rejected']);
+
+            // 🔔 NOTIFICATION 7: Join Request Rejected -> Inform Requesting User
+            $targetUser = User::find($request->user_id);
+            if ($targetUser) {
+                $title = "❌ Join Request Declined";
+                $message = "Your request to join '{$group->name}' was declined by the administration.";
+                $url = route('student.community-hub');
+
+                $targetUser->notify(new CommunityNotification($title, $message, $url));
+            }
+            
             return back()->with('success', 'Join request rejected.');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to reject request. Please try again.');

@@ -71,6 +71,14 @@ class User extends Authenticatable implements MustVerifyEmail
     return $this->email; // This should return the correct email
 }
 
+/**
+ * Get the memberships for the user.
+ */
+public function groupMemberships()
+{
+    return $this->hasMany(\App\Models\GroupMember::class, 'user_id');
+}
+
     public function isVerifiedMember()
     {
         return $this->is_verified;

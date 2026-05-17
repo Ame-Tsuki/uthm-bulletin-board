@@ -299,6 +299,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/announcements/verification-queue', [AnnouncementController::class, 'verificationQueue'])->name('announcements.verification-queue');
         Route::get('/announcements/rejected', [AnnouncementController::class, 'rejected'])->name('announcements.rejected');
         Route::post('/announcements/{id}/resubmit', [AnnouncementController::class, 'resubmit'])->name('announcements.resubmit');
+        
+        // ============================================
+        // PENDING COUNT API ROUTE (For dashboard)
+        // ============================================
+        Route::get('/announcements/pending-count', [AnnouncementController::class, 'getPendingCount'])
+            ->name('announcements.pending-count');
     });
 
     // ============================================
@@ -328,7 +334,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/community-hub', [CommunityHubController::class, 'index'])->name('community-hub');
         Route::get('/community-hub/{id}', [CommunityHubController::class, 'show'])->name('community-hub.show');
         
-        // Admin Moderation
+        // Admin Moderation Page (View)
         Route::get('/moderation', [AdminController::class, 'moderation'])->name('moderation');
         
         // Admin Settings

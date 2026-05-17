@@ -38,7 +38,7 @@
                 <p class="text-blue-100">Total Users</p>
                 <h3 class="text-3xl font-bold mt-2">{{ $stats['total_users'] ?? 0 }}</h3>
                 <p class="text-blue-100 text-sm mt-2">
-                    <i class="fas fa-arrow-up mr-1"></i>12% from last month
+                    <i class="fas fa-arrow-up mr-1"></i>{{ $stats['user_growth_percentage'] ?? '0' }}% from last month
                 </p>
             </div>
             <div class="bg-white bg-opacity-20 p-4 rounded-full">
@@ -53,7 +53,7 @@
                 <p class="text-green-100">Active Students</p>
                 <h3 class="text-3xl font-bold mt-2">{{ $stats['students'] ?? 0 }}</h3>
                 <p class="text-green-100 text-sm mt-2">
-                    <i class="fas fa-user-graduate mr-1"></i>{{ round(($stats['students'] ?? 0) / ($stats['total_users'] ?? 1) * 100, 1) }}% of total
+                    <i class="fas fa-user-graduate mr-1"></i>{{ $stats['student_percentage'] ?? '0' }}% of total
                 </p>
             </div>
             <div class="bg-white bg-opacity-20 p-4 rounded-full">
@@ -68,7 +68,7 @@
                 <p class="text-orange-100">Staff Members</p>
                 <h3 class="text-3xl font-bold mt-2">{{ $stats['staff'] ?? 0 }}</h3>
                 <p class="text-orange-100 text-sm mt-2">
-                    <i class="fas fa-user-tie mr-1"></i>{{ round(($stats['staff'] ?? 0) / ($stats['total_users'] ?? 1) * 100, 1) }}% of total
+                    <i class="fas fa-user-tie mr-1"></i>{{ $stats['staff_percentage'] ?? '0' }}% of total
                 </p>
             </div>
             <div class="bg-white bg-opacity-20 p-4 rounded-full">
@@ -80,44 +80,14 @@
     <div class="stat-card bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow">
         <div class="flex justify-between items-center">
             <div>
-                <p class="text-purple-100">Pending Verification</p>
-                <h3 class="text-3xl font-bold mt-2" id="top-unverified-count">{{ $stats['unverified_users'] ?? 0 }}</h3>
+                <p class="text-purple-100">Pending Reports</p>
+                <h3 class="text-3xl font-bold mt-2" id="pending-reports-count-stat">{{ $stats['pending_reports'] ?? 0 }}</h3>
                 <p class="text-purple-100 text-sm mt-2">
-                    <i class="fas fa-clock mr-1"></i>Requires attention
+                    <i class="fas fa-flag mr-1"></i>{{ $stats['pending_verification_text'] ?? 'Requires review' }}
                 </p>
             </div>
             <div class="bg-white bg-opacity-20 p-4 rounded-full">
-                <i class="fas fa-user-clock text-2xl"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="stat-card bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-xl shadow">
-        <div class="flex justify-between items-center">
-            <div>
-                <p class="text-red-100">Total Announcements</p>
-                <h3 class="text-3xl font-bold mt-2" id="total-announcements">0</h3>
-                <p class="text-red-100 text-sm mt-2">
-                    <i class="fas fa-megaphone mr-1"></i>Across platform
-                </p>
-            </div>
-            <div class="bg-white bg-opacity-20 p-4 rounded-full">
-                <i class="fas fa-megaphone text-2xl"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="stat-card bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-6 rounded-xl shadow">
-        <div class="flex justify-between items-center">
-            <div>
-                <p class="text-indigo-100">Total Events</p>
-                <h3 class="text-3xl font-bold mt-2" id="total-events">0</h3>
-                <p class="text-indigo-100 text-sm mt-2">
-                    <i class="fas fa-calendar mr-1"></i>All activities
-                </p>
-            </div>
-            <div class="bg-white bg-opacity-20 p-4 rounded-full">
-                <i class="fas fa-calendar text-2xl"></i>
+                <i class="fas fa-flag text-2xl"></i>
             </div>
         </div>
     </div>
@@ -126,7 +96,7 @@
 <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-xl font-bold text-gray-800">Quick Actions</h2>
-        <a href="{{ route('admin.users.index') }}" class="text-blue-600 hover:text-blue-800 font-medium">View All</a>
+        <a href="{{ route('admin.moderation') }}" class="text-blue-600 hover:text-blue-800 font-medium">View All Reports</a>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <a href="{{ route('admin.users.index') }}" class="bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-500 p-4 rounded-lg transition block">
@@ -148,19 +118,19 @@
                 </div>
                 <div>
                     <h3 class="font-bold text-gray-800">Moderate Content</h3>
-                    <p class="text-sm text-gray-600" id="pending-reports-count">0 reports to review</p>
+                    <p class="text-sm text-gray-600" id="pending-reports-count">{{ $stats['pending_reports'] ?? 0 }} report(s) to review</p>
                 </div>
             </div>
         </a>
         
-        <a href="{{ route('admin.settings.index') }}" class="bg-purple-50 hover:bg-purple-100 border-l-4 border-purple-500 p-4 rounded-lg transition block">
+        <a href="{{ route('admin.announcements.index') }}" class="bg-yellow-50 hover:bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded-lg transition block">
             <div class="flex items-center">
-                <div class="bg-purple-100 p-3 rounded-lg mr-4">
-                    <i class="fas fa-sliders-h text-purple-600"></i>
+                <div class="bg-yellow-100 p-3 rounded-lg mr-4">
+                    <i class="fas fa-clock text-yellow-600"></i>
                 </div>
                 <div>
-                    <h3 class="font-bold text-gray-800">System Settings</h3>
-                    <p class="text-sm text-gray-600">Configure parameters</p>
+                    <h3 class="font-bold text-gray-800">Pending Verification</h3>
+                    <p class="text-sm text-gray-600" id="pending-verification-count">{{ $stats['pending_verification_announcements'] ?? 0 }} announcement(s) waiting</p>
                 </div>
             </div>
         </a>
@@ -244,7 +214,7 @@
                         <tr>
                             <td colspan="4" class="px-6 py-8 text-center text-gray-500">
                                 <i class="fas fa-users text-3xl mb-2 text-gray-300"></i>
-                                <p>No recent users found</p>
+                                <p>{{ $stats['no_users_message'] ?? 'No recent users found' }}</p>
                             </td>
                         </tr>
                         @endforelse
@@ -258,60 +228,41 @@
         <h2 class="text-xl font-bold text-gray-800 mb-6">System Status</h2>
         
         <div class="space-y-4">
+            @foreach($stats['system_status'] ?? [] as $status)
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <div class="w-3 h-3 rounded-full bg-green-500 mr-3"></div>
-                    <span class="font-medium">Database</span>
+                    <div class="w-3 h-3 rounded-full {{ $status['status'] == 'online' ? 'bg-green-500' : ($status['status'] == 'warning' ? 'bg-yellow-500' : 'bg-red-500') }} mr-3"></div>
+                    <span class="font-medium">{{ $status['name'] }}</span>
                 </div>
-                <span class="text-green-600 font-bold">Online</span>
+                <span class="{{ $status['status'] == 'online' ? 'text-green-600' : ($status['status'] == 'warning' ? 'text-yellow-600' : 'text-red-600') }} font-bold">{{ $status['value'] }}</span>
             </div>
-            
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="w-3 h-3 rounded-full bg-green-500 mr-3"></div>
-                    <span class="font-medium">Mail Server</span>
-                </div>
-                <span class="text-green-600 font-bold">Online</span>
-            </div>
-            
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="w-3 h-3 rounded-full bg-yellow-500 mr-3"></div>
-                    <span class="font-medium">Storage</span>
-                </div>
-                <span class="text-yellow-600 font-bold">75% Used</span>
-            </div>
-            
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="w-3 h-3 rounded-full bg-green-500 mr-3"></div>
-                    <span class="font-medium">API Services</span>
-                </div>
-                <span class="text-green-600 font-bold">Online</span>
-            </div>
+            @endforeach
         </div>
         
         <div class="mt-8">
             <h3 class="font-bold text-gray-700 mb-3">Recent Activity</h3>
             <div class="space-y-3">
+                @forelse($stats['recent_activities'] ?? [] as $activity)
                 <div class="flex items-start">
-                    <div class="bg-blue-100 p-2 rounded-lg mr-3">
-                        <i class="fas fa-user-plus text-blue-600"></i>
+                    <div class="{{ $activity['icon_bg'] ?? 'bg-blue-100' }} p-2 rounded-lg mr-3">
+                        <i class="{{ $activity['icon'] ?? 'fas fa-info-circle' }} {{ $activity['icon_color'] ?? 'text-blue-600' }}"></i>
                     </div>
                     <div>
-                        <p class="text-sm">New user registration</p>
-                        <p class="text-xs text-gray-500">2 minutes ago</p>
+                        <p class="text-sm">{{ $activity['message'] }}</p>
+                        <p class="text-xs text-gray-500">{{ $activity['time_ago'] }}</p>
                     </div>
                 </div>
+                @empty
                 <div class="flex items-start">
-                    <div class="bg-green-100 p-2 rounded-lg mr-3">
-                        <i class="fas fa-check-circle text-green-600"></i>
+                    <div class="bg-gray-100 p-2 rounded-lg mr-3">
+                        <i class="fas fa-info-circle text-gray-600"></i>
                     </div>
                     <div>
-                        <p class="text-sm">System backup completed</p>
-                        <p class="text-xs text-gray-500">1 hour ago</p>
+                        <p class="text-sm">No recent activities</p>
+                        <p class="text-xs text-gray-500">Activities will appear here</p>
                     </div>
                 </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -326,86 +277,54 @@
         return meta ? meta.getAttribute('content') : '';
     };
 
-    // Mobile menu toggle
-    if (document.getElementById('menuToggle')) {
-        document.getElementById('menuToggle').addEventListener('click', function() {
-            document.getElementById('mobileSidebar').classList.remove('hidden');
-        });
-    }
-
-    if (document.getElementById('closeMenu')) {
-        document.getElementById('closeMenu').addEventListener('click', function() {
-            document.getElementById('mobileSidebar').classList.add('hidden');
-        });
-    }
-
-    // User dropdown
-    if (document.getElementById('userMenu')) {
-        document.getElementById('userMenu').addEventListener('click', function() {
-            document.getElementById('dropdownMenu').classList.toggle('hidden');
-        });
-    }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(event) {
-        const dropdown = document.getElementById('dropdownMenu');
-        const userMenu = document.getElementById('userMenu');
-        
-        if (dropdown && userMenu && !userMenu.contains(event.target) && !dropdown.contains(event.target)) {
-            dropdown.classList.add('hidden');
-        }
-    });
-
-    // Auto-hide success messages
-    setTimeout(function() {
-        const alerts = document.querySelectorAll('.alert-auto-hide');
-        alerts.forEach(alert => {
-            alert.style.transition = 'opacity 0.5s';
-            alert.style.opacity = '0';
-            setTimeout(() => alert.remove(), 500);
-        });
-    }, 5000);
-
-    // Load content statistics
-    async function loadContentStats() {
-        try {
-            const response = await fetch('{{ route("admin.content-stats") }}');
-            const data = await response.json();
-            
-            if (data.success) {
-                document.getElementById('total-announcements').textContent = data.data.total_announcements || 0;
-                document.getElementById('total-events').textContent = data.data.total_events || 0;
-            }
-        } catch (error) {
-            console.error('Error loading content stats:', error);
-        }
-    }
-    
-    // Load pending reports count & sync verification layout components
-    async function loadPendingReports() {
+    // Load moderation statistics (reports)
+    async function loadModerationStats() {
         try {
             const response = await fetch('/api/admin/reports/statistics');
             const data = await response.json();
             
             if (data.success) {
-                // Update text container in Quick Actions element row
-                if (document.getElementById('pending-reports-count')) {
-                    const pendingCount = data.data.pending || 0;
-                    document.getElementById('pending-reports-count').textContent = `${pendingCount} report${pendingCount !== 1 ? 's' : ''} to review`;
+                const pendingCount = data.data.pending || 0;
+                const resolvedCount = data.data.resolved || 0;
+                const dismissedCount = data.data.dismissed || 0;
+                const totalCount = data.data.total || 0;
+                
+                // Update pending reports count in stats card
+                if (document.getElementById('pending-reports-count-stat')) {
+                    document.getElementById('pending-reports-count-stat').textContent = pendingCount;
                 }
-
-                // Synchronize dynamic counter badges across blocks if provided by API payload
-                if (data.data.unverified_users !== undefined) {
-                    if (document.getElementById('top-unverified-count')) {
-                        document.getElementById('top-unverified-count').textContent = data.data.unverified_users;
-                    }
-                    if (document.getElementById('quick-action-unverified-text')) {
-                        document.getElementById('quick-action-unverified-text').textContent = `${data.data.unverified_users} pending`;
-                    }
+                
+                // Update quick action text
+                if (document.getElementById('pending-reports-count')) {
+                    document.getElementById('pending-reports-count').textContent = `${pendingCount} report(s) to review`;
+                }
+                
+                // Optionally, you can update other report-related stats
+                console.log(`Moderation stats loaded: ${pendingCount} pending, ${resolvedCount} resolved, ${dismissedCount} dismissed, ${totalCount} total`);
+            }
+        } catch (error) {
+            console.error('Error loading moderation statistics:', error);
+        }
+    }
+    
+    // Load pending verification announcements count
+    async function loadPendingVerificationCount() {
+        try {
+            const response = await fetch('/announcements/pending-count');
+            const data = await response.json();
+            
+            if (data.count !== undefined) {
+                if (document.getElementById('pending-verification-count')) {
+                    document.getElementById('pending-verification-count').textContent = `${data.count} announcement(s) waiting`;
                 }
             }
         } catch (error) {
-            console.error('Error loading pending reports:', error);
+            console.error('Error loading pending verification count:', error);
+            // Fallback to Laravel passed data if API fails
+            const fallbackCount = {{ $stats['pending_verification_announcements'] ?? 0 }};
+            if (document.getElementById('pending-verification-count')) {
+                document.getElementById('pending-verification-count').textContent = `${fallbackCount} announcement(s) waiting`;
+            }
         }
     }
 
@@ -441,14 +360,14 @@
         window.location.href = `/admin/users/${userId}`;
     }
 
-    // Load stats on page load
+    // Load all stats on page load
     document.addEventListener('DOMContentLoaded', function() {
-        loadContentStats();
-        loadPendingReports();
+        loadModerationStats();
+        loadPendingVerificationCount();
     });
 
-    // Refresh content stats on set loop windows
-    setInterval(loadContentStats, 60000);
-    setInterval(loadPendingReports, 30000);
+    // Refresh stats periodically
+    setInterval(loadModerationStats, 30000);  // Refresh every 30 seconds
+    setInterval(loadPendingVerificationCount, 60000);  // Refresh every minute
 </script>
 @endsection

@@ -140,7 +140,7 @@
                         <div class="flex items-center space-x-4">
                             <button class="relative text-gray-600 hover:text-gray-800">
                                 <i class="fas fa-bell text-xl"></i>
-                                <span class="absolute -top-1 -right-1 bg-red-500 text-xs text-white rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                            
                             </button>
                             <div class="relative">
                                 <button id="userMenu" class="flex items-center space-x-2 focus:outline-none">

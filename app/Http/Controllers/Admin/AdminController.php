@@ -23,11 +23,252 @@ class AdminController extends Controller
             'staff' => User::where('role', 'staff')->count(),
             'verified_users' => User::where('is_verified', true)->count(),
             'unverified_users' => User::where('is_verified', false)->count(),
-            'recent_users'     => User::orderBy('created_at', 'desc')->take(10)->get(),
+            'recent_users' => User::orderBy('created_at', 'desc')->take(10)->get(),
+            'pending_reports' => AnnouncementReport::where('status', 'pending')->count(),
+            'pending_verification_announcements' => \App\Models\Announcement::where('status', 'pending_verification')->count(),
+            'system_status' => [
+                ['name' => 'Database', 'status' => 'online', 'value' => 'Online'],
+                ['name' => 'Mail Server', 'status' => 'online', 'value' => 'Online'],
+                ['name' => 'Storage', 'status' => 'warning', 'value' => '75% Used'],
+                ['name' => 'API Services', 'status' => 'online', 'value' => 'Online'],
+            ],
+            'recent_activities' => $this->getRecentActivityData(),
         ];
 
         return view('admin.admin', compact('stats'));
     }
+
+    /**
+     * Get recent activity data for dashboard
+     */
+    private function getRecentActivityData()
+    {
+        $activities = [];
+        
+        // Get recent user registrations
+        $recentUsers = User::orderBy('created_at', 'desc')->take(3)->get();
+        foreach ($recentUsers as $user) {
+            $activities[] = [
+                'icon_bg' => 'bg-blue-100',
+                'icon' => 'fas fa-user-plus',
+                'icon_color' => 'text-blue-600',
+                'message' => "New user registered: {$user->name}",
+                'time_ago' => $user->created_at->diffForHumans(),
+            ];
+        }
+        
+        // Get recent announcements
+        $recentAnnouncements = \App\Models\Announcement::orderBy('created_at', 'desc')->take(2)->get();
+        foreach ($recentAnnouncements as $announcement) {
+            $activities[] = [
+                'icon_bg' => 'bg-green-100',
+                'icon' => 'fas fa-megaphone',
+                'icon_color' => 'text-green-600',
+                'message' => "New announcement: {$announcement->title}",
+                'time_ago' => $announcement->created_at->diffForHumans(),
+            ];
+        }
+        
+        return $activities;
+    }
+
+    /**
+     * Show moderation page with hydrated data queues
+     */
+    public function moderation()
+    {
+        $user = auth()->user();
+
+        // 1. Fetch announcements waiting for initial verification
+        $pendingAnnouncements = \App\Models\Announcement::with('author')
+            ->where('status', 'pending_verification')
+            ->latest()
+            ->get();
+
+        // 2. Fetch pending user reports 
+        $pendingReports = AnnouncementReport::with(['announcement.author', 'reporter'])
+            ->where('status', 'pending')
+            ->latest()
+            ->get();
+
+        // 3. Fetch current status summary counters
+        $reportStats = [
+            'pending'   => AnnouncementReport::where('status', 'pending')->count(),
+            'resolved'  => AnnouncementReport::where('status', 'resolved')->count(),
+            'dismissed' => AnnouncementReport::where('status', 'dismissed')->count(),
+            'total'     => AnnouncementReport::count(),
+        ];
+
+        return view('admin.moderation', compact('user', 'pendingAnnouncements', 'pendingReports', 'reportStats'));
+    }
+
+    /**
+     * Get content statistics
+     */
+    public function getContentStats()
+    {
+        $stats = [
+            'total_announcements' => \App\Models\Announcement::count(),
+            'published_announcements' => \App\Models\Announcement::where('status', 'published')->count(),
+            'pending_announcements' => \App\Models\Announcement::where('status', 'pending_verification')->count(), // FIXED: Changed 'pending' to 'pending_verification'
+            'rejected_announcements' => \App\Models\Announcement::where('status', 'rejected')->count(),
+            'draft_announcements' => \App\Models\Announcement::where('status', 'draft')->count(),
+            'total_events' => \App\Models\Event::count(),
+            'upcoming_events' => \App\Models\Event::where('event_date', '>=', now())->count(),
+            'past_events' => \App\Models\Event::where('event_date', '<', now())->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats
+        ]);
+    }
+
+    // ============================================
+    // MODERATION API METHODS
+    // ============================================
+
+    public function getReportStatistics()
+    {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'pending' => AnnouncementReport::where('status', 'pending')->count(),
+                'resolved' => AnnouncementReport::where('status', 'resolved')->count(),
+                'dismissed' => AnnouncementReport::where('status', 'dismissed')->count(),
+                'total' => AnnouncementReport::count(),
+            ],
+        ]);
+    }
+
+    public function getReports(Request $request)
+    {
+        $status = $request->get('status', 'all');
+        $priority = $request->get('priority', 'all');
+        $search = $request->get('search', '');
+
+        $query = AnnouncementReport::with(['announcement.author', 'reporter'])
+            ->latest();
+
+        if ($status && $status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        if ($priority && $priority !== 'all') {
+            $query->where('priority', $priority);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('reason', 'like', "%{$search}%")
+                    ->orWhereHas('reporter', fn ($r) => $r->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('announcement', fn ($a) => $a->where('title', 'like', "%{$search}%"));
+            });
+        }
+
+        $reports = $query->get()->map(fn ($report) => $report->toModerationArray());
+
+        return response()->json([
+            'success' => true,
+            'data' => $reports,
+        ]);
+    }
+
+    public function getReport($id)
+    {
+        $report = AnnouncementReport::with(['announcement.author', 'reporter', 'resolver'])
+            ->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $report->toModerationArray(),
+        ]);
+    }
+
+    public function dismissReport(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $report = AnnouncementReport::findOrFail($id);
+
+        if ($report->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This report has already been processed.',
+            ], 422);
+        }
+
+        $report->update([
+            'status' => 'dismissed',
+            'resolution_note' => $validated['reason'] ?? 'Report dismissed by admin.',
+            'resolved_by' => auth()->id(),
+            'resolved_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Report dismissed. The announcement was not changed.',
+        ]);
+    }
+
+    public function banReportedAnnouncement(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'reason' => 'nullable|string|max:500',
+        ]);
+
+        $report = AnnouncementReport::with('announcement')->findOrFail($id);
+
+        if ($report->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This report has already been processed.',
+            ], 422);
+        }
+
+        $announcement = $report->announcement;
+
+        if (! $announcement) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Announcement not found.',
+            ], 404);
+        }
+
+        $banReason = $validated['reason'] ?? 'Removed due to community reports.';
+
+        DB::transaction(function () use ($announcement, $report, $banReason) {
+            $announcement->update([
+                'status' => 'banned',
+                'is_banned' => true,
+                'is_active' => false,
+                'is_featured' => false,
+                'banned_at' => now(),
+                'banned_by' => auth()->id(),
+                'ban_reason' => $banReason,
+            ]);
+
+            AnnouncementReport::where('announcement_id', $announcement->id)
+                ->where('status', 'pending')
+                ->update([
+                    'status' => 'resolved',
+                    'resolution_note' => $banReason,
+                    'resolved_by' => auth()->id(),
+                    'resolved_at' => now(),
+                ]);
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Announcement has been banned and hidden from users.',
+        ]);
+    }
+
+    // ============================================
+    // USER MANAGEMENT METHODS
+    // ============================================
 
     /**
      * Get all users with pagination
@@ -166,7 +407,6 @@ class AdminController extends Controller
             'success' => true,
             'message' => 'User deleted successfully'
         ]);
-    
     }
 
     /**
@@ -317,13 +557,13 @@ class AdminController extends Controller
     {
         $announcements = \App\Models\Announcement::count();
         $events = \App\Models\Event::count();
-        $totalAnnouncements = \App\Models\Announcement::sum('views') ?? 0;
+        $totalViews = \App\Models\Announcement::sum('view_count') ?? 0;
         
         $stats = [
             'total_announcements' => $announcements,
             'total_events' => $events,
-            'total_views' => $totalAnnouncements,
-            'avg_views_per_announcement' => $announcements > 0 ? round($totalAnnouncements / $announcements, 2) : 0,
+            'total_views' => $totalViews,
+            'avg_views_per_announcement' => $announcements > 0 ? round($totalViews / $announcements, 2) : 0,
         ];
 
         return response()->json([
@@ -519,36 +759,6 @@ class AdminController extends Controller
         ]);
     }
 
-  /**
- * Show moderation page with hydrated data queues
- */
-public function moderation()
-{
-    $user = auth()->user();
-
-    // 1. Fetch announcements waiting for initial verification
-    $pendingAnnouncements = \App\Models\Announcement::with('author')
-        ->where('status', 'pending_verification')
-        ->latest()
-        ->get();
-
-    // 2. Fetch pending user reports 
-    $pendingReports = AnnouncementReport::with(['announcement.author', 'reporter'])
-        ->where('status', 'pending')
-        ->latest()
-        ->get();
-
-    // 3. Fetch current status summary counters
-    $reportStats = [
-        'pending'   => AnnouncementReport::where('status', 'pending')->count(),
-        'resolved'  => AnnouncementReport::where('status', 'resolved')->count(),
-        'dismissed' => AnnouncementReport::where('status', 'dismissed')->count(),
-        'total'     => AnnouncementReport::count(),
-    ];
-
-    return view('admin.moderation', compact('user', 'pendingAnnouncements', 'pendingReports', 'reportStats'));
-}
-
     /**
      * Delete an event
      */
@@ -608,27 +818,6 @@ public function moderation()
         return response()->json([
             'success' => true,
             'message' => 'Settings updated successfully'
-        ]);
-    }
-
-    /**
-     * Get content statistics
-     */
-    public function getContentStats()
-    {
-        $stats = [
-            'total_announcements' => \App\Models\Announcement::count(),
-            'published_announcements' => \App\Models\Announcement::where('status', 'published')->count(),
-            'pending_announcements' => \App\Models\Announcement::where('status', 'pending')->count(),
-            'rejected_announcements' => \App\Models\Announcement::where('status', 'rejected')->count(),
-            'total_events' => \App\Models\Event::count(),
-            'upcoming_events' => \App\Models\Event::where('event_date', '>=', now())->count(),
-            'past_events' => \App\Models\Event::where('event_date', '<', now())->count(),
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => $stats
         ]);
     }
 
@@ -838,143 +1027,4 @@ public function moderation()
             'message' => count($validated['announcement_ids']) . ' announcements removed from featured'
         ]);
     }
-
-    public function getReportStatistics()
-    {
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'pending' => AnnouncementReport::where('status', 'pending')->count(),
-                'resolved' => AnnouncementReport::where('status', 'resolved')->count(),
-                'dismissed' => AnnouncementReport::where('status', 'dismissed')->count(),
-                'total' => AnnouncementReport::count(),
-            ],
-        ]);
-    }
-
-    public function getReports(Request $request)
-    {
-        $status = $request->get('status', 'all');
-        $priority = $request->get('priority', 'all');
-        $search = $request->get('search', '');
-
-        $query = AnnouncementReport::with(['announcement.author', 'reporter'])
-            ->latest();
-
-        if ($status && $status !== 'all') {
-            $query->where('status', $status);
-        }
-
-        if ($priority && $priority !== 'all') {
-            $query->where('priority', $priority);
-        }
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('reason', 'like', "%{$search}%")
-                    ->orWhereHas('reporter', fn ($r) => $r->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('announcement', fn ($a) => $a->where('title', 'like', "%{$search}%"));
-            });
-        }
-
-        $reports = $query->get()->map(fn ($report) => $report->toModerationArray());
-
-        return response()->json([
-            'success' => true,
-            'data' => $reports,
-        ]);
-    }
-
-    public function getReport($id)
-    {
-        $report = AnnouncementReport::with(['announcement.author', 'reporter', 'resolver'])
-            ->findOrFail($id);
-
-        return response()->json([
-            'success' => true,
-            'data' => $report->toModerationArray(),
-        ]);
-    }
-
-    public function dismissReport(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'reason' => 'nullable|string|max:500',
-        ]);
-
-        $report = AnnouncementReport::findOrFail($id);
-
-        if ($report->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'This report has already been processed.',
-            ], 422);
-        }
-
-        $report->update([
-            'status' => 'dismissed',
-            'resolution_note' => $validated['reason'] ?? 'Report dismissed by admin.',
-            'resolved_by' => auth()->id(),
-            'resolved_at' => now(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Report dismissed. The announcement was not changed.',
-        ]);
-    }
-
-    public function banReportedAnnouncement(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'reason' => 'nullable|string|max:500',
-        ]);
-
-        $report = AnnouncementReport::with('announcement')->findOrFail($id);
-
-        if ($report->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'This report has already been processed.',
-            ], 422);
-        }
-
-        $announcement = $report->announcement;
-
-        if (! $announcement) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Announcement not found.',
-            ], 404);
-        }
-
-        $banReason = $validated['reason'] ?? 'Removed due to community reports.';
-
-        DB::transaction(function () use ($announcement, $report, $banReason) {
-            $announcement->update([
-                'status' => 'banned',
-                'is_banned' => true,
-                'is_active' => false,
-                'is_featured' => false,
-                'banned_at' => now(),
-                'banned_by' => auth()->id(),
-                'ban_reason' => $banReason,
-            ]);
-
-            AnnouncementReport::where('announcement_id', $announcement->id)
-                ->where('status', 'pending')
-                ->update([
-                    'status' => 'resolved',
-                    'resolution_note' => $banReason,
-                    'resolved_by' => auth()->id(),
-                    'resolved_at' => now(),
-                ]);
-        });
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Announcement has been banned and hidden from users.',
-        ]);
-    }
-
 }

@@ -15,6 +15,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\CommunityHubController;
 use App\Http\Controllers\Admin\FeaturedPostController;
 use App\Http\Controllers\GoogleCalendarController;
+use App\Http\Controllers\NotificationController;
 
 // Public Routes (No Auth Required)
 Route::get('/', function () {
@@ -318,6 +319,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/statistics', [AdminController::class, 'getStatistics'])->name('statistics');
         Route::get('/content-stats', [AdminController::class, 'getContentStats'])->name('content-stats');
         
+        // Global Admin Notification Routes (MOVED HERE)
+        // If your "Mark all as read" button is a plain <a> link, change Route::post to Route::get
+        Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
+             ->name('notifications.markAllRead');
+
         // Featured Posts Management Routes
         Route::get('/featured-posts', [FeaturedPostController::class, 'index'])->name('featured-posts');
         Route::post('/featured-posts/toggle', [FeaturedPostController::class, 'toggle'])->name('featured-posts.toggle');
@@ -349,6 +355,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/list', [AdminController::class, 'getUsers'])->name('index');
             Route::post('/bulk-action', [AdminController::class, 'bulkAction'])->name('bulk-action');
             Route::post('/create', [AdminController::class, 'createUser'])->name('create');
+            
+            // REMOVED THE DUPLICATE/MISPLACED NOTIFICATION ROUTES FROM HERE
+            
             Route::get('/{id}', [AdminController::class, 'getUser'])->name('show');
             Route::put('/{id}', [AdminController::class, 'updateUser'])->name('update');
             Route::delete('/{id}', [AdminController::class, 'deleteUser'])->name('destroy');
@@ -358,6 +367,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
     });
 
+    
     // ============================================
     // ADMIN MODERATION API (used by content moderation page)
     // ============================================

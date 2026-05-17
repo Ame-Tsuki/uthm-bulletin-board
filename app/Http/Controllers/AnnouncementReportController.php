@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Announcement;
 use App\Models\AnnouncementReport;
+use App\Models\User; // <-- ADDED THIS IMPORT
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Notifications\NewReportNotification;
+use Illuminate\Support\Facades\Notification;
 
 class AnnouncementReportController extends Controller
 {
@@ -60,6 +63,7 @@ class AnnouncementReportController extends Controller
             $priority = 'high';
         }
 
+        // 1. Create the report
         $report = AnnouncementReport::create([
             'announcement_id' => $announcement->id,
             'reporter_id' => $user->id,
@@ -69,6 +73,15 @@ class AnnouncementReportController extends Controller
             'status' => 'pending',
         ]);
 
+        // 2. Fetch admins and send notification (MOVED UP HERE)
+        // Note: Ensure 'role' and 'admin' exactly match your users table structure!
+        $admins = User::where('role', 'admin')->get();
+        
+        if ($admins->isNotEmpty()) {
+            Notification::send($admins, new NewReportNotification($report));
+        }
+
+        // 3. Return the response LAST
         return response()->json([
             'success' => true,
             'message' => 'Thank you. Your report has been submitted for review.',

@@ -78,6 +78,14 @@ class AdminController extends Controller
         return view('admin.admin', compact('stats'));
     }
 
+
+    public function markAllNotificationsRead()
+{
+    auth()->user()->unreadNotifications->markAsRead();
+    return back()->with('success', 'All notifications marked as read.');
+}
+
+
     /**
      * Get recent activity data for dashboard
      */

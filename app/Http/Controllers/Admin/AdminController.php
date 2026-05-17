@@ -214,57 +214,76 @@ class AdminController extends Controller
     }
 
     public function banReportedAnnouncement(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'reason' => 'nullable|string|max:500',
-        ]);
+{
+    $validated = $request->validate([
+        'reason' => 'nullable|string|max:500',
+    ]);
 
-        $report = AnnouncementReport::with('announcement')->findOrFail($id);
+    $report = AnnouncementReport::with('announcement')->findOrFail($id);
 
-        if ($report->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'This report has already been processed.',
-            ], 422);
-        }
-
-        $announcement = $report->announcement;
-
-        if (! $announcement) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Announcement not found.',
-            ], 404);
-        }
-
-        $banReason = $validated['reason'] ?? 'Removed due to community reports.';
-
-        DB::transaction(function () use ($announcement, $report, $banReason) {
-            $announcement->update([
-                'status' => 'banned',
-                'is_banned' => true,
-                'is_active' => false,
-                'is_featured' => false,
-                'banned_at' => now(),
-                'banned_by' => auth()->id(),
-                'ban_reason' => $banReason,
-            ]);
-
-            AnnouncementReport::where('announcement_id', $announcement->id)
-                ->where('status', 'pending')
-                ->update([
-                    'status' => 'resolved',
-                    'resolution_note' => $banReason,
-                    'resolved_by' => auth()->id(),
-                    'resolved_at' => now(),
-                ]);
-        });
-
+    if ($report->status !== 'pending') {
         return response()->json([
-            'success' => true,
-            'message' => 'Announcement has been banned and hidden from users.',
-        ]);
+            'success' => false,
+            'message' => 'This report has already been processed.',
+        ], 422);
     }
+
+    $announcement = $report->announcement;
+
+    if (! $announcement) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Announcement not found.',
+        ], 404);
+    }
+
+    $banReason = $validated['reason'] ?? 'Removed due to community reports.';
+
+    DB::transaction(function () use ($announcement, $report, $banReason) {
+        // Your existing ban logic
+        $announcement->status = 'banned';
+        $announcement->is_banned = true;
+        $announcement->is_active = false;
+        $announcement->banned_at = now();
+        $announcement->banned_by = auth()->id();
+        $announcement->ban_reason = $banReason;
+        
+        // ADD THIS BLOCK to automatically remove featured status upon ban
+        if ($announcement->is_featured) {
+            $announcement->is_featured = false;
+            $announcement->featured_order = null;
+            $announcement->featured_at = null;
+            
+            // Reorder the remaining featured posts so there are no gaps
+            $featured = \App\Models\Announcement::where('is_featured', true)
+                ->where('status', 'published') // Only reorder published featured posts
+                ->orderBy('featured_order')
+                ->get();
+                
+            foreach ($featured as $index => $item) {
+                $item->featured_order = $index + 1;
+                $item->save();
+            }
+        }
+        
+        $announcement->save();
+
+        // Update all pending reports for this announcement
+        AnnouncementReport::where('announcement_id', $announcement->id)
+            ->where('status', 'pending')
+            ->update([
+                'status' => 'resolved',
+                'resolution_note' => $banReason,
+                'resolved_by' => auth()->id(),
+                'resolved_at' => now(),
+            ]);
+    });
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Announcement has been banned and hidden from users.',
+    ]);
+}
 
     // ============================================
     // USER MANAGEMENT METHODS

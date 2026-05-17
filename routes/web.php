@@ -321,7 +321,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Featured Posts Management Routes
         Route::get('/featured-posts', [FeaturedPostController::class, 'index'])->name('featured-posts');
         Route::post('/featured-posts/toggle', [FeaturedPostController::class, 'toggle'])->name('featured-posts.toggle');
-        Route::post('/featured-posts/update-image', [FeaturedPostController::class, 'updateImage'])->name('featured-posts.update-image');
         Route::post('/featured-posts/reorder', [FeaturedPostController::class, 'reorder'])->name('featured-posts.reorder');
     
         // Admin Calendar

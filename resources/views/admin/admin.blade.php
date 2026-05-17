@@ -31,12 +31,23 @@
 @endsection
 
 @section('content')
+@php
+    // Safely define base counts
+    $totalUsers = $stats['total_users'] ?? 0;
+    $students = $stats['students'] ?? 0;
+    $staff = $stats['staff'] ?? 0;
+    
+    // Calculate percentages (rounded to 1 decimal place), defaulting to 0 if no users exist
+    $studentPercentage = $totalUsers > 0 ? round(($students / $totalUsers) * 100, 1) : 0;
+    $staffPercentage = $totalUsers > 0 ? round(($staff / $totalUsers) * 100, 1) : 0;
+@endphp
+
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="stat-card bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow">
         <div class="flex justify-between items-center">
             <div>
                 <p class="text-blue-100">Total Users</p>
-                <h3 class="text-3xl font-bold mt-2">{{ $stats['total_users'] ?? 0 }}</h3>
+                <h3 class="text-3xl font-bold mt-2">{{ $totalUsers }}</h3>
                 <p class="text-blue-100 text-sm mt-2">
                     <i class="fas fa-arrow-up mr-1"></i>{{ $stats['user_growth_percentage'] ?? '0' }}% from last month
                 </p>
@@ -51,9 +62,9 @@
         <div class="flex justify-between items-center">
             <div>
                 <p class="text-green-100">Active Students</p>
-                <h3 class="text-3xl font-bold mt-2">{{ $stats['students'] ?? 0 }}</h3>
+                <h3 class="text-3xl font-bold mt-2">{{ $students }}</h3>
                 <p class="text-green-100 text-sm mt-2">
-                    <i class="fas fa-user-graduate mr-1"></i>{{ $stats['student_percentage'] ?? '0' }}% of total
+                    <i class="fas fa-user-graduate mr-1"></i>{{ $studentPercentage }}% of total
                 </p>
             </div>
             <div class="bg-white bg-opacity-20 p-4 rounded-full">
@@ -66,9 +77,9 @@
         <div class="flex justify-between items-center">
             <div>
                 <p class="text-orange-100">Staff Members</p>
-                <h3 class="text-3xl font-bold mt-2">{{ $stats['staff'] ?? 0 }}</h3>
+                <h3 class="text-3xl font-bold mt-2">{{ $staff }}</h3>
                 <p class="text-orange-100 text-sm mt-2">
-                    <i class="fas fa-user-tie mr-1"></i>{{ $stats['staff_percentage'] ?? '0' }}% of total
+                    <i class="fas fa-user-tie mr-1"></i>{{ $staffPercentage }}% of total
                 </p>
             </div>
             <div class="bg-white bg-opacity-20 p-4 rounded-full">
@@ -225,19 +236,7 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm p-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-6">System Status</h2>
         
-        <div class="space-y-4">
-            @foreach($stats['system_status'] ?? [] as $status)
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div class="w-3 h-3 rounded-full {{ $status['status'] == 'online' ? 'bg-green-500' : ($status['status'] == 'warning' ? 'bg-yellow-500' : 'bg-red-500') }} mr-3"></div>
-                    <span class="font-medium">{{ $status['name'] }}</span>
-                </div>
-                <span class="{{ $status['status'] == 'online' ? 'text-green-600' : ($status['status'] == 'warning' ? 'text-yellow-600' : 'text-red-600') }} font-bold">{{ $status['value'] }}</span>
-            </div>
-            @endforeach
-        </div>
         
         <div class="mt-8">
             <h3 class="font-bold text-gray-700 mb-3">Recent Activity</h3>

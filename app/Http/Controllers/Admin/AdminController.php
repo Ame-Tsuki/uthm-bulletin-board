@@ -9,23 +9,63 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
-    /**
+   /**
      * Display admin dashboard with statistics
      */
     public function dashboard()
     {
+        // 1. Get base counts first so we can do math on them
+        $totalUsers = \App\Models\User::count();
+        $students = \App\Models\User::where('role', 'student')->count();
+        $staff = \App\Models\User::where('role', 'staff')->count();
+        $pendingReports = \App\Models\AnnouncementReport::where('status', 'pending')->count();
+
+        // 2. Calculate Role Percentages (safely avoiding division by zero)
+        $studentPercentage = $totalUsers > 0 ? round(($students / $totalUsers) * 100, 1) : 0;
+        $staffPercentage = $totalUsers > 0 ? round(($staff / $totalUsers) * 100, 1) : 0;
+
+        // 3. Calculate User Growth Percentage (This Month vs Last Month)
+        $currentMonthNewUsers = \App\Models\User::whereMonth('created_at', \Carbon\Carbon::now()->month)
+                                    ->whereYear('created_at', \Carbon\Carbon::now()->year)
+                                    ->count();
+
+        $lastMonthNewUsers = \App\Models\User::whereMonth('created_at', \Carbon\Carbon::now()->subMonth()->month)
+                                  ->whereYear('created_at', \Carbon\Carbon::now()->subMonth()->year)
+                                  ->count();
+
+        if ($lastMonthNewUsers > 0) {
+            $growthPercentage = round((($currentMonthNewUsers - $lastMonthNewUsers) / $lastMonthNewUsers) * 100, 1);
+        } else {
+            $growthPercentage = $currentMonthNewUsers > 0 ? 100 : 0; 
+        }
+
+        // 4. Build the final stats array
         $stats = [
-            'total_users' => User::count(),
-            'students' => User::where('role', 'student')->count(),
-            'staff' => User::where('role', 'staff')->count(),
-            'verified_users' => User::where('is_verified', true)->count(),
-            'unverified_users' => User::where('is_verified', false)->count(),
-            'recent_users' => User::orderBy('created_at', 'desc')->take(10)->get(),
-            'pending_reports' => AnnouncementReport::where('status', 'pending')->count(),
+            // Base Stats
+            'total_users' => $totalUsers,
+            'students' => $students,
+            'staff' => $staff,
+            
+            // The Calculated Percentages for the View
+            'user_growth_percentage' => $growthPercentage,
+            'student_percentage' => $studentPercentage,
+            'staff_percentage' => $staffPercentage,
+            
+            // Other User Stats
+            'verified_users' => \App\Models\User::where('is_verified', true)->count(),
+            'unverified_users' => \App\Models\User::where('is_verified', false)->count(),
+            'recent_users' => \App\Models\User::orderBy('created_at', 'desc')->take(10)->get(),
+            
+            // Reports & Announcements
+            'pending_reports' => $pendingReports,
+            'pending_verification_text' => $pendingReports > 0 ? 'Requires review' : 'All clear',
             'pending_verification_announcements' => \App\Models\Announcement::where('status', 'pending_verification')->count(),
+            
+            // System
             'system_status' => [
                 ['name' => 'Database', 'status' => 'online', 'value' => 'Online'],
                 ['name' => 'Mail Server', 'status' => 'online', 'value' => 'Online'],
@@ -46,7 +86,7 @@ class AdminController extends Controller
         $activities = [];
         
         // Get recent user registrations
-        $recentUsers = User::orderBy('created_at', 'desc')->take(3)->get();
+        $recentUsers = \App\Models\User::orderBy('created_at', 'desc')->take(3)->get();
         foreach ($recentUsers as $user) {
             $activities[] = [
                 'icon_bg' => 'bg-blue-100',

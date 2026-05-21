@@ -384,6 +384,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
 
     Route::middleware('role:admin')->prefix('api/admin')->name('admin.api.')->group(function () {
+        Route::get('/analytics', [AdminController::class, 'getAnalytics'])->name('analytics');
+        Route::get('/activity', [AdminController::class, 'getActivityFeed'])->name('activity');
+        Route::post('/report', [AdminController::class, 'generateReport'])->name('report');
+
         Route::get('/reports/statistics', [AdminController::class, 'getReportStatistics'])->name('reports.statistics');
         Route::get('/reports', [AdminController::class, 'getReports'])->name('reports.index');
         Route::get('/reports/{id}', [AdminController::class, 'getReport'])->name('reports.show');

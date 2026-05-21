@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Announcement;
 use App\Models\AnnouncementReport;
+use App\Models\Event;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 
@@ -162,8 +165,8 @@ class AdminController extends Controller
             'rejected_announcements' => \App\Models\Announcement::where('status', 'rejected')->count(),
             'draft_announcements' => \App\Models\Announcement::where('status', 'draft')->count(),
             'total_events' => \App\Models\Event::count(),
-            'upcoming_events' => \App\Models\Event::where('event_date', '>=', now())->count(),
-            'past_events' => \App\Models\Event::where('event_date', '<', now())->count(),
+            'upcoming_events' => Event::where('start_date', '>=', now()->toDateString())->count(),
+            'past_events' => Event::where('start_date', '<', now()->toDateString())->count(),
         ];
 
         return response()->json([
@@ -620,23 +623,139 @@ class AdminController extends Controller
     /**
      * Get analytics data (announcements, events, engagement)
      */
-    public function getAnalytics()
+    public function getAnalytics(Request $request)
     {
-        $announcements = \App\Models\Announcement::count();
-        $events = \App\Models\Event::count();
-        $totalViews = \App\Models\Announcement::sum('view_count') ?? 0;
-        
-        $stats = [
-            'total_announcements' => $announcements,
-            'total_events' => $events,
-            'total_views' => $totalViews,
-            'avg_views_per_announcement' => $announcements > 0 ? round($totalViews / $announcements, 2) : 0,
-        ];
+        $period = $request->get('period', 'month');
+        $since = $this->periodStart($period);
+        $today = now()->toDateString();
+
+        $totalViews = (int) Announcement::sum('view_count');
+        $announcementCount = Announcement::count();
 
         return response()->json([
             'success' => true,
-            'data' => $stats
+            'data' => [
+                'period' => $period,
+                'new_users' => User::where('created_at', '>=', $since)->count(),
+                'new_announcements' => Announcement::where('created_at', '>=', $since)->count(),
+                'new_events' => Event::where('created_at', '>=', $since)->count(),
+                'active_sessions' => $this->countActiveSessions(),
+                'announcements' => [
+                    'published' => Announcement::where('status', 'published')->count(),
+                    'pending' => Announcement::where('status', 'pending_verification')->count(),
+                    'rejected' => Announcement::where('status', 'rejected')->count(),
+                ],
+                'events' => [
+                    'upcoming' => Event::where('start_date', '>=', $today)->count(),
+                    'past' => Event::where('start_date', '<', $today)->count(),
+                ],
+                'total_views' => $totalViews,
+                'avg_views_per_announcement' => $announcementCount > 0
+                    ? round($totalViews / $announcementCount, 2)
+                    : 0,
+            ],
         ]);
+    }
+
+    /**
+     * Get unified activity feed for analytics dashboard
+     */
+    public function getActivityFeed()
+    {
+        $activities = collect();
+
+        User::orderByDesc('created_at')->limit(8)->get(['name', 'created_at'])->each(function ($user) use ($activities) {
+            $activities->push([
+                'type' => 'user_created',
+                'description' => "New user registered: {$user->name}",
+                'created_at' => $user->created_at,
+            ]);
+        });
+
+        Announcement::orderByDesc('created_at')->limit(8)->get(['title', 'status', 'created_at'])->each(function ($announcement) use ($activities) {
+            $type = match ($announcement->status) {
+                'published' => 'announcement_approved',
+                'rejected' => 'announcement_rejected',
+                default => 'announcement_created',
+            };
+            $verb = match ($announcement->status) {
+                'published' => 'published',
+                'rejected' => 'rejected',
+                'pending_verification' => 'submitted for verification',
+                default => 'created',
+            };
+            $activities->push([
+                'type' => $type,
+                'description' => "Announcement {$verb}: {$announcement->title}",
+                'created_at' => $announcement->created_at,
+            ]);
+        });
+
+        Event::orderByDesc('created_at')->limit(6)->get(['title', 'created_at'])->each(function ($event) use ($activities) {
+            $activities->push([
+                'type' => 'event_created',
+                'description' => "New event created: {$event->title}",
+                'created_at' => $event->created_at,
+            ]);
+        });
+
+        User::where('is_verified', true)
+            ->orderByDesc('updated_at')
+            ->limit(5)
+            ->get(['name', 'updated_at'])
+            ->each(function ($user) use ($activities) {
+                $activities->push([
+                    'type' => 'user_verified',
+                    'description' => "User verified: {$user->name}",
+                    'created_at' => $user->updated_at,
+                ]);
+            });
+
+        $feed = $activities
+            ->sortByDesc(fn ($item) => $item['created_at'])
+            ->take(20)
+            ->values()
+            ->map(fn ($item) => [
+                'type' => $item['type'],
+                'description' => $item['description'],
+                'created_at' => $item['created_at'] instanceof Carbon
+                    ? $item['created_at']->toIso8601String()
+                    : Carbon::parse($item['created_at'])->toIso8601String(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $feed,
+        ]);
+    }
+
+    /**
+     * Resolve the start datetime for an analytics period filter.
+     */
+    private function periodStart(string $period): Carbon
+    {
+        return match ($period) {
+            'day' => now()->startOfDay(),
+            'week' => now()->startOfWeek(),
+            'year' => now()->startOfYear(),
+            default => now()->startOfMonth(),
+        };
+    }
+
+    /**
+     * Count active sessions (database sessions when available, otherwise recent user activity).
+     */
+    private function countActiveSessions(): int
+    {
+        if (Schema::hasTable('sessions')) {
+            $cutoff = now()->subMinutes((int) config('session.lifetime', 120))->getTimestamp();
+
+            return (int) DB::table('sessions')
+                ->where('last_activity', '>=', $cutoff)
+                ->count();
+        }
+
+        return User::where('updated_at', '>=', now()->subMinutes(30))->count();
     }
 
     /**
@@ -893,26 +1012,34 @@ class AdminController extends Controller
      */
     public function generateReport(Request $request)
     {
-        $period = $request->get('period', 'month'); // day, week, month, year
-
-        $date = match ($period) {
-            'day' => now()->subDay(),
-            'week' => now()->subWeek(),
-            'year' => now()->subYear(),
-            default => now()->subMonth(),
-        };
+        $period = $request->get('period', 'month');
+        $since = $this->periodStart($period);
+        $today = now()->toDateString();
 
         $report = [
             'period' => $period,
-            'new_users' => User::where('created_at', '>=', $date)->count(),
-            'new_announcements' => \App\Models\Announcement::where('created_at', '>=', $date)->count(),
-            'new_events' => \App\Models\Event::where('created_at', '>=', $date)->count(),
-            'verified_users' => User::where('is_verified', true)->where('created_at', '>=', $date)->count(),
+            'generated_at' => now()->toIso8601String(),
+            'new_users' => User::where('created_at', '>=', $since)->count(),
+            'new_announcements' => Announcement::where('created_at', '>=', $since)->count(),
+            'new_events' => Event::where('created_at', '>=', $since)->count(),
+            'verified_users' => User::where('is_verified', true)->where('created_at', '>=', $since)->count(),
+            'active_sessions' => $this->countActiveSessions(),
+            'announcements' => [
+                'published' => Announcement::where('status', 'published')->count(),
+                'pending' => Announcement::where('status', 'pending_verification')->count(),
+                'rejected' => Announcement::where('status', 'rejected')->count(),
+            ],
+            'events' => [
+                'upcoming' => Event::where('start_date', '>=', $today)->count(),
+                'past' => Event::where('start_date', '<', $today)->count(),
+            ],
+            'total_views' => (int) Announcement::sum('view_count'),
         ];
 
         return response()->json([
             'success' => true,
-            'data' => $report
+            'data' => $report,
+            'message' => 'Report generated successfully for ' . str_replace('_', ' ', $period) . ' period.',
         ]);
     }
 

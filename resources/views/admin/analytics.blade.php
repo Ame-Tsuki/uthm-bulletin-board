@@ -143,10 +143,14 @@
                         </div>
                         
                         <div class="flex items-center space-x-4">
-                            <button class="relative text-gray-600 hover:text-gray-800">
+                            <a href="{{ route('admin.moderation') }}" class="relative text-gray-600 hover:text-gray-800">
                                 <i class="fas fa-bell text-xl"></i>
-                                <span class="absolute -top-1 -right-1 bg-red-500 text-xs text-white rounded-full h-5 w-5 flex items-center justify-center">3</span>
-                            </button>
+                                @if(Auth::check() && Auth::user()->unreadNotifications->count() > 0)
+                                    <span class="absolute -top-1 -right-1 bg-red-500 text-xs text-white rounded-full h-5 w-5 flex items-center justify-center">
+                                        {{ Auth::user()->unreadNotifications->count() }}
+                                    </span>
+                                @endif
+                            </a>
                             <div class="relative">
                                 <button id="userMenu" class="flex items-center space-x-2 focus:outline-none">
                                     <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -353,7 +357,7 @@
                     </div>
                     <div class="flex items-center space-x-4 mt-2 md:mt-0">
                         <span class="text-sm text-gray-600">v1.2.1</span>
-                        <span class="text-sm text-gray-600">Last updated: Today, 08:45 AM</span>
+                        <span class="text-sm text-gray-600" id="lastUpdatedText">Last updated: —</span>
                     </div>
                 </div>
             </footer>
@@ -384,10 +388,18 @@
             }
         });
 
+        const analyticsUrl = @json(route('admin.api.analytics'));
+        const activityUrl = @json(route('admin.api.activity'));
+        const reportUrl = @json(route('admin.api.report'));
+
         // Load analytics on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadAnalytics();
             loadActivityFeed();
+
+            document.getElementById('periodFilter')?.addEventListener('change', function() {
+                loadAnalytics();
+            });
             
             document.getElementById('generateReportBtn')?.addEventListener('click', function() {
                 const period = document.getElementById('periodFilter').value;
@@ -396,7 +408,11 @@
         });
 
         function loadAnalytics() {
-            fetch('/api/admin/analytics')
+            const period = document.getElementById('periodFilter')?.value || 'month';
+            fetch(`${analyticsUrl}?period=${encodeURIComponent(period)}`, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+            })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -429,13 +445,25 @@
                         document.getElementById('upcomingEvents').textContent = analytics.events?.upcoming || 0;
                         document.getElementById('pastEvents').textContent = analytics.events?.past || 0;
                         document.getElementById('totalEvents').textContent = (analytics.events?.upcoming || 0) + (analytics.events?.past || 0);
+
+                        updateLastRefreshed();
                     }
                 })
                 .catch(error => console.error('Error loading analytics:', error));
         }
 
+        function updateLastRefreshed() {
+            const el = document.getElementById('lastUpdatedText');
+            if (el) {
+                el.textContent = 'Last updated: ' + new Date().toLocaleString();
+            }
+        }
+
         function loadActivityFeed() {
-            fetch('/api/admin/activity')
+            fetch(activityUrl, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
+            })
                 .then(response => response.json())
                 .then(data => {
                     const container = document.getElementById('activityFeed');
@@ -512,21 +540,23 @@
             generateBtn.disabled = true;
             generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
             
-            fetch('/api/admin/report', {
+            fetch(reportUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest',
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({ period: period })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showNotification('Report generated successfully!', 'success');
-                    // You could open a modal with report data or trigger download
-                    if (data.data && data.data.download_url) {
-                        window.open(data.data.download_url, '_blank');
+                    showNotification(data.message || 'Report generated successfully!', 'success');
+                    if (data.data) {
+                        loadAnalytics();
                     }
                 } else {
                     showNotification(data.message || 'Error generating report', 'error');

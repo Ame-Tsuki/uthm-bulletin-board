@@ -54,6 +54,24 @@ Route::middleware('auth')->group(function () {
     })->middleware(['throttle:6,1'])->name('verification.send');
 });
 
+// ============================================
+// NOTIFICATION ROUTES (Available to ALL authenticated users)
+// ============================================
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Mark all notifications as read
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
+        ->name('notifications.markAllRead');
+    
+    // Mark a single notification as read
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])
+        ->name('notifications.read');
+    
+    // Get unread notifications count
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])
+        ->name('notifications.unread-count');
+});
+
 // Authenticated Routes (Require Login)
 Route::middleware(['auth', 'verified'])->group(function () {
     
@@ -138,7 +156,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->where('is_featured', 1)
                 ->where('is_active', 1)
                 ->where('is_banned', false)
-                ->where('status', 'published')
+                ->visibleOnBoard()
                 ->where(function($query) {
                     $query->whereNull('published_at')
                           ->orWhere('published_at', '<=', now());
@@ -151,7 +169,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             $announcements = App\Models\Announcement::with('author')
                 ->where('is_active', 1)
                 ->where('is_banned', false)
-                ->where('status', 'published')
+                ->visibleOnBoard()
                 ->where(function($query) {
                     $query->whereNull('published_at')
                           ->orWhere('published_at', '<=', now());
@@ -273,6 +291,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
     Route::get('/announcements/published', [AnnouncementController::class, 'published'])->name('announcements.published');
     Route::get('/announcements/drafts', [AnnouncementController::class, 'drafts'])->name('announcements.drafts');
+    Route::post('/announcements/{announcement}/add-to-calendar', [AnnouncementController::class, 'addToSystemCalendar'])->name('announcements.add-to-calendar');
+    Route::get('/announcements/{announcement}/calendar', [AnnouncementController::class, 'downloadCalendar'])->name('announcements.calendar');
     Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show'])->name('announcements.show');
     Route::get('/announcements/{announcement}/edit', [AnnouncementController::class, 'edit'])->name('announcements.edit');
     Route::get('/my-announcements', [AnnouncementController::class, 'myAnnouncements'])->name('announcements.my-announcements');
@@ -319,11 +339,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/statistics', [AdminController::class, 'getStatistics'])->name('statistics');
         Route::get('/content-stats', [AdminController::class, 'getContentStats'])->name('content-stats');
         
-        // Global Admin Notification Routes (MOVED HERE)
-        // If your "Mark all as read" button is a plain <a> link, change Route::post to Route::get
-        Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
-             ->name('notifications.markAllRead');
-
         // Featured Posts Management Routes
         Route::get('/featured-posts', [FeaturedPostController::class, 'index'])->name('featured-posts');
         Route::post('/featured-posts/toggle', [FeaturedPostController::class, 'toggle'])->name('featured-posts.toggle');
@@ -355,9 +370,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/list', [AdminController::class, 'getUsers'])->name('index');
             Route::post('/bulk-action', [AdminController::class, 'bulkAction'])->name('bulk-action');
             Route::post('/create', [AdminController::class, 'createUser'])->name('create');
-            
-            // REMOVED THE DUPLICATE/MISPLACED NOTIFICATION ROUTES FROM HERE
-            
             Route::get('/{id}', [AdminController::class, 'getUser'])->name('show');
             Route::put('/{id}', [AdminController::class, 'updateUser'])->name('update');
             Route::delete('/{id}', [AdminController::class, 'deleteUser'])->name('destroy');
@@ -367,7 +379,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
     });
 
-    
     // ============================================
     // ADMIN MODERATION API (used by content moderation page)
     // ============================================

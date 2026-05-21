@@ -25,6 +25,7 @@ class Event extends Model
         'recurrence_pattern',
         'color',
         'user_id',
+        'announcement_id',
         'google_event_id',
         'synced_with_google',
         'last_synced_at',
@@ -46,6 +47,11 @@ class Event extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function announcement(): BelongsTo
+    {
+        return $this->belongsTo(Announcement::class);
     }
 
     /**

@@ -925,7 +925,7 @@ class AdminController extends Controller
         $search = $request->get('search', '');
 
         $query = \App\Models\Announcement::where('is_featured', true)
-            ->where('status', 'published')
+            ->visibleOnBoard()
             ->with('author');
 
         if ($search) {
@@ -953,7 +953,7 @@ class AdminController extends Controller
         $search = $request->get('search', '');
         $limit = $request->get('limit', 10);
 
-        $query = \App\Models\Announcement::where('status', 'published')
+        $query = \App\Models\Announcement::visibleOnBoard()
             ->where('is_featured', false)
             ->with('author');
 

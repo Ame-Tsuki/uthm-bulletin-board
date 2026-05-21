@@ -210,13 +210,18 @@
                                     {{ optional($announcement->updated_at)->format('F j, Y \\a\\t g:i A') ?? 'Date unavailable' }}
                                 </p>
                             </div>
-                            <div class="p-4 {{ ($announcement->status === 'banned' || $announcement->is_banned) ? 'bg-red-50' : 'bg-green-50' }} rounded-lg">
-                                <p class="text-sm {{ ($announcement->status === 'banned' || $announcement->is_banned) ? 'text-red-700' : 'text-green-700' }} font-medium mb-1">Status</p>
-                                <p class="{{ ($announcement->status === 'banned' || $announcement->is_banned) ? 'text-red-900' : 'text-green-900' }}">
+                            <div class="p-4 {{ ($announcement->status === 'banned' || $announcement->is_banned) ? 'bg-red-50' : ($announcement->status === 'expired' ? 'bg-gray-50' : 'bg-green-50') }} rounded-lg">
+                                <p class="text-sm {{ ($announcement->status === 'banned' || $announcement->is_banned) ? 'text-red-700' : ($announcement->status === 'expired' ? 'text-gray-700' : 'text-green-700') }} font-medium mb-1">Status</p>
+                                <p class="{{ ($announcement->status === 'banned' || $announcement->is_banned) ? 'text-red-900' : ($announcement->status === 'expired' ? 'text-gray-900' : 'text-green-900') }}">
                                     @if($announcement->status === 'banned' || $announcement->is_banned)
                                         <span class="inline-flex items-center">
                                             <span class="h-2 w-2 bg-red-500 rounded-full mr-2"></span>
                                             Banned
+                                        </span>
+                                    @elseif($announcement->status === 'expired')
+                                        <span class="inline-flex items-center">
+                                            <span class="h-2 w-2 bg-gray-500 rounded-full mr-2"></span>
+                                            Expired
                                         </span>
                                     @else
                                         <span class="inline-flex items-center">
@@ -225,10 +230,19 @@
                                         </span>
                                     @endif
                                 </p>
+                                @if($announcement->expiry_date)
+                                    <p class="text-xs text-gray-600 mt-2">Expires: {{ $announcement->expiry_date->format('M d, Y') }}</p>
+                                @endif
                             </div>
                             <div class="p-4 bg-purple-50 rounded-lg">
                                 <p class="text-sm text-purple-700 font-medium mb-1">Visibility</p>
-                                <p class="purple-900">All Users</p>
+                                <p class="text-purple-900">
+                                    @if($announcement->status === 'expired')
+                                        Hidden from main board (author only)
+                                    @else
+                                        All Users
+                                    @endif
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -244,6 +258,12 @@
                             </p>
                         </div>
                         <div class="flex flex-wrap gap-3">
+                            @include('announcements.partials.calendar-dropdown', [
+                                'announcement' => $announcement,
+                                'calendar' => $calendar,
+                                'compact' => false,
+                            ])
+
                             <a href="{{ route('announcements.index') }}" 
                                class="inline-flex items-center px-5 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
                                 <i class="fas fa-list mr-2"></i>
@@ -423,5 +443,6 @@
             }
         });
     </script>
+    @include('announcements.partials.calendar-assets')
 </body>
 </html>

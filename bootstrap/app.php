@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Illuminate\Foundation\Configuration\Middleware $middleware) {
     $middleware->web(append: [
+        \App\Http\Middleware\ExpireAnnouncements::class,
         \App\Http\Middleware\CheckNotBanned::class,
     ]);
     $middleware->alias([

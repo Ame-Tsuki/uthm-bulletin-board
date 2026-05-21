@@ -50,121 +50,103 @@
             .sidebar-collapsed, .sidebar-expanded {
                 width: 280px !important;
                 transform: translateX(-100%);
-            }
-            .sidebar-collapsed,
-            .sidebar-expanded {
-                width: 280px !important;
-                transform: translateX(-100%);
                 transition: transform 0.3s ease;
-                }
-
+            }
             .sidebar-expanded.mobile-open {
                 transform: translateX(0);
-                }
+            }
+        }
 
         .calendar-day {
-    position: relative;
-    background: white;
-    border-right: 1px solid #e5e7eb;
-    border-bottom: 1px solid #e5e7eb;
-    min-height: 140px;
-    padding: 8px;
-    overflow: hidden;
-    transition: background 0.2s ease;
-}
-}
+            position: relative;
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            min-height: 140px;
+            padding: 8px;
+            overflow: hidden;
+            transition: background 0.2s ease;
+        }
 
-.calendar-day:hover {
-    background: #f8fafc;
-}
+        .calendar-day:hover {
+            background: #f8fafc;
+        }
 
-.calendar-day.other-month {
-    background: #f9fafb;
-    color: #9ca3af;
-}
+        .calendar-day.other-month {
+            background: #f9fafb;
+            color: #9ca3af;
+        }
 
-.calendar-day.today .day-number {
-    background: #1a73e8;
-    color: white;
-}
+        .calendar-day.today .day-number {
+            background: #1a73e8;
+            color: white;
+        }
 
-.day-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-}
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
 
-.day-number {
-    width: 28px;
-    height: 28px;
-    border-radius: 9999px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 500;
-}
+        .day-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+        }
 
-.add-event-btn {
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    color: #6b7280;
-}
+        .add-event-btn {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            color: #6b7280;
+        }
 
-.calendar-day:hover .add-event-btn {
-    opacity: 1;
-}
+        .calendar-day:hover .add-event-btn {
+            opacity: 1;
+        }
 
-.day-events {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
+        .day-events {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
 
-.calendar-event {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: pointer;
-}
+        .calendar-event {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
 
-.calendar-event:hover {
-    opacity: 0.9;
-}
+        .calendar-event:hover {
+            opacity: 0.9;
+        }
 
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-auto-rows: minmax(140px, auto);
-    width: 100%;
-}
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: minmax(140px, auto);
+            width: 100%;
+        }
 
-.calendar-day {
-    position: relative;
-    background: white;
-    border-right: 1px solid #e5e7eb;
-    border-bottom: 1px solid #e5e7eb;
-    min-height: 140px;
-    padding: 8px;
-    overflow: hidden;
-    transition: background 0.2s ease;
-}
-
-
-.calendar-weekday {
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
-    padding: 12px;
-    text-align: center;
-    font-weight: 500;
-    color: #5f6368;
-    font-size: 14px;
-}
+        .calendar-weekday {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 12px;
+            text-align: center;
+            font-weight: 500;
+            color: #5f6368;
+            font-size: 14px;
+        }
         
         .event-dot {
             width: 8px;
@@ -239,8 +221,8 @@
     </div>
 
     <!-- Sidebar -->
-    <div id="sidebar" class="sidebar-collapsed bg-white shadow-lg h-screen fixed left-0 top-0 overflow-y-auto z-40 sidebar-transition">
-        <div class="p-4 border-b border-gray-200">
+    <div id="sidebar" class="sidebar-collapsed bg-white shadow-lg h-screen fixed left-0 top-0 z-40 sidebar-transition flex flex-col">
+        <div class="p-4 border-b border-gray-200 flex-shrink-0">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3 overflow-hidden">
                     <div class="bg-green-600 text-white p-2 rounded-lg shrink-0">
@@ -259,7 +241,7 @@
             </div>
         </div>
 
-        <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
+        <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors flex-shrink-0">
             <div class="p-4 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
@@ -273,7 +255,7 @@
             </div>
         </a>
 
-        <nav class="p-4">
+        <nav class="p-4 flex-1 overflow-y-auto">
             <ul class="space-y-2">
                 <li>
                     <a href="{{ route('dashboard') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
@@ -294,7 +276,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('calendar') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
+                    <a href="{{ route('calendar') }}" class="flex items-center p-3 rounded-lg bg-uthm-blue-light text-uthm-blue transition-colors">
                         <div class="shrink-0"><i class="fas fa-calendar-alt w-5 h-5"></i></div>
                         <span class="sidebar-text ml-3">Calendar</span>
                     </a>
@@ -314,18 +296,8 @@
             </ul>
         </nav>
 
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
-                    <div class="shrink-0"><i class="fas fa-sign-out-alt w-5 h-5"></i></div>
-                    <span class="sidebar-text ml-3">Logout</span>
-                </button>
-            </form>
-        </div>
-    </div>
-
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+        <!-- Logout Button -固定在底部 -->
+        <div class="p-4 border-t border-gray-200 flex-shrink-0">
             <form action="{{ route('logout') }}" method="POST">
                 @csrf
                 <button type="submit" class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
@@ -347,7 +319,6 @@
                         <span id="current-month-year" class="text-gray-600">Loading...</span>
                     </div>
                     <div class="flex items-center space-x-4">
-                        
                         <button onclick="openEventModal()" class="bg-uthm-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center">
                             <i class="fas fa-plus mr-2"></i>
                             <span class="hidden md:inline">Add Event</span>
@@ -744,81 +715,66 @@
     });
     
     // Sidebar initialization
-function initializeSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const mainContent = document.getElementById('main-content');
-    const sidebarToggle = document.getElementById('sidebar-toggle');
-    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-    const toggleIcon = document.getElementById('toggle-icon');
-    const userMenuButton = document.getElementById('user-menu-button');
-    const userMenu = document.getElementById('user-menu');
+    function initializeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userMenu = document.getElementById('user-menu');
 
-    let isCollapsed = true;
+        let isCollapsed = true;
 
-    // Desktop sidebar toggle
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', function () {
-            isCollapsed = !isCollapsed;
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function () {
+                isCollapsed = !isCollapsed;
 
-            if (isCollapsed) {
-                sidebar.classList.remove('sidebar-expanded');
-                sidebar.classList.add('sidebar-collapsed');
+                if (isCollapsed) {
+                    sidebar.classList.remove('sidebar-expanded');
+                    sidebar.classList.add('sidebar-collapsed');
+                    mainContent.classList.remove('content-expanded');
+                    mainContent.classList.add('content-collapsed');
+                    if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
+                } else {
+                    sidebar.classList.remove('sidebar-collapsed');
+                    sidebar.classList.add('sidebar-expanded');
+                    mainContent.classList.remove('content-collapsed');
+                    mainContent.classList.add('content-expanded');
+                    if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
+                }
+            });
+        }
 
-                mainContent.classList.remove('content-expanded');
-                mainContent.classList.add('content-collapsed');
+        if (mobileMenuToggle) {
+            mobileMenuToggle.addEventListener('click', function () {
+                sidebar.classList.toggle('mobile-open');
+                sidebar.classList.toggle('sidebar-expanded');
+            });
+        }
 
-                toggleIcon.style.transform = 'rotate(0deg)';
-            } else {
-                sidebar.classList.remove('sidebar-collapsed');
-                sidebar.classList.add('sidebar-expanded');
-
-                mainContent.classList.remove('content-collapsed');
-                mainContent.classList.add('content-expanded');
-
-                toggleIcon.style.transform = 'rotate(180deg)';
+        document.addEventListener('click', function (e) {
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile && !sidebar.contains(e.target) && !mobileMenuToggle?.contains(e.target)) {
+                sidebar.classList.remove('mobile-open');
             }
         });
-    }
 
-    // Mobile sidebar toggle
-    if (mobileMenuToggle) {
-        mobileMenuToggle.addEventListener('click', function () {
-            sidebar.classList.toggle('mobile-open');
-            sidebar.classList.toggle('sidebar-expanded');
-        });
-    }
-
-    // Close mobile sidebar when clicking outside
-    document.addEventListener('click', function (e) {
-        const isMobile = window.innerWidth <= 768;
-
-        if (
-            isMobile &&
-            !sidebar.contains(e.target) &&
-            !mobileMenuToggle.contains(e.target)
-        ) {
-            sidebar.classList.remove('mobile-open');
+        if (userMenuButton && userMenu) {
+            userMenuButton.addEventListener('click', function (e) {
+                e.stopPropagation();
+                userMenu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', function () {
+                userMenu.classList.add('hidden');
+            });
         }
-    });
 
-    // User dropdown menu
-    if (userMenuButton && userMenu) {
-        userMenuButton.addEventListener('click', function (e) {
-            e.stopPropagation();
-            userMenu.classList.toggle('hidden');
-        });
-
-        document.addEventListener('click', function () {
-            userMenu.classList.add('hidden');
-        });
+        if (window.innerWidth > 768) {
+            sidebar.classList.add('sidebar-collapsed');
+            mainContent.classList.add('content-collapsed');
+        }
     }
-
-    // Initial desktop state
-    if (window.innerWidth > 768) {
-        sidebar.classList.add('sidebar-collapsed');
-        mainContent.classList.add('content-collapsed');
-    }
-}
     
     // Setup navigation
     function setupNavigation() {
@@ -939,7 +895,6 @@ function initializeSidebar() {
         const totalDays = lastDay.getDate();
         const startingDay = firstDay.getDay();
         
-        // Previous month days
         const prevMonthLastDay = new Date(year, month, 0).getDate();
         for (let i = 0; i < startingDay; i++) {
             const day = prevMonthLastDay - startingDay + i + 1;
@@ -947,7 +902,6 @@ function initializeSidebar() {
             calendarGrid.appendChild(cell);
         }
         
-        // Current month days
         const today = new Date();
         for (let day = 1; day <= totalDays; day++) {
             let classes = '';
@@ -957,7 +911,6 @@ function initializeSidebar() {
             
             const cell = createDayCell(day, classes);
             
-            // Add events for this day
             const dayEvents = filteredEvents.filter(event => {
                 const eventDate = new Date(event.start_date);
                 return eventDate.getFullYear() === year && 
@@ -990,7 +943,6 @@ function initializeSidebar() {
             calendarGrid.appendChild(cell);
         }
         
-        // Fill remaining cells
         const totalCells = Math.ceil((startingDay + totalDays) / 7) * 7;
         const remainingCells = totalCells - (startingDay + totalDays);
         for (let i = 1; i <= remainingCells; i++) {
@@ -1000,133 +952,86 @@ function initializeSidebar() {
     }
     
     function createDayCell(day, additionalClasses = '') {
-    const cell = document.createElement('div');
-
-    cell.className = `calendar-day ${additionalClasses}`;
-
-    cell.innerHTML = `
-        <div class="day-header">
-            <div class="day-number">${day}</div>
-
-            <button
-                class="add-event-btn"
-                onclick="event.stopPropagation(); openEventModal()"
-            >
-                <i class="fas fa-plus text-xs"></i>
-            </button>
-        </div>
-
-        <div class="day-events"></div>
-    `;
-
-    return cell;
-}
-    
-    // Get event class based on type
-    function getEventClass(type) {
-    const classes = {
-        lecture: 'bg-blue-500 text-white',
-        deadline: 'bg-red-500 text-white',
-        exam: 'bg-purple-500 text-white',
-        social: 'bg-green-500 text-white',
-        workshop: 'bg-yellow-400 text-black',
-        important: 'bg-pink-500 text-white',
-        other: 'bg-gray-500 text-white'
-    };
-
-    return classes[type] || 'bg-gray-500 text-white';
-}
-    
-    // Render upcoming events
-    function renderUpcomingEvents() {
-    const container = document.getElementById('upcoming-events');
-
-    if (!container) return;
-
-    // Today's date without time
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Next 7 days
-    const nextWeek = new Date(today);
-    nextWeek.setDate(today.getDate() + 7);
-
-    const upcoming = filteredEvents
-        .filter(event => {
-            const eventDate = new Date(event.start_date);
-            eventDate.setHours(0, 0, 0, 0);
-
-            return eventDate >= today && eventDate <= nextWeek;
-        })
-        .sort((a, b) => {
-            return new Date(a.start_date) - new Date(b.start_date);
-        });
-
-    if (upcoming.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-8 text-gray-500">
-                <i class="fas fa-calendar-times text-3xl mb-2"></i>
-                <p>No upcoming events this week</p>
+        const cell = document.createElement('div');
+        cell.className = `calendar-day ${additionalClasses}`;
+        cell.innerHTML = `
+            <div class="day-header">
+                <div class="day-number">${day}</div>
+                <button class="add-event-btn" onclick="event.stopPropagation(); openEventModal()">
+                    <i class="fas fa-plus text-xs"></i>
+                </button>
             </div>
+            <div class="day-events"></div>
         `;
-        return;
+        return cell;
     }
-
-    container.innerHTML = '';
-
-    upcoming.forEach(event => {
-        const eventDate = new Date(event.start_date);
-
-        const div = document.createElement('div');
-
-        div.className =
-            'flex items-center p-4 bg-white border rounded-xl hover:shadow-md transition cursor-pointer';
-
-        div.onclick = () => showEventDetail(event);
-
-        div.innerHTML = `
-            <div class="mr-4 text-center min-w-[60px]">
-                <div class="font-bold text-xl text-gray-900">
-                    ${eventDate.getDate()}
-                </div>
-
-                <div class="text-xs uppercase text-gray-500">
-                    ${eventDate.toLocaleDateString('en-US', {
-                        month: 'short'
-                    })}
-                </div>
-            </div>
-
-            <div class="flex-1">
-                <h4 class="font-semibold text-gray-900">
-                    ${event.title}${event.synced_with_google ? ' <i class="fab fa-google text-blue-500 text-xs ml-1" title="Synced with Google Calendar"></i>' : ''}
-                </h4>
-
-                <p class="text-sm text-gray-500 mt-1">
-                    ${
-                        event.start_time
-                            ? `<i class="far fa-clock mr-1"></i>${event.start_time}`
-                            : ''
-                    }
-
-                    ${
-                        event.location
-                            ? ` • ${event.location}`
-                            : ''
-                    }
-                </p>
-
-                <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full ${getEventClass(event.type)}">
-                    ${event.type}
-                </span>
-            </div>
-        `;
-
-        container.appendChild(div);
-    });
-}
     
-    // Google Calendar functions
+    function getEventClass(type) {
+        const classes = {
+            lecture: 'bg-blue-500 text-white',
+            deadline: 'bg-red-500 text-white',
+            exam: 'bg-purple-500 text-white',
+            social: 'bg-green-500 text-white',
+            workshop: 'bg-yellow-400 text-black',
+            important: 'bg-pink-500 text-white',
+            other: 'bg-gray-500 text-white'
+        };
+        return classes[type] || 'bg-gray-500 text-white';
+    }
+    
+    function renderUpcomingEvents() {
+        const container = document.getElementById('upcoming-events');
+        if (!container) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const nextWeek = new Date(today);
+        nextWeek.setDate(today.getDate() + 7);
+
+        const upcoming = filteredEvents
+            .filter(event => {
+                const eventDate = new Date(event.start_date);
+                eventDate.setHours(0, 0, 0, 0);
+                return eventDate >= today && eventDate <= nextWeek;
+            })
+            .sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+
+        if (upcoming.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-calendar-times text-3xl mb-2"></i>
+                    <p>No upcoming events this week</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = '';
+        upcoming.forEach(event => {
+            const eventDate = new Date(event.start_date);
+            const div = document.createElement('div');
+            div.className = 'flex items-center p-4 bg-white border rounded-xl hover:shadow-md transition cursor-pointer';
+            div.onclick = () => showEventDetail(event);
+            div.innerHTML = `
+                <div class="mr-4 text-center min-w-[60px]">
+                    <div class="font-bold text-xl text-gray-900">${eventDate.getDate()}</div>
+                    <div class="text-xs uppercase text-gray-500">${eventDate.toLocaleDateString('en-US', { month: 'short' })}</div>
+                </div>
+                <div class="flex-1">
+                    <h4 class="font-semibold text-gray-900">
+                        ${event.title}${event.synced_with_google ? ' <i class="fab fa-google text-blue-500 text-xs ml-1" title="Synced with Google Calendar"></i>' : ''}
+                    </h4>
+                    <p class="text-sm text-gray-500 mt-1">
+                        ${event.start_time ? `<i class="far fa-clock mr-1"></i>${event.start_time}` : 'All day'}
+                        ${event.location ? ` • ${event.location}` : ''}
+                    </p>
+                    <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full ${getEventClass(event.type)}">${event.type}</span>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+    
     function checkGoogleStatus() {
         fetch('/google-calendar/status')
             .then(res => res.json())
@@ -1217,7 +1122,6 @@ function initializeSidebar() {
         }
     }
     
-    // Event Modal
     function openEventModal() {
         document.getElementById('event-modal').classList.remove('hidden');
         document.getElementById('modal-title').textContent = 'Add New Event';
@@ -1329,7 +1233,6 @@ function initializeSidebar() {
         });
     }
     
-    // Save event
     function saveEvent(e) {
         e.preventDefault();
         
@@ -1417,7 +1320,6 @@ function initializeSidebar() {
         }
     }
     
-    // Toast notification
     function showToast(message, type = 'info') {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
@@ -1436,11 +1338,9 @@ function initializeSidebar() {
         setTimeout(() => toast.remove(), 3000);
     }
     
-    // Attach event handlers
     document.getElementById('event-form').addEventListener('submit', saveEvent);
     document.getElementById('connect-google-btn').addEventListener('click', connectGoogle);
     document.getElementById('disconnect-google-btn').addEventListener('click', disconnectGoogle);
-</script>
+    </script>
 </body>
 </html>
-

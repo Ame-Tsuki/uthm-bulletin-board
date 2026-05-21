@@ -390,7 +390,7 @@
                     <!-- Image Field (Optional) -->
                     <div class="mb-6">
                         <label for="image" class="form-label">
-                            Featured Image (Optional)
+                            Cover Image (Optional)
                         </label>
                         
                         <input type="file" 
@@ -426,7 +426,7 @@
                                 <div class="bg-white/20 rounded-full p-6 mb-4 backdrop-blur-sm">
                                     <i class="fas fa-image text-white text-5xl"></i>
                                 </div>
-                                <h3 class="text-white text-xl font-bold mb-2">Add Featured Image</h3>
+                                <h3 class="text-white text-xl font-bold mb-2">Add Cover Image</h3>
                                 <p class="text-white/90 text-sm mb-4">Upload an image that represents your announcement</p>
                                 <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
                                     <p class="text-white text-xs font-medium">Click to upload or drag & drop</p>
@@ -444,6 +444,25 @@
                         @enderror
                     </div>
 
+                    <!-- Expiry Date -->
+                    <div class="mb-6">
+                        <label for="expiry_date" class="form-label">
+                            Expiry Date (Optional)
+                        </label>
+                        <input type="date"
+                               id="expiry_date"
+                               name="expiry_date"
+                               value="{{ old('expiry_date') }}"
+                               min="{{ now()->format('Y-m-d') }}"
+                               class="form-input">
+                        @error('expiry_date')
+                            <p class="form-error">{{ $message }}</p>
+                        @enderror
+                        <p class="mt-2 text-sm text-gray-500">
+                            Visible through this day; removed from the main board the next day and shown as Expired on My Announcements.
+                        </p>
+                    </div>
+
                     <!-- Additional Information -->
                     <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <h3 class="font-medium text-gray-900 mb-2">
@@ -455,6 +474,7 @@
                             <li>• <strong class="text-green-600">✓ Content moderation is active</strong> - inappropriate content will be automatically blocked</li>
                             <li>• Official announcements may require verification before publishing</li>
                             <li>• Unofficial announcements are published immediately</li>
+                            <li>• Set an expiry date to automatically remove the post from the main board when it ends</li>
                             <li>• Be respectful and follow community guidelines</li>
                         </ul>
                     </div>

@@ -78,6 +78,10 @@
             background-color: #6b7280;
             color: white;
         }
+        .status-expired {
+            background-color: #9ca3af;
+            color: white;
+        }
 
         /* Custom sidebar styles */
         :root {
@@ -428,6 +432,12 @@
             <i class="fas fa-check-circle mr-2"></i>Published
             <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'published' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $publishedCount ?? 0 }}</span>
         </a>
+
+        <a href="{{ route('announcements.my-announcements') }}?status=expired" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'expired' ? 'bg-gray-500 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+            <i class="fas fa-hourglass-end mr-2"></i>Expired
+            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'expired' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $expiredCount ?? 0 }}</span>
+        </a>
         
         <a href="{{ route('announcements.my-announcements') }}?status=draft" 
            class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'draft' ? 'bg-gray-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
@@ -508,6 +518,13 @@
                                                         <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                                             <i class="fas fa-times-circle mr-1"></i> Rejected
                                                         </span>
+                                                    @elseif($announcement->status == 'expired')
+                                                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-200 text-gray-800">
+                                                            <i class="fas fa-hourglass-end mr-1"></i> Expired
+                                                        </span>
+                                                        @if($announcement->expiry_date)
+                                                            <p class="text-xs text-gray-500 mt-1">Expired {{ $announcement->expiry_date->format('M d, Y') }}</p>
+                                                        @endif
                                                     @elseif($announcement->status == 'banned' || $announcement->is_banned)
                                                         <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-200 text-red-900">
                                                             <i class="fas fa-ban mr-1"></i> Banned
@@ -526,8 +543,14 @@
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {{ $announcement->created_at->format('M d, Y') }}
                                                 </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    <div class="flex space-x-2">
+                                                <td class="announcement-actions-cell px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                    <div class="flex flex-wrap items-center gap-2">
+                                                        @if(in_array($announcement->status, ['published', 'expired', 'pending_verification', 'draft']))
+                                                            @include('announcements.partials.calendar-dropdown', [
+                                                                'announcement' => $announcement,
+                                                                'compact' => true,
+                                                            ])
+                                                        @endif
                                                         <a href="{{ route('announcements.show', $announcement) }}" 
                                                            class="inline-flex items-center px-3 py-1 border border-transparent text-xs rounded btn-view hover:bg-green-700">
                                                             <i class="fas fa-eye mr-1"></i> View
@@ -780,5 +803,6 @@ statusTabs.forEach(tab => {
             });
         });
     </script>
+    @include('announcements.partials.calendar-assets')
 </body>
 </html>

@@ -1,0 +1,34 @@
+@php
+    $user = $user ?? auth()->user();
+    $showCalendar = $showCalendar ?? true;
+@endphp
+
+<div class="flex flex-wrap justify-end gap-2 items-center">
+    @if($showCalendar)
+        @include('announcements.partials.calendar-dropdown', [
+            'announcement' => $announcement,
+            'compact' => true,
+        ])
+    @endif
+
+    @if(($showApprove ?? false) && in_array($user->role ?? 'guest', ['admin', 'staff']) && $announcement->status === 'pending_verification')
+        <button type="button"
+                onclick="openApproveModal({{ $announcement->id }}, '{{ addslashes($announcement->title) }}')"
+                class="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shrink-0"
+                title="Approve">
+            <i class="fas fa-check mr-1"></i> Approve
+        </button>
+        <button type="button"
+                onclick="openRejectModal({{ $announcement->id }}, '{{ addslashes($announcement->title) }}')"
+                class="inline-flex items-center px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shrink-0"
+                title="Reject">
+            <i class="fas fa-times mr-1"></i> Reject
+        </button>
+    @endif
+
+    <a href="{{ route('announcements.show', $announcement) }}"
+       class="inline-flex items-center shrink-0 px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-100 transition-colors">
+        View Details
+        <i class="fas fa-arrow-right ml-2"></i>
+    </a>
+</div>

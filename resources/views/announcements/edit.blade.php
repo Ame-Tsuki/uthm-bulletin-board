@@ -325,7 +325,7 @@
                                     name="status" 
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('status') border-red-500 @enderror">
                                 <option value="draft" {{ old('status', $announcement->status ?? 'draft') == 'draft' ? 'selected' : '' }}>Draft</option>
-                                <option value="published" {{ old('status', $announcement->status) == 'published' ? 'selected' : '' }}>Published</option>
+                                <option value="published" {{ in_array(old('status', $announcement->status), ['published', 'expired']) ? 'selected' : '' }}>Published</option>
                                 <option value="archived" {{ old('status', $announcement->status) == 'archived' ? 'selected' : '' }}>Archived</option>
                                 <option value="pending_verification" {{ old('status', $announcement->status) == 'pending_verification' ? 'selected' : '' }}>Pending Verification</option>
                             </select>
@@ -337,7 +337,7 @@
                         <!-- Image Field (Optional) -->
                         <div class="mb-6">
                             <label for="image" class="block text-sm font-medium text-gray-700 mb-2">
-                                Featured Image (Optional)
+                                Cover Image (Optional)
                             </label>
                             
                             <!-- Hidden File Input -->
@@ -376,7 +376,7 @@
                                     <div class="bg-white/20 rounded-full p-6 mb-4 backdrop-blur-sm">
                                         <i class="fas fa-image text-white text-5xl"></i>
                                     </div>
-                                    <h3 class="text-white text-xl font-bold mb-2">Add Featured Image</h3>
+                                    <h3 class="text-white text-xl font-bold mb-2">Add Cover Image</h3>
                                     <p class="text-white/90 text-sm mb-4">Upload an image that represents your announcement</p>
                                     <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
                                         <p class="text-white text-xs font-medium">Click to upload or drag & drop</p>
@@ -452,15 +452,19 @@
                                 <label for="expiry_date" class="block text-sm font-medium text-gray-700 mb-2">
                                     Expiry Date
                                 </label>
-                                <input type="datetime-local" 
+                                <input type="date" 
                                        id="expiry_date" 
                                        name="expiry_date" 
-                                       value="{{ old('expiry_date', $announcement->expiry_date ? $announcement->expiry_date->format('Y-m-d\TH:i') : '') }}"
+                                       value="{{ old('expiry_date', $announcement->expiry_date ? $announcement->expiry_date->format('Y-m-d') : '') }}"
+                                       min="{{ now()->format('Y-m-d') }}"
                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('expiry_date') border-red-500 @enderror">
                                 @error('expiry_date')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
-                                <p class="mt-1 text-sm text-gray-500">Optional - when this announcement should expire</p>
+                                <p class="mt-1 text-sm text-gray-500">Optional — visible through this day; hidden from the main board the next day</p>
+                                @if($announcement->status === 'expired')
+                                    <p class="mt-2 text-sm text-amber-700">This announcement has expired. Set a future expiry date and publish again to restore it on the main board.</p>
+                                @endif
                             </div>
                         </div>
 
@@ -547,14 +551,14 @@
             const publishDateInput = document.getElementById('publish_date');
             const expiryDateInput = document.getElementById('expiry_date');
             
-            if (publishDateInput && publishDateInput.value) {
-                expiryDateInput.min = publishDateInput.value;
+            if (publishDateInput && publishDateInput.value && expiryDateInput) {
+                expiryDateInput.min = publishDateInput.value.split('T')[0] || publishDateInput.value;
             }
             
             if (publishDateInput) {
                 publishDateInput.addEventListener('change', function() {
                     if (this.value && expiryDateInput) {
-                        expiryDateInput.min = this.value;
+                        expiryDateInput.min = this.value.split('T')[0] || this.value;
                     }
                 });
             }

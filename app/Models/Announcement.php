@@ -5,10 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class Announcement extends Model
 {
+    /** Placeholder when an announcement has no cover image (featured carousel, etc.). */
+    public const DEFAULT_IMAGE_URL = 'https://placehold.co/600x400/e2e8f0/64748b?text=No+Image';
+
     protected $fillable = [
         'title',
         'content',
@@ -23,7 +27,6 @@ class Announcement extends Model
         'published_at',
         'expiry_date',
         'is_featured',
-        'featured_image',
         'featured_order',
         'featured_at',
         'view_count',           // Add this for view tracking
@@ -76,6 +79,92 @@ class Announcement extends Model
         return $query->where('is_banned', false)->where('status', '!=', 'banned');
     }
 
+    /**
+     * Exclude expired announcements from public listings.
+     */
+    public function scopeNotExpired($query)
+    {
+        return $query->where('status', '!=', 'expired');
+    }
+
+    /**
+     * Published announcements whose expiry calendar day has not passed.
+     */
+    public function scopeNotPastExpiry($query)
+    {
+        if (!Schema::hasColumn('announcements', 'expiry_date')) {
+            return $query;
+        }
+
+        return $query->where(function ($q) {
+            $q->whereNull('expiry_date')
+              ->orWhereDate('expiry_date', '>=', now()->toDateString());
+        });
+    }
+
+    /**
+     * Visible on the main announcements board (published and not past expiry).
+     */
+    public function scopeVisibleOnBoard($query)
+    {
+        return $query->where('status', 'published')->notPastExpiry();
+    }
+
+    /**
+     * Shown on the main index (active published + items awaiting moderation).
+     */
+    public function scopeListedOnMainBoard($query)
+    {
+        return $query->where(function ($q) {
+            $q->visibleOnBoard()
+              ->orWhereIn('status', ['pending_verification', 'rejected']);
+        });
+    }
+
+    public function isExpired(): bool
+    {
+        if ($this->status === 'expired') {
+            return true;
+        }
+
+        if (!$this->expiry_date) {
+            return false;
+        }
+
+        return $this->expiry_date->startOfDay()->lt(now()->startOfDay());
+    }
+
+    /**
+     * Mark published announcements as expired when expiry_date has passed.
+     */
+    public static function expireDueAnnouncements(): int
+    {
+        if (!Schema::hasColumn('announcements', 'expiry_date')) {
+            return 0;
+        }
+
+        $due = static::query()
+            ->where('status', 'published')
+            ->whereNotNull('expiry_date')
+            ->whereDate('expiry_date', '<', now()->toDateString());
+
+        $count = (clone $due)->count();
+
+        if ($count === 0) {
+            return 0;
+        }
+
+        $updates = ['status' => 'expired'];
+
+        if (Schema::hasColumn('announcements', 'is_featured')) {
+            $updates['is_featured'] = false;
+        }
+
+        $due->update($updates);
+
+        return $count;
+    }
+
     public function isBanned(): bool
     {
         return $this->is_banned || $this->status === 'banned';
@@ -86,44 +175,32 @@ class Announcement extends Model
      */
     public function getImageUrlAttribute(): ?string
     {
-        if (!$this->image) {
-            return null;
-        }
-
-        // If it's already a URL, return as-is
-        if (str_starts_with($this->image, 'http')) {
-            return $this->image;
-        }
-
-        // If it's a storage path, construct the URL
-        return asset('storage/' . $this->image);
+        return $this->resolvePublicImageUrl($this->image);
     }
 
     /**
-     * Get the featured image URL (for carousel)
+     * Image URL for the featured carousel — always this announcement's own cover image.
+     * Featuring only sets is_featured; it does not use a separate image.
      */
     public function getFeaturedImageUrlAttribute(): string
     {
-        // If custom featured image is set, use it
-        if ($this->featured_image) {
-            return $this->featured_image;
+        return $this->image_url ?? self::DEFAULT_IMAGE_URL;
+    }
+
+    /**
+     * Turn a stored image path or absolute URL into a public URL.
+     */
+    protected function resolvePublicImageUrl(?string $path): ?string
+    {
+        if (!$path) {
+            return null;
         }
-        
-        // If announcement has an uploaded image, use it
-        if ($this->image_url) {
-            return $this->image_url;
+
+        if (str_starts_with($path, 'http')) {
+            return $path;
         }
-        
-        // Return category-specific default images
-        $defaultImages = [
-            'urgent' => 'https://picsum.photos/id/0/600/400',
-            'important' => 'https://picsum.photos/id/26/600/400',
-            'academic' => 'https://picsum.photos/id/20/600/400',
-            'events' => 'https://picsum.photos/id/29/600/400',
-            'general' => 'https://picsum.photos/id/91/600/400',
-        ];
-        
-        return $defaultImages[$this->category] ?? 'https://picsum.photos/id/20/600/400';
+
+        return asset('storage/' . ltrim($path, '/'));
     }
 
     /**
@@ -132,7 +209,7 @@ class Announcement extends Model
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true)
-                     ->where('status', 'published')
+                     ->visibleOnBoard()
                      ->orderBy('featured_order', 'asc');
     }
 
@@ -142,6 +219,11 @@ class Announcement extends Model
     public function scopePublished($query)
     {
         return $query->where('status', 'published');
+    }
+
+    public function scopeExpired($query)
+    {
+        return $query->where('status', 'expired');
     }
 
     /**

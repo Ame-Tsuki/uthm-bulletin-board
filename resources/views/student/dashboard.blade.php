@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - UTHM Bulletin</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -386,38 +387,38 @@
                                             ];
                                             $category = $announcement->category ?? 'general';
                                             $config = $categoryConfig[$category] ?? $categoryConfig['general'];
-                                            $imageUrl = $announcement->featured_image ?? $announcement->image ?? 'https://picsum.photos/id/20/600/400';
+                                            $imageUrl = $announcement->image_url ?? \App\Models\Announcement::DEFAULT_IMAGE_URL;
                                         @endphp
                                         
                                         <div class="w-full flex-shrink-0">
                                             <div class="bg-gradient-to-r {{ $config['bg'] }} rounded-xl overflow-hidden">
                                                 <div class="flex flex-col md:flex-row">
                                                     <div class="md:w-2/5 relative">
-                                                        <img src="{{ $imageUrl }}" alt="{{ $announcement->title }}" class="w-full h-64 md:h-full object-cover">
-                                                        @if($announcement->priority === 'urgent')
-                                                            <div class="absolute top-4 left-4">
-                                                                <span class="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">URGENT</span>
-                                                            </div>
-                                                        @elseif($announcement->priority === 'important')
-                                                            <div class="absolute top-4 left-4">
-                                                                <span class="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-semibold">IMPORTANT</span>
-                                                            </div>
-                                                        @endif
+                                                        <img src="{{ $imageUrl }}" alt="{{ $announcement->title }}" class="w-full h-64 md:h-full object-cover" onerror="this.onerror=null;this.src='{{ \App\Models\Announcement::DEFAULT_IMAGE_URL }}'">
                                                     </div>
                                                     <div class="md:w-3/5 p-6 md:p-8">
                                                         <div class="flex items-center gap-2 mb-3 flex-wrap">
-                                                            <span class="px-3 py-1 {{ $config['badge'] }} rounded-full text-xs font-semibold">{{ $config['label'] }}</span>
                                                             @if($announcement->is_official)
-                                                                <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs">Official</span>
+                                                                <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+                                                                    <i class="fas fa-check-circle mr-1"></i> Official
+                                                                </span>
                                                             @else
-                                                                <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Community</span>
+                                                                <span class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">
+                                                                    <i class="fas fa-users mr-1"></i> Unofficial
+                                                                </span>
                                                             @endif
                                                         </div>
                                                         <h4 class="text-2xl font-bold text-gray-900 mb-3">{{ $announcement->title }}</h4>
                                                         <p class="text-gray-600 mb-4 line-clamp-3">{{ Str::limit(strip_tags($announcement->content), 200) }}</p>
-                                                        <a href="{{ route('announcements.show', $announcement) }}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center">
-                                                            View Details <i class="fas fa-arrow-right ml-2"></i>
-                                                        </a>
+                                                        <div class="flex flex-wrap items-center gap-2 relative z-10">
+                                                            @include('announcements.partials.calendar-dropdown', [
+                                                                'announcement' => $announcement,
+                                                                'compact' => true,
+                                                            ])
+                                                            <a href="{{ route('announcements.show', $announcement) }}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center text-sm font-medium">
+                                                                View Details <i class="fas fa-arrow-right ml-2"></i>
+                                                            </a>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -487,9 +488,9 @@
                                     $priorityColor = $announcement->priority === 'urgent' ? 'bg-red-100 text-red-700' : ($announcement->priority === 'important' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700');
                                 @endphp
                                 <div class="announcement-card {{ $priorityClass }} bg-white rounded-lg shadow p-6">
-                                    <div class="flex justify-between items-start">
-                                        <div class="flex-1">
-                                            <div class="flex items-center gap-2 mb-2">
+                                    <div class="flex flex-col gap-3">
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-2 flex-wrap">
                                                 <h4 class="font-semibold text-gray-900 text-lg">{{ $announcement->title }}</h4>
                                                 @if($announcement->priority)
                                                     <span class="px-2 py-1 text-xs font-medium {{ $priorityColor }} rounded-full">{{ ucfirst($announcement->priority) }}</span>
@@ -504,11 +505,10 @@
                                                 <span><i class="far fa-eye mr-1"></i> {{ $announcement->view_count ?? 0 }} views</span>
                                             </div>
                                         </div>
-                                        <div class="ml-4">
-                                            <a href="{{ route('announcements.show', $announcement) }}" class="text-blue-600 hover:text-blue-800">
-                                                <i class="fas fa-arrow-right"></i>
-                                            </a>
-                                        </div>
+                                        @include('announcements.partials.announcement-card-actions', [
+                                            'announcement' => $announcement,
+                                            'showApprove' => false,
+                                        ])
                                     </div>
                                 </div>
                             @empty
@@ -670,5 +670,6 @@
             }
         });
     </script>
+    @include('announcements.partials.calendar-assets')
 </body>
 </html>

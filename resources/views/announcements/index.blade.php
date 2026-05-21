@@ -595,7 +595,7 @@
                 <!-- Announcements Grid -->
                 <div id="announcements-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     @forelse($announcements as $announcement)
-                        <div class="announcement-card bg-white rounded-xl shadow hover:shadow-lg transition-shadow overflow-hidden border border-gray-200" 
+                        <div class="announcement-card bg-white rounded-xl shadow hover:shadow-lg transition-shadow border border-gray-200" 
                              data-id="{{ $announcement->id }}"
                              data-type="{{ $announcement->is_official ? 'official' : 'unofficial' }}"
                              data-category="{{ $announcement->category }}"
@@ -665,41 +665,25 @@
                                     </div>
                                 @endif
                                 
-                                <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                                    <div class="flex items-center text-sm text-gray-500">
-                                        <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
+                                <div class="announcement-card-footer mt-4 pt-4 border-t border-gray-100">
+                                    <div class="flex items-center text-sm text-gray-500 min-w-0 mb-3">
+                                        <div class="w-8 h-8 shrink-0 bg-gray-200 rounded-full flex items-center justify-center mr-2">
                                             <span class="font-bold text-gray-600">{{ strtoupper(substr($announcement->author->name ?? 'A', 0, 1)) }}</span>
                                         </div>
-                                        <div>
-                                            <span>{{ $announcement->author->name ?? 'Anonymous' }}</span>
+                                        <div class="min-w-0">
+                                            <span class="block truncate">{{ $announcement->author->name ?? 'Anonymous' }}</span>
                                             @if($announcement->author)
-                                                <span class="ml-2 px-2 py-1 text-xs rounded-full badge-{{ $announcement->author->role }}">
+                                                <span class="inline-block mt-0.5 px-2 py-0.5 text-xs rounded-full badge-{{ $announcement->author->role }}">
                                                     {{ ucfirst($announcement->author->role) }}
                                                 </span>
                                             @endif
                                         </div>
                                     </div>
-                                    <div class="flex gap-2">
-                                        <!-- Approve/Reject buttons for admin/staff on pending announcements -->
-                                        @if(in_array($user->role ?? 'guest', ['admin', 'staff']) && $announcement->status === 'pending_verification')
-                                            <button onclick="openApproveModal({{ $announcement->id }}, '{{ addslashes($announcement->title) }}')" 
-                                                    class="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors"
-                                                    title="Approve">
-                                                <i class="fas fa-check mr-1"></i> Approve
-                                            </button>
-                                            <button onclick="openRejectModal({{ $announcement->id }}, '{{ addslashes($announcement->title) }}')" 
-                                                    class="inline-flex items-center px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors"
-                                                    title="Reject">
-                                                <i class="fas fa-times mr-1"></i> Reject
-                                            </button>
-                                        @endif
-                                        
-                                        <a href="{{ route('announcements.show', $announcement) }}" 
-                                           class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors">
-                                            View Details
-                                            <i class="fas fa-arrow-right ml-2"></i>
-                                        </a>
-                                    </div>
+                                    @include('announcements.partials.announcement-card-actions', [
+                                        'announcement' => $announcement,
+                                        'user' => $user,
+                                        'showApprove' => true,
+                                    ])
                                 </div>
                             </div>
                         </div>
@@ -1239,5 +1223,6 @@ function confirmReject() {
             if (event.target === rejectModal) closeRejectModal();
         });
     </script>
+    @include('announcements.partials.calendar-assets')
 </body>
 </html>

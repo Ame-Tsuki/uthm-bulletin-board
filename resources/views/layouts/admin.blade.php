@@ -197,7 +197,7 @@
                                     <div class="py-3 px-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
                                         <span class="text-sm font-bold text-gray-700">Notifications</span>
                                         @if(Auth::check() && Auth::user()->unreadNotifications->count() > 0)
-                                            <form action="{{ route('admin.notifications.markAllRead') }}" method="POST" class="inline">
+                                            <form action="{{ route('notifications.markAllRead') }}" method="POST" class="inline">
                                                 @csrf
                                                 <button type="submit" class="text-xs font-semibold text-blue-600 hover:text-blue-800 focus:outline-none">Mark all read</button>
                                             </form>

@@ -17,17 +17,15 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Notifications\AnnouncementNotification;
 use Illuminate\Support\Facades\Notification; // ADD THIS MISSING IMPORT
+use App\Services\ModerationService;
 
 class AnnouncementController extends Controller
 {
-    protected $localMod;
-
-    /**
-     * Constructor with LocalMod injection
-     */
-    public function __construct(LocalModService $localMod)
+    protected $moderationService;  // ADD THIS
+    
+    public function __construct(ModerationService $moderationService)  // ADD THIS
     {
-        $this->localMod = $localMod;
+        $this->moderationService = $moderationService;
     }
 
     /**
@@ -108,38 +106,22 @@ class AnnouncementController extends Controller
         $validated = $request->validate($validationRules);
         
         // ============================================
-        // MODERATION CHECK - Check title and content
+        // MODERATION CHECK - USING .NET API
         // ============================================
-        $titleModeration = $this->localMod->analyzeText($validated['title'], ['toxicity', 'pii', 'spam']);
-        $contentModeration = $this->localMod->analyzeText($validated['content'], ['toxicity', 'pii', 'spam']);
+        $textToCheck = $validated['title'] . ' ' . $validated['content'];
+        $moderationResult = $this->moderationService->moderate($textToCheck);
         
         // If moderation fails, block the announcement
-        if (($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false)) {
-            $violations = [];
-            
-            if ($titleModeration['flagged'] ?? false) {
-                foreach ($titleModeration['results'] ?? [] as $v) {
-                    if ($v['flagged'] ?? false) {
-                        $violations[] = "Title contains {$v['classifier']}";
-                    }
-                }
-            }
-            
-            if ($contentModeration['flagged'] ?? false) {
-                foreach ($contentModeration['results'] ?? [] as $v) {
-                    if ($v['flagged'] ?? false) {
-                        $violations[] = "Content contains {$v['classifier']}";
-                    }
-                }
-            }
-            
-            $violationText = implode(', ', $violations);
+        if (!$moderationResult['allowed']) {
             $errorMessage = "Your announcement was blocked by our content moderation system. " .
                            "Please remove inappropriate language. " .
-                           "Detected: {$violationText}";
+                           "Reason: {$moderationResult['reason']}";
             
             return back()->withErrors(['moderation' => $errorMessage])->withInput();
         }
+        
+        // Extract toxicity score for logging
+        $toxicityScore = $moderationResult['raw']['toxicityScore'] ?? 0;
         // ============================================
         // END MODERATION CHECK
         // ============================================
@@ -206,12 +188,15 @@ class AnnouncementController extends Controller
             }
         }
         
-        // Save moderation results (optional - for audit)
-        $validated['moderation_flagged'] = ($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false);
+        // Save moderation results (using .NET API data)
+        $validated['moderation_flagged'] = !$moderationResult['allowed'];
         $validated['moderation_results'] = json_encode([
-            'title' => $titleModeration,
-            'content' => $contentModeration,
-            'checked_at' => now()->toDateTimeString()
+            'toxicity_score' => $toxicityScore,
+            'allowed' => $moderationResult['allowed'],
+            'reason' => $moderationResult['reason'],
+            'raw_response' => $moderationResult['raw'],
+            'checked_at' => now()->toDateTimeString(),
+            'moderation_service' => '.NET Moderation API'
         ]);
         
         // Create the announcement
@@ -241,7 +226,7 @@ class AnnouncementController extends Controller
             $message = "A new official notice titled '{$announcement->title}' requires review.";
             
             // Point this URL to your admin moderation queue dashboard route
-            $url = route('announcements.verification-queue'); // FIXED: Use correct route name
+            $url = route('announcements.verification-queue');
 
             Notification::send($moderators, new AnnouncementNotification($title, $message, $url));
         }
@@ -259,6 +244,7 @@ class AnnouncementController extends Controller
                 ->with('success', 'Announcement published successfully.');
         }
     }
+
 
     /**
      * Display a single announcement.
@@ -342,174 +328,161 @@ class AnnouncementController extends Controller
     }
 
     /**
-     * Update the specified announcement in storage with MODERATION.
-     */
-    public function update(Request $request, Announcement $announcement): RedirectResponse
-    {
-        // Check authorization
-        $user = auth()->user();
-        if ($announcement->author_id !== $user->id && !in_array($user->role, ['admin', 'staff'])) {
-            abort(403, 'Unauthorized to update this announcement.');
-        }
+ * Update the specified announcement in storage with MODERATION.
+ */
+public function update(Request $request, Announcement $announcement): RedirectResponse
+{
+    // Check authorization
+    $user = auth()->user();
+    if ($announcement->author_id !== $user->id && !in_array($user->role, ['admin', 'staff'])) {
+        abort(403, 'Unauthorized to update this announcement.');
+    }
+    
+    // Create validation rules
+    $validationRules = [
+        'title' => 'required|string|max:255',
+        'content' => 'required|string',
+        'image' => $request->hasFile('image') ? 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120' : 'nullable',
+        'category' => 'required|in:urgent,academic,events,general,important',
+        'priority' => 'nullable|in:urgent,important,normal',
+        'department' => 'nullable|string|max:100',
+        'publish_date' => 'nullable|date',
+        'expiry_date' => 'nullable|date|after_or_equal:publish_date',
+        'announcement_type' => 'required|in:official,unofficial',
+        'status' => 'required|in:draft,published,pending_verification',
+        'remove_image' => 'nullable|boolean',
+    ];
+    
+    // Validate all fields at once
+    $validated = $request->validate($validationRules);
+    
+    // ============================================
+    // MODERATION CHECK - Using .NET API
+    // ============================================
+    $textToCheck = $validated['title'] . ' ' . $validated['content'];
+    $moderationResult = $this->moderationService->moderate($textToCheck);
+    
+    // If moderation fails, block the update
+    if (!$moderationResult['allowed']) {
+        $errorMessage = "Your updated announcement was blocked by our content moderation system. " .
+                       "Please remove inappropriate language. " .
+                       "Reason: {$moderationResult['reason']}";
         
-        // Create validation rules
-        $validationRules = [
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'image' => $request->hasFile('image') ? 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120' : 'nullable',
-            'category' => 'required|in:urgent,academic,events,general,important',
-            'priority' => 'nullable|in:urgent,important,normal',
-            'department' => 'nullable|string|max:100',
-            'publish_date' => 'nullable|date',
-            'expiry_date' => 'nullable|date|after_or_equal:publish_date',
-            'announcement_type' => 'required|in:official,unofficial',
-            'status' => 'required|in:draft,published,pending_verification',
-            'remove_image' => 'nullable|boolean',
-        ];
+        return back()->withErrors(['moderation' => $errorMessage])->withInput();
+    }
+    
+    // Extract toxicity score for logging
+    $toxicityScore = $moderationResult['raw']['toxicityScore'] ?? 0;
+    // ============================================
+    // END MODERATION CHECK
+    // ============================================
+    
+    // Determine announcement type and verification status
+    $announcementType = $validated['announcement_type'];
+    $isAdminOrStaff = in_array($user->role, ['admin', 'staff']);
+    
+    if ($announcementType === 'official') {
+        // Official announcement
+        $validated['is_official'] = true;
         
-        // Validate all fields at once
-        $validated = $request->validate($validationRules);
-        
-        // ============================================
-        // MODERATION CHECK - Check updated title and content
-        // ============================================
-        $titleModeration = $this->localMod->analyzeText($validated['title'], ['toxicity', 'pii', 'spam']);
-        $contentModeration = $this->localMod->analyzeText($validated['content'], ['toxicity', 'pii', 'spam']);
-        
-        // If moderation fails, block the update
-        if (($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false)) {
-            $violations = [];
-            
-            if ($titleModeration['flagged'] ?? false) {
-                foreach ($titleModeration['results'] ?? [] as $v) {
-                    if ($v['flagged'] ?? false) {
-                        $violations[] = "Title contains {$v['classifier']}";
-                    }
-                }
-            }
-            
-            if ($contentModeration['flagged'] ?? false) {
-                foreach ($contentModeration['results'] ?? [] as $v) {
-                    if ($v['flagged'] ?? false) {
-                        $violations[] = "Content contains {$v['classifier']}";
-                    }
-                }
-            }
-            
-            $violationText = implode(', ', $violations);
-            $errorMessage = "Your updated announcement was blocked by our content moderation system. " .
-                           "Please remove inappropriate language. " .
-                           "Detected: {$violationText}";
-            
-            return back()->withErrors(['moderation' => $errorMessage])->withInput();
-        }
-        // ============================================
-        // END MODERATION CHECK
-        // ============================================
-        
-        // Determine announcement type and verification status
-        $announcementType = $validated['announcement_type'];
-        $isAdminOrStaff = in_array($user->role, ['admin', 'staff']);
-        
-        if ($announcementType === 'official') {
-            // Official announcement
-            $validated['is_official'] = true;
-            
-            if ($isAdminOrStaff) {
-                // Admin/staff can publish official announcements immediately
-                if ($validated['status'] === 'published') {
-                    $validated['status'] = 'published';
-                    $validated['needs_verification'] = false;
-                    $validated['verified_at'] = now();
-                    $validated['verified_by'] = $user->id;
-                } elseif ($validated['status'] === 'pending_verification') {
-                    $validated['status'] = 'published';
-                    $validated['needs_verification'] = false;
-                    $validated['verified_at'] = now();
-                    $validated['verified_by'] = $user->id;
-                } else {
-                    $validated['needs_verification'] = false;
-                }
+        if ($isAdminOrStaff) {
+            // Admin/staff can publish official announcements immediately
+            if ($validated['status'] === 'published') {
+                $validated['status'] = 'published';
+                $validated['needs_verification'] = false;
+                $validated['verified_at'] = now();
+                $validated['verified_by'] = $user->id;
+            } elseif ($validated['status'] === 'pending_verification') {
+                $validated['status'] = 'published';
+                $validated['needs_verification'] = false;
+                $validated['verified_at'] = now();
+                $validated['verified_by'] = $user->id;
             } else {
-                // Regular users need verification for official announcements
-                if ($validated['status'] === 'published') {
-                    $validated['status'] = 'pending_verification';
-                    $validated['needs_verification'] = true;
-                    $validated['verified_at'] = null;
-                    $validated['verified_by'] = null;
-                } elseif ($validated['status'] === 'pending_verification') {
-                    $validated['needs_verification'] = true;
-                } else {
-                    $validated['needs_verification'] = true;
-                }
+                $validated['needs_verification'] = false;
             }
         } else {
-            // Unofficial announcement
-            $validated['is_official'] = false;
-            $validated['needs_verification'] = false;
-            $validated['verified_at'] = null;
-            $validated['verified_by'] = null;
-            
-            // Unofficial announcements can be published immediately by anyone
-            if ($validated['status'] === 'pending_verification') {
-                $validated['status'] = 'published';
+            // Regular users need verification for official announcements
+            if ($validated['status'] === 'published') {
+                $validated['status'] = 'pending_verification';
+                $validated['needs_verification'] = true;
+                $validated['verified_at'] = null;
+                $validated['verified_by'] = null;
+            } elseif ($validated['status'] === 'pending_verification') {
+                $validated['needs_verification'] = true;
+            } else {
+                $validated['needs_verification'] = true;
             }
         }
+    } else {
+        // Unofficial announcement
+        $validated['is_official'] = false;
+        $validated['needs_verification'] = false;
+        $validated['verified_at'] = null;
+        $validated['verified_by'] = null;
         
-        // Remove announcement_type from data as it's not a database column
-        unset($validated['announcement_type']);
-        
-        // Save moderation results (optional - for audit)
-        $validated['moderation_flagged'] = ($titleModeration['flagged'] ?? false) || ($contentModeration['flagged'] ?? false);
-        $validated['moderation_results'] = json_encode([
-            'title' => $titleModeration,
-            'content' => $contentModeration,
-            'checked_at' => now()->toDateTimeString()
-        ]);
-        
-        // Handle image upload
-        if ($request->hasFile('image')) {
-            try {
-                // Delete old image if it exists
-                if ($announcement->image && Storage::disk('public')->exists($announcement->image)) {
-                    Storage::disk('public')->delete($announcement->image);
-                }
-                
-                $image = $request->file('image');
-                $imagePath = $image->store('announcements', 'public');
-                $validated['image'] = $imagePath;
-            } catch (\Exception $e) {
-                Log::error('Image upload failed: ' . $e->getMessage());
-            }
+        // Unofficial announcements can be published immediately by anyone
+        if ($validated['status'] === 'pending_verification') {
+            $validated['status'] = 'published';
         }
-        
-        // Handle image removal
-        if ($request->has('remove_image') && $request->get('remove_image') == '1') {
+    }
+    
+    // Remove announcement_type from data as it's not a database column
+    unset($validated['announcement_type']);
+    
+    // Save moderation results (using .NET API data)
+    $validated['moderation_flagged'] = !$moderationResult['allowed'];
+    $validated['moderation_results'] = json_encode([
+        'toxicity_score' => $toxicityScore,
+        'allowed' => $moderationResult['allowed'],
+        'reason' => $moderationResult['reason'],
+        'raw_response' => $moderationResult['raw'],
+        'checked_at' => now()->toDateTimeString(),
+        'moderation_service' => '.NET Moderation API',
+        'action' => 'update'
+    ]);
+    
+    // Handle image upload
+    if ($request->hasFile('image')) {
+        try {
+            // Delete old image if it exists
             if ($announcement->image && Storage::disk('public')->exists($announcement->image)) {
                 Storage::disk('public')->delete($announcement->image);
             }
-            $validated['image'] = null;
-        }
-        
-        // Remove remove_image from validated data
-        unset($validated['remove_image']);
-        
-        // Update the announcement
-        $announcement->update($validated);
-        
-        // Redirect with appropriate message
-        if ($validated['status'] === 'draft') {
-            return redirect()->route('announcements.my-announcements', ['status' => 'draft'])
-                ->with('success', 'Announcement updated as draft successfully.');
-        } elseif ($announcementType === 'official' && isset($validated['needs_verification']) && $validated['needs_verification']) {
-            return redirect()->route('announcements.my-announcements', ['status' => 'pending_verification'])
-                ->with('success', 'Official announcement updated and submitted for verification.');
-        } else {
-            return redirect()->route('announcements.show', $announcement)
-                ->with('success', 'Announcement updated successfully.');
+            
+            $image = $request->file('image');
+            $imagePath = $image->store('announcements', 'public');
+            $validated['image'] = $imagePath;
+        } catch (\Exception $e) {
+            Log::error('Image upload failed: ' . $e->getMessage());
         }
     }
-
+    
+    // Handle image removal
+    if ($request->has('remove_image') && $request->get('remove_image') == '1') {
+        if ($announcement->image && Storage::disk('public')->exists($announcement->image)) {
+            Storage::disk('public')->delete($announcement->image);
+        }
+        $validated['image'] = null;
+    }
+    
+    // Remove remove_image from validated data
+    unset($validated['remove_image']);
+    
+    // Update the announcement
+    $announcement->update($validated);
+    
+    // Redirect with appropriate message
+    if ($validated['status'] === 'draft') {
+        return redirect()->route('announcements.my-announcements', ['status' => 'draft'])
+            ->with('success', 'Announcement updated as draft successfully.');
+    } elseif ($announcementType === 'official' && isset($validated['needs_verification']) && $validated['needs_verification']) {
+        return redirect()->route('announcements.my-announcements', ['status' => 'pending_verification'])
+            ->with('success', 'Official announcement updated and submitted for verification.');
+    } else {
+        return redirect()->route('announcements.show', $announcement)
+            ->with('success', 'Announcement updated successfully.');
+    }
+}
     /**
      * Get featured announcements for the carousel
      */

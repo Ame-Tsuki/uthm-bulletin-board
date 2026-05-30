@@ -139,8 +139,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Settings Routes
-    Route::get('/settings', [ProfileController::class, 'settings'])->name('settings');
-    Route::patch('/settings/preferences', [ProfileController::class, 'updatePreferences'])->name('settings.preferences.update');
+  Route::get('/settings', function () {
+    $user = auth()->user();
+    return view('settings', compact('user'));
+})->name('settings');
 
     // ============================================
     // STUDENT ROUTES

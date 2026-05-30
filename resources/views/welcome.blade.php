@@ -225,13 +225,7 @@
     </a>
 </div>
                 
-                <!-- Desktop Navigation -->
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="#" class="nav-link active text-gray-700 hover:text-uthm-blue font-medium">Home</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-uthm-blue font-medium">Announcements</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-uthm-blue font-medium">Events</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-uthm-blue font-medium">Calendar</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-uthm-blue font-medium">Clubs</a>
+            
                     
                     <!-- Auth Buttons -->
                     <div class="flex items-center space-x-3">
@@ -253,11 +247,7 @@
             <!-- Enhanced Mobile Menu with slide animation -->
             <div id="mobile-menu" class="mobile-menu md:hidden">
                 <div class="flex flex-col space-y-1 pt-2 border-t border-gray-100">
-                    <a href="#" class="text-gray-700 hover:text-uthm-blue hover:bg-uthm-blue-light font-medium py-3 px-4 rounded-lg transition-colors">Home</a>
-                    <a href="#" class="text-gray-700 hover:text-uthm-blue hover:bg-uthm-blue-light font-medium py-3 px-4 rounded-lg transition-colors">Announcements</a>
-                    <a href="#" class="text-gray-700 hover:text-uthm-blue hover:bg-uthm-blue-light font-medium py-3 px-4 rounded-lg transition-colors">Events</a>
-                    <a href="#" class="text-gray-700 hover:text-uthm-blue hover:bg-uthm-blue-light font-medium py-3 px-4 rounded-lg transition-colors">Calendar</a>
-                    <a href="#" class="text-gray-700 hover:text-uthm-blue hover:bg-uthm-blue-light font-medium py-3 px-4 rounded-lg transition-colors">Clubs</a>
+                    
                     <div class="pt-4 mt-2 border-t border-gray-100 space-y-3">
                         <a href="{{ route('login') }}" class="block px-4 py-3 text-center text-uthm-blue border-2 border-uthm-blue rounded-lg hover:bg-uthm-blue hover:text-white transition-all font-medium">Login</a>
                         <a href="{{ route('register') }}" class="block px-4 py-3 text-center bg-uthm-blue text-white rounded-lg hover:bg-uthm-blue-dark transition-all font-medium">Register</a>

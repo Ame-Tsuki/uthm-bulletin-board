@@ -259,7 +259,7 @@
             </div>
         </div>
 
-        <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
+        <a href="{{ route('profile.show') }}" class="block hover:bg-gray-50 transition-colors">
             <div class="p-4 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
@@ -369,7 +369,7 @@
                             </button>
                             
                             <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50">
-                                <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-user mr-2"></i> My Profile
                                 </a>
                                 <a href="{{ route('settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">

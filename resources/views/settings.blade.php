@@ -71,7 +71,7 @@
                 <div class="mt-6 portal-card p-6">
                     <h3 class="portal-section-title text-base mb-4">Quick Links</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <a href="{{ route('profile') }}" class="portal-quick-link bg-uthm-blue-light hover:bg-blue-100 flex items-center gap-3 text-left">
+                        <a href="{{ route('profile.show') }}" class="portal-quick-link bg-uthm-blue-light hover:bg-blue-100 flex items-center gap-3 text-left">
                             <i class="fas fa-user text-uthm-blue"></i>
                             <span class="text-sm font-semibold text-gray-800">View Profile</span>
                         </a>

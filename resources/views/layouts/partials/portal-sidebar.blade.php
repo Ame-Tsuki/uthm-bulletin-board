@@ -43,7 +43,7 @@
         </div>
     </div>
 
-    <a href="{{ route('profile') }}" class="block hover:bg-uthm-blue-light/50 transition-colors">
+    <a href="{{ route('profile.show') }}" class="block hover:bg-uthm-blue-light/50 transition-colors">
         <div class="p-3 border-b border-gray-100">
             <div class="flex items-center space-x-2.5">
                 <div class="w-9 h-9 bg-gradient-to-br from-uthm-blue-light to-blue-100 rounded-full flex items-center justify-center shrink-0 ring-2 ring-white shadow-sm">

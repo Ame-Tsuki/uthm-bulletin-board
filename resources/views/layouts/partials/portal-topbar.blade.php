@@ -41,7 +41,7 @@
                     </button>
 
                     <div id="user-menu" class="portal-dropdown absolute right-0 mt-2 w-52 py-2 hidden z-50">
-                        <a href="{{ route('profile') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        <a href="{{ route('profile.show') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                             <i class="fas fa-user w-5 text-gray-400 mr-2"></i> My Profile
                         </a>
                         <a href="{{ route('settings') }}" class="flex items-center px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">

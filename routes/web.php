@@ -128,20 +128,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
     })->name('dashboard');
 
-    // Profile Routes
-    Route::get('/profile', function () {
-        $user = auth()->user();
-        return view('profile', compact('user'));
-    })->name('profile');
+    // ============================================
+    // PROFILE ROUTES (FIXED - Proper route names)
+    // ============================================
     
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/settings', function () {
-        $user = auth()->user();
-        return view('settings', compact('user'));
-    })->name('settings');
+    // Settings Routes
+    Route::get('/settings', [ProfileController::class, 'settings'])->name('settings');
+    Route::patch('/settings/preferences', [ProfileController::class, 'updatePreferences'])->name('settings.preferences.update');
 
     // ============================================
     // STUDENT ROUTES

@@ -7,133 +7,20 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    @include('layouts.partials.portal-head')
     <style>
-        /* Custom sidebar styles */
-        :root {
-            --sidebar-collapsed: 80px;
-            --sidebar-expanded: 280px;
-            --transition-speed: 0.3s;
-        }
+        /* Announcement page-specific styles */
+        .badge-urgent { background-color: #fee2e2; color: #dc2626; }
+        .badge-important { background-color: #fef3c7; color: #d97706; }
+        .badge-academic { background-color: #dbeafe; color: #1d4ed8; }
+        .badge-events { background-color: #f3e8ff; color: #7c3aed; }
+        .badge-general { background-color: #f0f9ff; color: #0369a1; }
+        .badge-official { background-color: #dcfce7; color: #166534; }
+        .badge-unofficial { background-color: #fef3c7; color: #92400e; }
+        .badge-pending { background-color: #fef3c7; color: #d97706; }
+        .badge-draft { background-color: #e5e7eb; color: #6b7280; }
+        .badge-rejected { background-color: #fee2e2; color: #dc2626; }
 
-        .sidebar-collapsed {
-            width: var(--sidebar-collapsed) !important;
-        }
-        
-        .sidebar-expanded {
-            width: var(--sidebar-expanded) !important;
-        }
-        
-        .content-collapsed {
-            margin-left: var(--sidebar-collapsed) !important;
-        }
-        
-        .content-expanded {
-            margin-left: var(--sidebar-expanded) !important;
-        }
-        
-        /* Smooth transitions */
-        .sidebar-transition {
-            transition: width var(--transition-speed) ease;
-        }
-        
-        .content-transition {
-            transition: margin-left var(--transition-speed) ease;
-        }
-        
-        /* Text visibility control */
-        .sidebar-text {
-            transition: all var(--transition-speed) ease;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-        
-        .sidebar-collapsed .sidebar-text {
-            opacity: 0;
-            width: 0;
-            margin-left: 0 !important;
-        }
-        
-        .sidebar-expanded .sidebar-text {
-            opacity: 1;
-            width: auto;
-            margin-left: 0.75rem !important;
-        }
-        
-        /* Mobile styles */
-        @media (max-width: 768px) {
-            .sidebar-collapsed,
-            .sidebar-expanded {
-                width: 280px !important;
-                transform: translateX(-100%);
-            }
-            
-            .sidebar-expanded.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .content-collapsed,
-            .content-expanded {
-                margin-left: 0 !important;
-            }
-        }
-
-        /* Announcement styles */
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .badge-urgent {
-            background-color: #fee2e2;
-            color: #dc2626;
-        }
-        .badge-important {
-            background-color: #fef3c7;
-            color: #d97706;
-        }
-        .badge-academic {
-            background-color: #dbeafe;
-            color: #1d4ed8;
-        }
-        .badge-events {
-            background-color: #f3e8ff;
-            color: #7c3aed;
-        }
-        .badge-general {
-            background-color: #f0f9ff;
-            color: #0369a1;
-        }
-        .badge-official {
-            background-color: #dcfce7;
-            color: #166534;
-        }
-        .badge-unofficial {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        .badge-pending {
-            background-color: #fef3c7;
-            color: #d97706;
-        }
-        .badge-draft {
-            background-color: #e5e7eb;
-            color: #6b7280;
-        }
-        .badge-rejected {
-            background-color: #fee2e2;
-            color: #dc2626;
-        }
-        
-        /* Custom colors */
-        .uthm-blue { color: #0056a6; }
-        .bg-uthm-blue { background-color: #0056a6; }
-        .bg-uthm-blue-light { background-color: #e6f0fa; }
-        .uthm-green { color: #6ea342; }
-        .uthm-yellow { color: #ffc107; }
-        .uthm-red { color: #dc3545; }
-
-        /* Floating button */
         .floating-add-btn {
             position: fixed;
             bottom: 2rem;
@@ -142,88 +29,28 @@
             box-shadow: 0 4px 20px rgba(0, 86, 166, 0.3);
             animation: pulse 2s infinite;
         }
-        
+
         @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(0, 86, 166, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(0, 86, 166, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(0, 86, 166, 0);
-            }
-        }
-        
-        /* Mobile floating button */
-        @media (max-width: 768px) {
-            .floating-add-btn {
-                bottom: 5rem;
-                right: 1.5rem;
-            }
-        }
-        
-        /* Tab styles */
-        .tab-active {
-            background-color: #0056a6;
-            color: white;
-        }
-        
-        .tab-inactive {
-            background-color: #f3f4f6;
-            color: #6b7280;
-            border: 1px solid #e5e7eb;
-        }
-        
-        .tab-inactive:hover {
-            background-color: #e5e7eb;
-        }
-        
-        /* Role badges */
-        .badge-admin {
-            background-color: #dc2626;
-            color: white;
-        }
-        .badge-staff {
-            background-color: #2563eb;
-            color: white;
-        }
-        .badge-student {
-            background-color: #059669;
-            color: white;
-        }
-        .badge-guest {
-            background-color: #6b7280;
-            color: white;
-        }
-        
-        /* Filter button active state */
-        .filter-btn-active {
-            background-color: #0056a6 !important;
-            color: white !important;
-        }
-        
-        .filter-btn-inactive {
-            background-color: #f3f4f6;
-            color: #6b7280;
-        }
-        
-        .filter-btn-inactive:hover {
-            background-color: #e5e7eb;
+            0% { box-shadow: 0 0 0 0 rgba(0, 86, 166, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 86, 166, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 86, 166, 0); }
         }
 
-        /* Modal animation */
-        .modal-enter {
-            opacity: 0;
-            transform: scale(0.95);
+        @media (max-width: 768px) {
+            .floating-add-btn { bottom: 5rem; right: 1.5rem; }
         }
-        .modal-enter-active {
-            opacity: 1;
-            transform: scale(1);
-            transition: opacity 0.2s, transform 0.2s;
-        }
-        
-        /* Toast animation */
+
+        .tab-active { background-color: #0056a6; color: white; }
+        .tab-inactive { background-color: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+        .tab-inactive:hover { background-color: #e5e7eb; }
+
+        .filter-btn-active { background-color: #0056a6 !important; color: white !important; }
+        .filter-btn-inactive { background-color: #f3f4f6; color: #6b7280; }
+        .filter-btn-inactive:hover { background-color: #e5e7eb; }
+
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.2s, transform 0.2s; }
+
         .toast-notification {
             position: fixed;
             bottom: 20px;
@@ -231,153 +58,15 @@
             z-index: 1000;
             animation: slideIn 0.3s ease;
         }
-        
+
         @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Mobile Menu Button -->
-    <div class="md:hidden fixed top-4 left-4 z-50">
-        <button id="mobile-menu-toggle" class="bg-uthm-blue text-white p-2 rounded-lg shadow-lg">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-        </button>
-    </div>
-
-    <!-- Sidebar Dashboard Navigation -->
-    <div id="sidebar" class="sidebar-collapsed bg-white shadow-lg h-screen fixed left-0 top-0 overflow-y-auto z-40 sidebar-transition">
-        <!-- Sidebar Header -->
-        <div class="p-4 border-b border-gray-200">
-            <div class="flex items-center justify-between">
-                <!-- Logo -->
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <div class="bg-green-600 text-white p-2 rounded-lg shrink-0">
-                        <i class="fas fa-user-graduate text-lg"></i>
-                    </div>
-                    <div class="sidebar-text">
-                        <h2 class="font-bold uthm-blue">UTHM Bulletin</h2>
-                        <p class="text-xs text-gray-500">Announcements</p>
-                    </div>
-                </div>
-                
-                <!-- Toggle Button -->
-                <button id="sidebar-toggle" class="hidden md:block text-gray-500 hover:text-uthm-blue shrink-0">
-                    <svg id="toggle-icon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- User Profile -->
-        <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
-            <div class="p-4 border-b border-gray-200">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
-                        <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
-                    </div>
-                    <div class="sidebar-text">
-                        <h3 class="font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</h3>
-                        <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
-                        @if($user?->role)
-                            <span class="mt-1 inline-block px-2 py-1 text-xs rounded-full badge-{{ $user->role }}">
-                                {{ ucfirst($user->role) }}
-                            </span>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </a>
-
-        <!-- Dashboard Navigation -->
-        <nav class="p-4">
-            <ul class="space-y-2">
-                <li>
-                    <a href="{{ route('dashboard') }}" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-home w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Dashboard</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="{{ route('announcements.index') }}" 
-                       class="flex items-center p-3 rounded-lg bg-uthm-blue-light text-uthm-blue">
-                        <div class="shrink-0">
-                            <i class="fas fa-bullhorn w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Announcements</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="{{ route('announcements.my-announcements') }}" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-file-alt w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">My Announcements</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="{{ route('calendar') }}"
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-calendar-alt w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Calendar</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="#" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-calendar-check w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Events</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="{{ route('settings') }}" 
-                       class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-cog w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Settings</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Logout -->
-        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" 
-                        class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
-                    <div class="shrink-0">
-                        <i class="fas fa-sign-out-alt w-5 h-5"></i>
-                    </div>
-                    <span class="sidebar-text ml-3">Logout</span>
-                </button>
-            </form>
-        </div>
-    </div>
+<body class="portal-body">
+    @include('layouts.partials.portal-sidebar', ['user' => $user ?? Auth::user()])
 
     <!-- Main Content -->
     <div id="main-content" class="content-collapsed min-h-screen content-transition">
@@ -453,15 +142,13 @@
             </div>
         </nav>
 
-        <!-- Main Content -->
-        <div class="py-8">
-            <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+        @include('layouts.partials.portal-content-open')
                 <!-- Page Header -->
-                <div class="mb-8">
+                <div class="mb-3">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h2 class="text-3xl font-bold text-gray-900">Announcements</h2>
-                            <p class="mt-2 text-gray-600">Stay updated with the latest news and announcements from UTHM</p>
+                            <h2 class="portal-section-title text-xl">Announcements</h2>
+                            <p class="mt-1 text-gray-500 text-sm">Stay updated with the latest news and announcements from UTHM</p>
                             <div class="mt-2 text-sm text-gray-500">
                                 <i class="fas fa-info-circle mr-1"></i>
                                 @if(in_array($user->role ?? 'guest', ['admin', 'staff']))
@@ -475,7 +162,7 @@
                 </div>
 
                 <!-- Announcement Type Navigation -->
-                <div class="mb-8 bg-white rounded-xl shadow p-4">
+                <div class="mb-3 portal-card">
                     <div class="flex flex-wrap gap-4">
                         <h3 class="text-lg font-medium text-gray-900 self-center">View:</h3>
                         <div class="flex space-x-2 flex-wrap gap-2">
@@ -513,7 +200,7 @@
 
                 <!-- Create Announcement Card -->
                 @auth
-                <div class="mb-8 bg-gradient-to-r from-blue-50 to-uthm-blue-light border border-blue-200 rounded-xl shadow-sm p-5">
+                <div class="mb-3 bg-gradient-to-r from-blue-50 to-uthm-blue-light border border-blue-200 rounded-xl shadow-sm p-4">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <div class="bg-uthm-blue text-white p-3 rounded-lg mr-4">
@@ -540,7 +227,7 @@
                 @endauth
 
                 <!-- Filters -->
-                <div class="mb-8 bg-white rounded-xl shadow p-4">
+                <div class="mb-3 portal-card">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div class="flex flex-wrap gap-2">
                             <button onclick="filterAnnouncements('all', 'all')" 
@@ -713,12 +400,11 @@
                         </div>
                     </div>
                 @endif
-            </div>
-        </div>
+        @include('layouts.partials.portal-content-close')
 
         <!-- Footer -->
-        <footer class="bg-white border-t border-gray-200 py-6">
-            <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <footer class="bg-white border-t border-gray-200 py-4">
+            <div class="portal-topbar-wrap max-w-full mx-auto">
                 <div class="text-center text-gray-500 text-sm">
                     <p>UTHM Digital Bulletin Board &copy; {{ date('Y') }}. All rights reserved.</p>
                     <p class="mt-1">All authenticated users can create announcements. Official announcements are verified by admin/staff.</p>

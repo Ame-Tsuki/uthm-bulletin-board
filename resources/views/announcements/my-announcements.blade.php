@@ -7,376 +7,95 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    @include('layouts.partials.portal-head')
     <style>
-        /* Custom colors */
-        .uthm-blue { color: #0056a6; }
-        .bg-uthm-blue { background-color: #0056a6; }
-        .bg-uthm-blue-light { background-color: #e6f0fa; }
-        
-        /* Badge styles */
-        .badge-official {
-            background-color: #dcfce7;
-            color: #166534;
-        }
-        .badge-unofficial {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        .badge-urgent {
-            background-color: #fee2e2;
-            color: #dc2626;
-        }
-        .badge-important {
-            background-color: #fef3c7;
-            color: #d97706;
-        }
-        .badge-academic {
-            background-color: #dbeafe;
-            color: #1d4ed8;
-        }
-        .badge-events {
-            background-color: #f3e8ff;
-            color: #7c3aed;
-        }
-        .badge-general {
-            background-color: #f0f9ff;
-            color: #0369a1;
-        }
-
-        /* Role badges */
-        .badge-admin {
-            background-color: #dc2626;
-            color: white;
-        }
-        .badge-staff {
-            background-color: #2563eb;
-            color: white;
-        }
-        .badge-student {
-            background-color: #059669;
-            color: white;
-        }
-        .badge-guest {
-            background-color: #6b7280;
-            color: white;
-        }
-        
-        /* Status badges */
-        .status-published {
-            background-color: #10b981;
-            color: white;
-        }
-        .status-pending-approval {
-            background-color: #fef3c7;
-            color: #d97706;
-        }
-        .status-rejected {
-            background-color: #fee2e2;
-            color: #dc2626;
-        }
-        .status-draft {
-            background-color: #6b7280;
-            color: white;
-        }
-        .status-expired {
-            background-color: #9ca3af;
-            color: white;
-        }
-
-        /* Custom sidebar styles */
-        :root {
-            --sidebar-collapsed: 80px;
-            --sidebar-expanded: 280px;
-            --transition-speed: 0.3s;
-        }
-
-        .sidebar-collapsed {
-            width: var(--sidebar-collapsed) !important;
-        }
-        
-        .sidebar-expanded {
-            width: var(--sidebar-expanded) !important;
-        }
-        
-        .content-collapsed {
-            margin-left: var(--sidebar-collapsed) !important;
-        }
-        
-        .content-expanded {
-            margin-left: var(--sidebar-expanded) !important;
-        }
-        
-        /* Smooth transitions */
-        .sidebar-transition {
-            transition: width var(--transition-speed) ease;
-        }
-        
-        .content-transition {
-            transition: margin-left var(--transition-speed) ease;
-        }
-        
-        /* Text visibility control */
-        .sidebar-text {
-            transition: all var(--transition-speed) ease;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-        
-        .sidebar-collapsed .sidebar-text {
-            opacity: 0;
-            width: 0;
-            margin-left: 0 !important;
-        }
-        
-        .sidebar-expanded .sidebar-text {
-            opacity: 1;
-            width: auto;
-            margin-left: 0.75rem !important;
-        }
-        
-        /* Mobile styles */
-        @media (max-width: 768px) {
-            .sidebar-collapsed,
-            .sidebar-expanded {
-                width: 280px !important;
-                transform: translateX(-100%);
-            }
-            
-            .sidebar-expanded.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .content-collapsed,
-            .content-expanded {
-                margin-left: 0 !important;
-            }
-        }
-        
-        /* Action buttons */
-        .btn-edit {
-            background-color: #3b82f6;
-            color: white;
-        }
-        .btn-delete {
-            background-color: #ef4444;
-            color: white;
-        }
-        .btn-view {
-            background-color: #10b981;
-            color: white;
-        }
-        
-        /* Dropdown animation */
-        .dropdown-enter {
-            opacity: 0;
-            transform: scale(0.95);
-        }
-        .dropdown-enter-active {
-            opacity: 1;
-            transform: scale(1);
-            transition: opacity 0.2s, transform 0.2s;
-        }
-        .dropdown-leave {
-            opacity: 1;
-            transform: scale(1);
-        }
-        .dropdown-leave-active {
-            opacity: 0;
-            transform: scale(0.95);
-            transition: opacity 0.2s, transform 0.2s;
-        }
+        .badge-official { background-color: #dcfce7; color: #166534; }
+        .badge-unofficial { background-color: #fef3c7; color: #92400e; }
+        .badge-urgent { background-color: #fee2e2; color: #dc2626; }
+        .badge-important { background-color: #fef3c7; color: #d97706; }
+        .badge-academic { background-color: #dbeafe; color: #1d4ed8; }
+        .badge-events { background-color: #f3e8ff; color: #7c3aed; }
+        .badge-general { background-color: #f0f9ff; color: #0369a1; }
+        .status-published { background-color: #10b981; color: white; }
+        .status-pending-approval { background-color: #fef3c7; color: #d97706; }
+        .status-rejected { background-color: #fee2e2; color: #dc2626; }
+        .status-draft { background-color: #6b7280; color: white; }
+        .status-expired { background-color: #9ca3af; color: white; }
+        .btn-edit { background-color: #3b82f6; color: white; }
+        .btn-delete { background-color: #ef4444; color: white; }
+        .btn-view { background-color: #10b981; color: white; }
+        .dropdown-enter { opacity: 0; transform: scale(0.95); }
+        .dropdown-enter-active { opacity: 1; transform: scale(1); transition: opacity 0.2s, transform 0.2s; }
+        .dropdown-leave { opacity: 1; transform: scale(1); }
+        .dropdown-leave-active { opacity: 0; transform: scale(0.95); transition: opacity 0.2s, transform 0.2s; }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="portal-body">
     <div class="min-h-screen flex">
-        <!-- Sidebar Dashboard Navigation -->
-        <div id="sidebar" class="sidebar-collapsed bg-white shadow-lg h-screen fixed left-0 top-0 overflow-y-auto z-40 sidebar-transition">
-            <!-- Sidebar Header -->
-            <div class="p-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3 overflow-hidden">
-                        <div class="bg-green-600 text-white p-2 rounded-lg shrink-0">
-                            <i class="fas fa-user-graduate text-lg"></i>
-                        </div>
-                        <div class="sidebar-text">
-                            <h2 class="font-bold uthm-blue">UTHM Bulletin</h2>
-                            <p class="text-xs text-gray-500">My Announcements</p>
-                        </div>
-                    </div>
-                    
-                    <button id="sidebar-toggle" class="hidden md:block text-gray-500 hover:text-uthm-blue shrink-0">
-                        <svg id="toggle-icon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- User Profile -->
-            <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors">
-                <div class="p-4 border-b border-gray-200">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
-                            <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
-                        </div>
-                        <div class="sidebar-text">
-                            <h3 class="font-medium text-gray-900">{{ $user?->name ?? 'Guest User' }}</h3>
-                            <p class="text-xs text-gray-500">{{ $user?->uthm_id ?? 'UTHM Member' }}</p>
-                            @if($user?->role)
-                                <span class="mt-1 inline-block px-2 py-1 text-xs rounded-full badge-{{ $user->role }}">
-                                    {{ ucfirst($user->role) }}
-                                </span>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </a>
-
-            <!-- Dashboard Navigation -->
-            <nav class="p-4">
-                <ul class="space-y-2">
-                    <li>
-                        <a href="{{ route('dashboard') }}" 
-                           class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                            <div class="shrink-0">
-                                <i class="fas fa-home w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Dashboard</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="{{ route('announcements.index') }}" 
-                              class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                            <div class="shrink-0">
-                                <i class="fas fa-bullhorn w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Announcements</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="{{ route('announcements.my-announcements') }}" 
-                           class="flex items-center p-3 rounded-lg bg-uthm-blue-light text-uthm-blue">
-                            <div class="shrink-0">
-                                <i class="fas fa-file-alt w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">My Announcements</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="{{ route('calendar') }}"
-                           class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                            <div class="shrink-0">
-                                <i class="fas fa-calendar-alt w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Calendar</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="#" 
-                           class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                            <div class="shrink-0">
-                                <i class="fas fa-calendar-check w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Events</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="{{ route('settings') }}" 
-                           class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                            <div class="shrink-0">
-                                <i class="fas fa-cog w-5 h-5"></i>
-                            </div>
-                            <span class="sidebar-text ml-3">Settings</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-
-            <!-- Logout -->
-            <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" 
-                            class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
-                        <div class="shrink-0">
-                            <i class="fas fa-sign-out-alt w-5 h-5"></i>
-                        </div>
-                        <span class="sidebar-text ml-3">Logout</span>
-                    </button>
-                </form>
-            </div>
-        </div>
+        @include('layouts.partials.portal-sidebar', ['user' => $user ?? Auth::user()])
 
         <!-- Main Content Wrapper -->
-        <div class="content-collapsed min-h-screen content-transition flex-1">
-            <!-- Top Navigation Bar -->
-            <nav class="bg-white shadow">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex justify-between h-16">
-                        <div class="flex items-center">
-                            <a href="{{ route('announcements.index') }}" class="flex items-center mr-8">
-                                <i class="fas fa-arrow-left text-gray-600 mr-2"></i>
-                                <span class="text-gray-700">Back to Announcements</span>
-                            </a>
-                            <h1 class="text-xl font-bold text-gray-900">My Announcements</h1>
-                        </div>
-                        
-                        <div class="flex items-center space-x-4">
-                            <a href="{{ route('announcements.create') }}" 
-                               class="bg-uthm-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center">
-                                <i class="fas fa-plus mr-2"></i>
-                                New Announcement
-                            </a>
-                            
-                            <!-- User Menu Dropdown (from student dashboard) -->
-                            <div class="relative">
-                                <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100">
-                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                        <span class="font-bold text-green-700">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
-                                    </div>
-                                    <div class="hidden md:block text-left">
-                                        <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
-                                        <p class="text-xs text-gray-500">{{ Auth::user()->uthm_id }}</p>
-                                    </div>
-                                    <i class="fas fa-chevron-down text-gray-500"></i>
-                                </button>
-                                
-                                <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50">
-                                    <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        <i class="fas fa-user mr-2"></i> My Profile
-                                    </a>
-                                    
-                                    <a href="{{ route('settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                        <i class="fas fa-cog mr-2"></i> Settings
-                                    </a>
-                                    
-                                    <div class="border-t border-gray-200 my-2"></div>
-                                    
-                                    <form action="{{ route('logout') }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                            <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+        <div class="content-collapsed min-h-screen content-transition flex-1 flex flex-col">
+           <!-- Top Navigation Bar -->
+<nav class="bg-white shadow flex-shrink-0">
+    <div class="flex items-center h-16 px-4 sm:px-6 lg:px-8">
+        <!-- Left side - Title (flush left) -->
+        <div class="flex-shrink-0">
+            <h1 class="text-xl font-bold text-gray-900">My Announcements</h1>
+        </div>
+        
+        <!-- Right side - New Announcement button and User Menu -->
+        <div class="flex items-center space-x-4 ml-auto flex-shrink-0">
+            <a href="{{ route('announcements.create') }}" 
+               class="bg-uthm-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center shadow-sm">
+                <i class="fas fa-plus mr-2"></i>
+                <span class="hidden sm:inline">New Announcement</span>
+                <span class="sm:hidden">New</span>
+            </a>
+            
+            <!-- User Menu Dropdown -->
+            <div class="relative">
+                <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="font-bold text-green-700 text-sm">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
                     </div>
+                    <div class="hidden md:block text-left">
+                        <p class="text-sm font-medium text-gray-900 leading-tight">{{ Auth::user()->name }}</p>
+                        <p class="text-xs text-gray-500 leading-tight">{{ Auth::user()->uthm_id }}</p>
+                    </div>
+                    <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                </button>
+                
+                <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50 border border-gray-100">
+                    <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-user mr-2 text-gray-400"></i> My Profile
+                    </a>
+                    
+                    <a href="{{ route('settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-cog mr-2 text-gray-400"></i> Settings
+                    </a>
+                    
+                    <div class="border-t border-gray-100 my-1"></div>
+                    
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                        </button>
+                    </form>
                 </div>
-            </nav>
+            </div>
+        </div>
+    </div>
+</nav>
 
-            <!-- Main Content -->
-            <div class="py-8">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Main Content Area -->
+            <div class="flex-1">
+                @include('layouts.partials.portal-content-open')
                     <!-- Page Header -->
-                    <div class="mb-8">
-                        <h2 class="text-2xl font-bold text-gray-900">Manage Your Announcements</h2>
-                        <p class="mt-2 text-gray-600">View, edit, and manage all announcements you've created</p>
+                    <div class="mb-3">
+                        <h2 class="portal-section-title text-xl">Manage Your Announcements</h2>
+                        <p class="mt-1 text-gray-500 text-sm">View, edit, and manage all announcements you've created</p>
                         
                         <!-- Stats -->
                         <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -419,51 +138,51 @@
                     </div>
 
                     <!-- Filter Tabs -->
-<div class="mb-6 bg-white rounded-lg shadow p-4">
-    <div class="flex flex-wrap gap-2">
-        <a href="{{ route('announcements.my-announcements') }}?status=all" 
-           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status', 'all') == 'all' ? 'bg-uthm-blue text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-            <i class="fas fa-list mr-2"></i>All
-            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status', 'all') == 'all' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $totalCount ?? 0 }}</span>
-        </a>
-        
-        <a href="{{ route('announcements.my-announcements') }}?status=published" 
-           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'published' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-            <i class="fas fa-check-circle mr-2"></i>Published
-            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'published' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $publishedCount ?? 0 }}</span>
-        </a>
+                    <div class="mb-6 bg-white rounded-lg shadow p-4">
+                        <div class="flex flex-wrap gap-2">
+                            <a href="{{ route('announcements.my-announcements') }}?status=all" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status', 'all') == 'all' ? 'bg-uthm-blue text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                                <i class="fas fa-list mr-2"></i>All
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status', 'all') == 'all' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $totalCount ?? 0 }}</span>
+                            </a>
+                            
+                            <a href="{{ route('announcements.my-announcements') }}?status=published" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'published' ? 'bg-green-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                                <i class="fas fa-check-circle mr-2"></i>Published
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'published' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $publishedCount ?? 0 }}</span>
+                            </a>
 
-        <a href="{{ route('announcements.my-announcements') }}?status=expired" 
-           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'expired' ? 'bg-gray-500 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-            <i class="fas fa-hourglass-end mr-2"></i>Expired
-            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'expired' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $expiredCount ?? 0 }}</span>
-        </a>
-        
-        <a href="{{ route('announcements.my-announcements') }}?status=draft" 
-           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'draft' ? 'bg-gray-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-            <i class="fas fa-edit mr-2"></i>Drafts
-            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'draft' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $draftCount ?? 0 }}</span>
-        </a>
-        
-        <a href="{{ route('announcements.my-announcements') }}?status=pending_verification" 
-           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'pending_verification' ? 'bg-yellow-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-            <i class="fas fa-clock mr-2"></i>Pending Approval
-            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'pending_verification' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $pendingCount ?? 0 }}</span>
-        </a>
-        
-        <a href="{{ route('announcements.my-announcements') }}?status=rejected" 
-           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'rejected' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-            <i class="fas fa-times-circle mr-2"></i>Rejected
-            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'rejected' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $rejectedCount ?? 0 }}</span>
-        </a>
+                            <a href="{{ route('announcements.my-announcements') }}?status=expired" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'expired' ? 'bg-gray-500 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                                <i class="fas fa-hourglass-end mr-2"></i>Expired
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'expired' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $expiredCount ?? 0 }}</span>
+                            </a>
+                            
+                            <a href="{{ route('announcements.my-announcements') }}?status=draft" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'draft' ? 'bg-gray-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                                <i class="fas fa-edit mr-2"></i>Drafts
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'draft' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $draftCount ?? 0 }}</span>
+                            </a>
+                            
+                            <a href="{{ route('announcements.my-announcements') }}?status=pending_verification" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'pending_verification' ? 'bg-yellow-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                                <i class="fas fa-clock mr-2"></i>Pending Approval
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'pending_verification' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $pendingCount ?? 0 }}</span>
+                            </a>
+                            
+                            <a href="{{ route('announcements.my-announcements') }}?status=rejected" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'rejected' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                                <i class="fas fa-times-circle mr-2"></i>Rejected
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'rejected' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $rejectedCount ?? 0 }}</span>
+                            </a>
 
-        <a href="{{ route('announcements.my-announcements') }}?status=banned" 
-           class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'banned' ? 'bg-red-800 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-            <i class="fas fa-ban mr-2"></i>Banned
-            <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'banned' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $bannedCount ?? 0 }}</span>
-        </a>
-    </div>
-</div>
+                            <a href="{{ route('announcements.my-announcements') }}?status=banned" 
+                               class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 {{ request('status') == 'banned' ? 'bg-red-800 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                                <i class="fas fa-ban mr-2"></i>Banned
+                                <span class="ml-1 px-2 py-0.5 rounded-full text-xs {{ request('status') == 'banned' ? 'bg-white bg-opacity-30 text-white' : 'bg-gray-200 text-gray-600' }}">{{ $bannedCount ?? 0 }}</span>
+                            </a>
+                        </div>
+                    </div>
 
                     <!-- Announcements List -->
                     <div class="bg-white rounded-lg shadow overflow-hidden">
@@ -667,11 +386,12 @@
                             </a>
                         </div>
                     </div>
-                </div>
+                @include('layouts.partials.portal-content-close')
             </div>
+            <!-- End flex-1 content area -->
 
             <!-- Footer -->
-            <footer class="bg-white border-t border-gray-200 py-6 mt-8">
+            <footer class="bg-white border-t border-gray-200 py-4 flex-shrink-0">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="text-center text-gray-500 text-sm">
                         <p>UTHM Digital Bulletin Board &copy; {{ date('Y') }}</p>
@@ -680,7 +400,9 @@
                 </div>
             </footer>
         </div>
+        <!-- End content-collapsed -->
     </div>
+    <!-- End min-h-screen flex -->
 
     <!-- JavaScript -->
     <script>
@@ -694,9 +416,31 @@
             // Load sidebar state from localStorage
             const isSidebarExpanded = localStorage.getItem('sidebarExpanded') === 'true';
             if (isSidebarExpanded) {
-                expandSidebar();
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('sidebar-expanded');
+                
+                const contentWrapper = document.querySelector('.content-collapsed, .content-expanded');
+                if (contentWrapper) {
+                    contentWrapper.classList.remove('content-collapsed');
+                    contentWrapper.classList.add('content-expanded');
+                }
+                
+                if (toggleIcon) {
+                    toggleIcon.style.transform = 'rotate(180deg)';
+                }
             } else {
-                collapseSidebar();
+                sidebar.classList.remove('sidebar-expanded');
+                sidebar.classList.add('sidebar-collapsed');
+                
+                const contentWrapper = document.querySelector('.content-collapsed, .content-expanded');
+                if (contentWrapper) {
+                    contentWrapper.classList.remove('content-expanded');
+                    contentWrapper.classList.add('content-collapsed');
+                }
+                
+                if (toggleIcon) {
+                    toggleIcon.style.transform = 'rotate(0deg)';
+                }
             }
             
             // Desktop sidebar toggle
@@ -717,7 +461,6 @@
                     userMenu.classList.toggle('hidden');
                 });
                 
-                // Close dropdown when clicking outside
                 document.addEventListener('click', function(event) {
                     if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
                         userMenu.classList.add('hidden');
@@ -729,16 +472,28 @@
                 sidebar.classList.remove('sidebar-collapsed');
                 sidebar.classList.add('sidebar-expanded');
                 
+                const contentWrapper = document.querySelector('.content-collapsed, .content-expanded');
+                if (contentWrapper) {
+                    contentWrapper.classList.remove('content-collapsed');
+                    contentWrapper.classList.add('content-expanded');
+                }
+                
                 if (toggleIcon) {
                     toggleIcon.style.transform = 'rotate(180deg)';
                 }
                 
                 localStorage.setItem('sidebarExpanded', 'true');
             }
-            
+
             function collapseSidebar() {
                 sidebar.classList.remove('sidebar-expanded');
                 sidebar.classList.add('sidebar-collapsed');
+                
+                const contentWrapper = document.querySelector('.content-collapsed, .content-expanded');
+                if (contentWrapper) {
+                    contentWrapper.classList.remove('content-expanded');
+                    contentWrapper.classList.add('content-collapsed');
+                }
                 
                 if (toggleIcon) {
                     toggleIcon.style.transform = 'rotate(0deg)';
@@ -747,34 +502,34 @@
                 localStorage.setItem('sidebarExpanded', 'false');
             }
             
-           // Status filter tab styling - Updated for all 5 tabs
-const statusTabs = document.querySelectorAll('a[href*="status="]');
-statusTabs.forEach(tab => {
-    tab.addEventListener('click', function(e) {
-        statusTabs.forEach(t => {
-            t.classList.remove('bg-uthm-blue', 'text-white', 'bg-green-600', 'bg-gray-600', 'bg-yellow-600', 'bg-red-600');
-            t.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
-        });
-        
-        const href = this.getAttribute('href');
-        if (href.includes('status=published')) {
-            this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
-            this.classList.add('bg-green-600', 'text-white');
-        } else if (href.includes('status=draft')) {
-            this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
-            this.classList.add('bg-gray-600', 'text-white');
-        } else if (href.includes('status=pending_verification')) {
-            this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
-            this.classList.add('bg-yellow-600', 'text-white');
-        } else if (href.includes('status=rejected')) {
-            this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
-            this.classList.add('bg-red-600', 'text-white');
-        } else {
-            this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
-            this.classList.add('bg-uthm-blue', 'text-white');
-        }
-    });
-});
+            // Status filter tab styling
+            const statusTabs = document.querySelectorAll('a[href*="status="]');
+            statusTabs.forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    statusTabs.forEach(t => {
+                        t.classList.remove('bg-uthm-blue', 'text-white', 'bg-green-600', 'bg-gray-600', 'bg-yellow-600', 'bg-red-600');
+                        t.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+                    });
+                    
+                    const href = this.getAttribute('href');
+                    if (href.includes('status=published')) {
+                        this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+                        this.classList.add('bg-green-600', 'text-white');
+                    } else if (href.includes('status=draft')) {
+                        this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+                        this.classList.add('bg-gray-600', 'text-white');
+                    } else if (href.includes('status=pending_verification')) {
+                        this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+                        this.classList.add('bg-yellow-600', 'text-white');
+                    } else if (href.includes('status=rejected')) {
+                        this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+                        this.classList.add('bg-red-600', 'text-white');
+                    } else {
+                        this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200');
+                        this.classList.add('bg-uthm-blue', 'text-white');
+                    }
+                });
+            });
             
             // Mobile sidebar handling
             const mobileMenuToggle = document.getElementById('mobile-menu-toggle');

@@ -7,63 +7,15 @@
     <title>Calendar - UTHM Digital Bulletin Board</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'uthm-blue': '#0056a6',
-                        'uthm-blue-light': '#e6f0fa',
-                        'uthm-green': '#6ea342',
-                        'uthm-yellow': '#ffc107',
-                        'uthm-red': '#dc3545',
-                        'uthm-purple': '#6f42c1',
-                    }
-                }
-            }
-        }
-    </script>
+    @include('layouts.partials.portal-head')
     <style>
-        :root {
-            --sidebar-collapsed: 80px;
-            --sidebar-expanded: 280px;
-            --transition-speed: 0.3s;
-        }
-
-        .sidebar-collapsed { width: var(--sidebar-collapsed) !important; }
-        .sidebar-expanded { width: var(--sidebar-expanded) !important; }
-        .content-collapsed { margin-left: var(--sidebar-collapsed) !important; }
-        .content-expanded { margin-left: var(--sidebar-expanded) !important; }
-        .sidebar-transition { transition: width var(--transition-speed) ease; }
-        .content-transition { transition: margin-left var(--transition-speed) ease; }
-        
-        .sidebar-text {
-            transition: all var(--transition-speed) ease;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-        
-        .sidebar-collapsed .sidebar-text { opacity: 0; width: 0; margin-left: 0 !important; }
-        .sidebar-expanded .sidebar-text { opacity: 1; width: auto; margin-left: 0.75rem !important; }
-        
-        @media (max-width: 768px) {
-            .sidebar-collapsed, .sidebar-expanded {
-                width: 280px !important;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-            .sidebar-expanded.mobile-open {
-                transform: translateX(0);
-            }
-        }
-
         .calendar-day {
             position: relative;
             background: white;
             border-right: 1px solid #e5e7eb;
             border-bottom: 1px solid #e5e7eb;
-            min-height: 140px;
-            padding: 8px;
+            min-height: 110px;
+            padding: 6px;
             overflow: hidden;
             transition: background 0.2s ease;
         }
@@ -134,7 +86,7 @@
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            grid-auto-rows: minmax(140px, auto);
+            grid-auto-rows: minmax(110px, auto);
             width: 100%;
         }
 
@@ -210,165 +162,26 @@
         }
     </style>
 </head>
-<body class="bg-[#f6f8fc]">
-    <!-- Mobile Menu Button -->
-    <div class="md:hidden fixed top-4 left-4 z-50">
-        <button id="mobile-menu-toggle" class="bg-uthm-blue text-white p-2 rounded-lg shadow-lg">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-        </button>
-    </div>
-
-    <!-- Sidebar -->
-    <div id="sidebar" class="sidebar-collapsed bg-white shadow-lg h-screen fixed left-0 top-0 z-40 sidebar-transition flex flex-col">
-        <div class="p-4 border-b border-gray-200 flex-shrink-0">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3 overflow-hidden">
-                    <div class="bg-green-600 text-white p-2 rounded-lg shrink-0">
-                        <i class="fas fa-user-graduate text-lg"></i>
-                    </div>
-                    <div class="sidebar-text">
-                        <h2 class="font-bold text-gray-900">UTHM Bulletin</h2>
-                        <p class="text-xs text-gray-500">Student Dashboard</p>
-                    </div>
-                </div>
-                <button id="sidebar-toggle" class="hidden md:block text-gray-500 hover:text-uthm-blue shrink-0">
-                    <svg id="toggle-icon" class="w-5 h-5 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <a href="{{ route('profile') }}" class="block hover:bg-gray-50 transition-colors flex-shrink-0">
-            <div class="p-4 border-b border-gray-200">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
-                        <span class="font-bold text-uthm-blue">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
-                    </div>
-                    <div class="sidebar-text">
-                        <h3 class="font-medium text-gray-900">{{ $user->name }}</h3>
-                        <p class="text-xs text-gray-500">{{ $user->uthm_id ?? 'UTHM Member' }}</p>
-                    </div>
-                </div>
-            </div>
-        </a>
-
-        <nav class="p-4 flex-1 overflow-y-auto">
-            <ul class="space-y-2">
-                <li>
-                    <a href="{{ route('dashboard') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0"><i class="fas fa-home w-5 h-5"></i></div>
-                        <span class="sidebar-text ml-3">Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('announcements.index') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0"><i class="fas fa-bullhorn w-5 h-5"></i></div>
-                        <span class="sidebar-text ml-3">Announcements</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('announcements.my-announcements') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0"><i class="fas fa-file-alt w-5 h-5"></i></div>
-                        <span class="sidebar-text ml-3">My Announcements</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('calendar') }}" class="flex items-center p-3 rounded-lg bg-uthm-blue-light text-uthm-blue transition-colors">
-                        <div class="shrink-0"><i class="fas fa-calendar-alt w-5 h-5"></i></div>
-                        <span class="sidebar-text ml-3">Calendar</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('student.community-hub') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0"><i class="fas fa-users w-5 h-5"></i></div>
-                        <span class="sidebar-text ml-3">Community Hub</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ route('settings') }}" class="flex items-center p-3 rounded-lg hover:bg-uthm-blue-light text-gray-600 hover:text-uthm-blue transition-colors">
-                        <div class="shrink-0"><i class="fas fa-cog w-5 h-5"></i></div>
-                        <span class="sidebar-text ml-3">Settings</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Logout Button -固定在底部 -->
-        <div class="p-4 border-t border-gray-200 flex-shrink-0">
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="flex items-center p-3 rounded-lg hover:bg-red-50 text-red-600 w-full transition-colors">
-                    <div class="shrink-0"><i class="fas fa-sign-out-alt w-5 h-5"></i></div>
-                    <span class="sidebar-text ml-3">Logout</span>
-                </button>
-            </form>
-        </div>
-    </div>
+<body class="portal-body">
+    @include('layouts.partials.portal-sidebar', ['user' => $user ?? Auth::user()])
 
     <!-- Main Content -->
     <div id="main-content" class="content-collapsed min-h-screen content-transition">
-        <nav class="bg-white shadow">
-            <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex items-center">
-                        <h1 class="text-xl font-bold text-gray-900">Student Calendar</h1>
-                        <span class="mx-2 text-gray-400">/</span>
-                        <span id="current-month-year" class="text-gray-600">Loading...</span>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        <button onclick="openEventModal()" class="bg-uthm-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center">
-                            <i class="fas fa-plus mr-2"></i>
-                            <span class="hidden md:inline">Add Event</span>
-                        </button>
-                        <button class="relative p-2 text-gray-600 hover:text-uthm-blue">
-                            <i class="fas fa-bell text-lg"></i>
-                            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
-                        <div class="relative">
-                            <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                    <span class="font-bold text-green-700">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}</span>
-                                </div>
-                                <div class="hidden md:block text-left">
-                                    <p class="text-sm font-medium text-gray-900">{{ Auth::user()->name }}</p>
-                                    <p class="text-xs text-gray-500">{{ Auth::user()->uthm_id }}</p>
-                                </div>
-                                <i class="fas fa-chevron-down text-gray-500"></i>
-                            </button>
-                            
-                            <div id="user-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden z-50">
-                                <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-user mr-2"></i> My Profile
-                                </a>
-                                <a href="{{ route('settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                    <i class="fas fa-cog mr-2"></i> Settings
-                                </a>
-                                <div class="border-t border-gray-200 my-2"></div>
-                                <form action="{{ route('logout') }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </nav>
+        @include('layouts.partials.portal-topbar', [
+            'user' => $user ?? Auth::user(),
+            'pageTitle' => 'Calendar',
+            'breadcrumbId' => 'current-month-year',
+            'headerActionsHtml' => '<button type="button" onclick="openEventModal()" class="portal-btn-primary text-sm inline-flex items-center px-3 py-2"><i class="fas fa-plus mr-2"></i><span class="hidden md:inline">Add Event</span></button>',
+        ])
 
         <!-- Calendar Content -->
-        <div class="py-8">
-            <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+        @include('layouts.partials.portal-content-open')
                 <!-- Calendar Controls -->
-                <div class="bg-white rounded-xl shadow p-6 mb-6">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between">
-                        <div class="mb-4 md:mb-0">
-                            <h2 class="text-2xl font-bold text-gray-900">Academic Calendar</h2>
-                            <p class="text-gray-600">Track your lectures, deadlines, and events</p>
+                <div class="portal-card mb-3">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div>
+                            <h2 class="portal-section-title text-lg">Academic Calendar</h2>
+                            <p class="text-gray-500 text-sm">Track your lectures, deadlines, and events</p>
                         </div>
                         <div class="flex items-center space-x-4">
                             <div class="flex bg-gray-100 p-1 rounded-lg">
@@ -388,7 +201,7 @@
                         </div>
                     </div>
                     
-                    <div class="mt-6 flex flex-wrap gap-2">
+                    <div class="mt-4 flex flex-wrap gap-1.5">
                         <button class="event-filter active px-3 py-1 bg-uthm-blue text-white rounded-full text-sm hover:bg-blue-700 transition" data-type="all">All Events</button>
                         <button class="event-filter px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition" data-type="lecture">
                             <span class="event-dot event-lecture"></span> Lectures
@@ -428,11 +241,11 @@
                 </div>
 
                 <!-- Upcoming Events & Sidebar -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-                    <div class="lg:col-span-2">
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-lg font-bold text-gray-900">Upcoming Events This Week</h3>
+                <div class="portal-grid-2-1 mt-3">
+                    <div>
+                        <div class="portal-card">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="portal-section-title">Upcoming Events This Week</h3>
                                 <a href="#" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">
                                     View All <i class="fas fa-arrow-right ml-1"></i>
                                 </a>
@@ -446,8 +259,8 @@
                         </div>
 
                         <!-- Calendar Statistics -->
-                        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="bg-white rounded-lg shadow p-4">
+                        <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div class="portal-card portal-card-compact">
                                 <div class="flex items-center">
                                     <div class="bg-blue-100 p-3 rounded-lg mr-3">
                                         <i class="fas fa-chalkboard-teacher text-blue-600"></i>
@@ -458,7 +271,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="bg-white rounded-lg shadow p-4">
+                            <div class="portal-card portal-card-compact">
                                 <div class="flex items-center">
                                     <div class="bg-red-100 p-3 rounded-lg mr-3">
                                         <i class="fas fa-exclamation-circle text-red-600"></i>
@@ -469,7 +282,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="bg-white rounded-lg shadow p-4">
+                            <div class="portal-card portal-card-compact">
                                 <div class="flex items-center">
                                     <div class="bg-purple-100 p-3 rounded-lg mr-3">
                                         <i class="fas fa-file-alt text-purple-600"></i>
@@ -484,44 +297,42 @@
                     </div>
 
                     <!-- Quick Actions & Sync -->
-                    <div class="space-y-6">
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
-                            <div class="space-y-3">
-                                <button onclick="openEventModal()" class="w-full bg-uthm-blue text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
+                    <div class="portal-stack">
+                        <div class="portal-card">
+                            <h3 class="portal-section-title mb-3">Quick Actions</h3>
+                            <div class="space-y-2">
+                                <button onclick="openEventModal()" class="w-full portal-btn-primary py-2.5 flex items-center justify-center text-sm">
                                     <i class="fas fa-plus mr-2"></i> Add New Event
                                 </button>
-                                <button onclick="syncWithGoogle()" id="sync-all-btn" class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition flex items-center justify-center">
+                                <button onclick="syncWithGoogle()" id="sync-all-btn" class="w-full bg-green-600 text-white px-4 py-2.5 rounded-lg hover:bg-green-700 transition flex items-center justify-center text-sm">
                                     <i class="fas fa-sync-alt mr-2"></i> Sync All to Google
                                 </button>
-                                <button onclick="window.print()" class="w-full bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition flex items-center justify-center">
+                                <button onclick="window.print()" class="w-full bg-gray-100 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-200 transition flex items-center justify-center text-sm">
                                     <i class="fas fa-print mr-2"></i> Print Schedule
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Calendar Sync -->
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-2">Sync Calendar</h3>
-                            <p id="google-status-text" class="text-sm text-gray-600 mb-4">
+                        <div class="portal-card">
+                            <h3 class="portal-section-title mb-2">Sync Calendar</h3>
+                            <p id="google-status-text" class="text-sm text-gray-600 mb-3">
                                 <i class="fas fa-circle text-gray-400 mr-1"></i> Checking status...
                             </p>
-                            <div class="space-y-3">
+                            <div class="space-y-2">
                                 <button id="connect-google-btn" 
-                                        class="w-full bg-gray-800 text-white px-4 py-3 rounded-lg hover:bg-gray-900 transition flex items-center justify-center">
+                                        class="w-full bg-gray-800 text-white px-4 py-2.5 rounded-lg hover:bg-gray-900 transition flex items-center justify-center text-sm">
                                     <i class="fab fa-google mr-2"></i> Connect Google Calendar
                                 </button>
                                 <button id="disconnect-google-btn" 
-                                        class="w-full bg-red-50 text-red-600 px-4 py-3 rounded-lg hover:bg-red-100 transition flex items-center justify-center text-sm hidden">
+                                        class="w-full bg-red-50 text-red-600 px-4 py-2.5 rounded-lg hover:bg-red-100 transition flex items-center justify-center text-sm hidden">
                                     <i class="fas fa-unlink mr-2"></i> Disconnect Google Calendar
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Event Categories -->
-                        <div class="bg-white rounded-xl shadow p-6">
-                            <h3 class="text-lg font-bold text-gray-900 mb-4">Event Categories</h3>
-                            <div class="space-y-3" id="event-categories">
+                        <div class="portal-card">
+                            <h3 class="portal-section-title mb-3">Event Categories</h3>
+                            <div class="space-y-2" id="event-categories">
                                 <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                                     <div class="flex items-center">
                                         <span class="event-dot event-lecture mr-3"></span>
@@ -561,8 +372,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+        @include('layouts.partials.portal-content-close')
     </div>
 
     <!-- Event Modal -->
@@ -707,74 +517,11 @@
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-        initializeSidebar();
         setupNavigation();
         setupFilters();
         checkGoogleStatus();
         loadEvents();
     });
-    
-    // Sidebar initialization
-    function initializeSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('main-content');
-        const sidebarToggle = document.getElementById('sidebar-toggle');
-        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-        const toggleIcon = document.getElementById('toggle-icon');
-        const userMenuButton = document.getElementById('user-menu-button');
-        const userMenu = document.getElementById('user-menu');
-
-        let isCollapsed = true;
-
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', function () {
-                isCollapsed = !isCollapsed;
-
-                if (isCollapsed) {
-                    sidebar.classList.remove('sidebar-expanded');
-                    sidebar.classList.add('sidebar-collapsed');
-                    mainContent.classList.remove('content-expanded');
-                    mainContent.classList.add('content-collapsed');
-                    if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
-                } else {
-                    sidebar.classList.remove('sidebar-collapsed');
-                    sidebar.classList.add('sidebar-expanded');
-                    mainContent.classList.remove('content-collapsed');
-                    mainContent.classList.add('content-expanded');
-                    if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
-                }
-            });
-        }
-
-        if (mobileMenuToggle) {
-            mobileMenuToggle.addEventListener('click', function () {
-                sidebar.classList.toggle('mobile-open');
-                sidebar.classList.toggle('sidebar-expanded');
-            });
-        }
-
-        document.addEventListener('click', function (e) {
-            const isMobile = window.innerWidth <= 768;
-            if (isMobile && !sidebar.contains(e.target) && !mobileMenuToggle?.contains(e.target)) {
-                sidebar.classList.remove('mobile-open');
-            }
-        });
-
-        if (userMenuButton && userMenu) {
-            userMenuButton.addEventListener('click', function (e) {
-                e.stopPropagation();
-                userMenu.classList.toggle('hidden');
-            });
-            document.addEventListener('click', function () {
-                userMenu.classList.add('hidden');
-            });
-        }
-
-        if (window.innerWidth > 768) {
-            sidebar.classList.add('sidebar-collapsed');
-            mainContent.classList.add('content-collapsed');
-        }
-    }
     
     // Setup navigation
     function setupNavigation() {
@@ -1342,5 +1089,6 @@
     document.getElementById('connect-google-btn').addEventListener('click', connectGoogle);
     document.getElementById('disconnect-google-btn').addEventListener('click', disconnectGoogle);
     </script>
+    @include('layouts.partials.portal-scripts')
 </body>
 </html>

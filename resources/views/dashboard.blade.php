@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - UTHM Bulletin</title>
+    <title>Dashboard - UTHM Digital Bulletin Board</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
@@ -141,7 +141,7 @@
                         <i class="fas fa-bullhorn text-lg"></i>
                     </div>
                     <div class="sidebar-text">
-                        <h2 class="font-bold uthm-blue">UTHM Bulletin</h2>
+                        <h2 class="font-bold uthm-blue">UTHM Digital Bulletin Board</h2>
                         <p class="text-xs text-gray-500">Dashboard</p>
                     </div>
                 </div>

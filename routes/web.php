@@ -16,11 +16,10 @@ use App\Http\Controllers\CommunityHubController;
 use App\Http\Controllers\Admin\FeaturedPostController;
 use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\WelcomeController;
 
 // Public Routes (No Auth Required)
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
 // Authentication Routes
 Route::middleware('guest')->group(function () {

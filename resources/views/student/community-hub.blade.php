@@ -253,7 +253,24 @@
         <!-- Right Column: Discover Groups -->
         <div>
             <div class="bg-white rounded-xl shadow p-5 mb-6" id="discover">
-                <h3 class="font-bold text-lg mb-4">Discover Groups</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg">Discover Groups</h3>
+                    <form action="{{ route('student.community-hub') }}" method="GET" class="flex items-center gap-2">
+                        <input type="search" name="q" value="{{ request('q') }}" placeholder="Search groups by name, category, or description..."
+                               class="px-3 py-2 border rounded-lg text-sm w-56 focus:ring-2 focus:ring-uthm-blue" />
+                        <button type="submit" class="bg-uthm-blue text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        @if(request('q'))
+                            <a href="{{ route('student.community-hub') }}" class="ml-2 text-sm text-gray-500 hover:underline">Clear</a>
+                        @endif
+                    </form>
+                </div>
+
+                @if(request('q'))
+                    <p class="text-sm text-gray-600 mb-3">Showing <strong>{{ $allGroups->total() }}</strong> results for "<strong>{{ request('q') }}</strong>"</p>
+                @endif
+
                 <div class="space-y-4 max-h-96 overflow-y-auto">
                     @foreach($allGroups as $group)
                     <div class="border-b border-gray-100 pb-3">
@@ -276,7 +293,7 @@
                     @endforeach
                 </div>
                 <div class="mt-4">
-                    {{ $allGroups->links() }}
+                    {{ $allGroups->appends(request()->only('q'))->links() }}
                 </div>
             </div>
             

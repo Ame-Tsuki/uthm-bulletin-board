@@ -16,14 +16,27 @@ use Illuminate\Validation\Rule;
 
 class CommunityHubController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
-        
-        // Get all groups with member count
-        $allGroups = CommunityGroup::withCount('members')
-            ->orderBy('created_at', 'desc')
-            ->paginate(9);
+
+        // Support searching groups via ?q=term (name, category, description)
+        $searchTerm = trim($request->input('q', ''));
+
+        $groupsQuery = CommunityGroup::withCount('members');
+
+        if (!empty($searchTerm)) {
+            $groupsQuery->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', "%{$searchTerm}%")
+                  ->orWhere('category', 'like', "%{$searchTerm}%")
+                  ->orWhere('description', 'like', "%{$searchTerm}%");
+            });
+        }
+
+        // Get all groups with member count (paginated)
+        $allGroups = $groupsQuery->orderBy('created_at', 'desc')
+            ->paginate(9)
+            ->withQueryString();
         
         // Get user's joined groups
         $myGroups = CommunityGroup::whereHas('members', function($q) use ($user) {

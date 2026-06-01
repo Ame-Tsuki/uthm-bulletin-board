@@ -179,7 +179,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->get();
 
             // Upcoming events: public events or created by the user, starting today or later
-            $upcomingEvents = App\Models\Event::with('creator')
+            $upcomingEvents = App\Models\Event::with(['creator', 'attendees'])
                 ->whereDate('start_date', '>=', now()->toDateString())
                 ->where(function ($q) use ($user) {
                     $q->where('visibility', 'public')
@@ -349,6 +349,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Featured Announcements Route
     Route::get('/announcements/featured', [AnnouncementController::class, 'getFeatured'])->name('announcements.featured');
+    // Event web routes (view + attend) - simple blade views and RSVP
+    Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+    Route::post('/events/{event}/attend', [EventController::class, 'toggleAttend'])->name('events.attend');
 
     // ============================================
     // APPROVAL ROUTES (ADMIN/STAFF)

@@ -296,7 +296,19 @@
                                                 @endif
                                             </p>
                                         </div>
-                                        <a href="{{ route('calendar') }}" class="portal-btn-primary text-xs px-3 py-1.5 shrink-0">View</a>
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ route('events.show', $event) }}" class="portal-btn-secondary text-xs px-3 py-1.5">View</a>
+                                            <form action="{{ route('events.attend', $event) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="portal-btn-primary text-xs px-3 py-1.5">
+                                                    @if(auth()->check() && $event->isAttending(auth()->id()))
+                                                        Unattend
+                                                    @else
+                                                        Attend
+                                                    @endif
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
                                 @empty
                                     <div class="text-center py-6">

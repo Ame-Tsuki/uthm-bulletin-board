@@ -22,6 +22,45 @@ class EventController extends Controller
     }
 
     /**
+     * Show event details (web view)
+     */
+    public function show(Event $event)
+    {
+        $user = Auth::user();
+
+        // Eager-load relations for the detail page
+        $event->load(['creator', 'attendees.user']);
+
+        return view('events.show', compact('event', 'user'));
+    }
+
+    /**
+     * Toggle attendance for the authenticated user (web action)
+     */
+    public function toggleAttend(Request $request, Event $event)
+    {
+        $user = Auth::user();
+
+        // Find existing attendance
+        $attendance = \App\Models\EventAttendee::where('event_id', $event->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($attendance) {
+            $attendance->delete();
+            return redirect()->back()->with('success', 'You are no longer attending this event.');
+        }
+
+        \App\Models\EventAttendee::create([
+            'event_id' => $event->id,
+            'user_id' => $user->id,
+            'status' => 'attending'
+        ]);
+
+        return redirect()->back()->with('success', 'You have been marked as attending.');
+    }
+
+    /**
      * Get events for the authenticated user (personal + public events)
      */
     public function index(Request $request)

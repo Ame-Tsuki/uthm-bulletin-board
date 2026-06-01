@@ -55,6 +55,14 @@ class Event extends Model
     }
 
     /**
+     * Event attendees (RSVP)
+     */
+    public function attendees()
+    {
+        return $this->hasMany(EventAttendee::class, 'event_id');
+    }
+
+    /**
      * Alias for user() - for better readability
      * Shows who created the event
      */
@@ -129,5 +137,18 @@ class Event extends Model
         }
         
         return $this->user->name . ' (' . ucfirst($this->user->role) . ')';
+    }
+
+    /**
+     * Check if a given user is attending this event
+     */
+    public function isAttending($userId = null): bool
+    {
+        if (!$userId) {
+            if (!auth()->check()) return false;
+            $userId = auth()->id();
+        }
+
+        return $this->attendees()->where('user_id', $userId)->exists();
     }
 }

@@ -148,28 +148,20 @@
     @include('layouts.partials.portal-scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const userMenuButton = document.getElementById('user-menu-button');
-            const userMenu = document.getElementById('user-menu');
             const notificationMenuButton = document.getElementById('notification-menu-button');
             const notificationMenu = document.getElementById('notification-menu');
-
-            if (userMenuButton && userMenu) {
-                userMenuButton.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    if (notificationMenu) notificationMenu.classList.add('hidden');
-                    userMenu.classList.toggle('hidden');
-                });
-            }
 
             if (notificationMenuButton && notificationMenu) {
                 notificationMenuButton.addEventListener('click', function(e) {
                     e.stopPropagation();
+                    const userMenu = document.getElementById('user-menu');
                     if (userMenu) userMenu.classList.add('hidden');
                     notificationMenu.classList.toggle('hidden');
                 });
             }
 
             document.addEventListener('click', function() {
+                const userMenu = document.getElementById('user-menu');
                 if (userMenu) userMenu.classList.add('hidden');
                 if (notificationMenu) notificationMenu.classList.add('hidden');
             });

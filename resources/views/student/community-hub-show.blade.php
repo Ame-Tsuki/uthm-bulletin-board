@@ -170,7 +170,23 @@
             </div>
         </div>
         
-        <!-- Post Actions (existing code) -->
+        <div class="flex items-center gap-2">
+            @if(Auth::id() === $post->user_id || ($userMember && $userMember->role === 'admin') || $group->isCreator(Auth::id()))
+                <button type="button" data-post-id="{{ $post->id }}" data-post-content="{{ e($post->content) }}" data-group-id="{{ $group->id }}" onclick="openEditPostModal(this)" class="text-gray-500 hover:text-uthm-blue transition flex items-center gap-2 text-sm">
+                    <i class="fas fa-edit"></i>
+                    <span>Edit</span>
+                </button>
+
+                <form action="{{ route('student.community-hub.post.delete', [$group->id, $post->id]) }}" method="POST" class="inline" onsubmit="return confirm('Delete this post?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="text-red-600 hover:text-red-800 text-sm flex items-center gap-2">
+                        <i class="fas fa-trash"></i>
+                        <span>Delete</span>
+                    </button>
+                </form>
+            @endif
+        </div>
     </div>
     
     <p class="text-gray-700">{{ $post->content }}</p>
@@ -363,6 +379,32 @@
             </form>
         </div>
     </div>
+
+    <!-- Edit Post Modal -->
+    <div id="editPostModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900">Edit Post</h2>
+                <button onclick="toggleEditPostModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="edit-post-form" method="POST" class="p-6 space-y-4">
+                @csrf
+                @method('PUT')
+
+                <div>
+                    <textarea id="edit-post-content" name="content" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-uthm-blue"></textarea>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="toggleEditPostModal()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-uthm-blue text-white rounded-lg hover:bg-blue-700">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endpush
 
 @push('scripts')
@@ -371,9 +413,31 @@
             document.getElementById('editModal').classList.toggle('hidden');
         }
 
-        function toggleEditPostModal(postId) {
-            // TODO: Implement edit post modal with AJAX
-            alert('Edit post feature coming soon');
+        function toggleEditPostModal(postId = null, content = '', groupId = null) {
+            const modal = document.getElementById('editPostModal');
+            const form = document.getElementById('edit-post-form');
+            const textarea = document.getElementById('edit-post-content');
+            if (!modal || !form || !textarea) return;
+
+            // If no postId passed, toggle visibility
+            if (!postId) {
+                modal.classList.toggle('hidden');
+                return;
+            }
+
+            // Populate and open modal
+            textarea.value = content;
+            form.action = `/student/community-hub/${groupId}/posts/${postId}`;
+            modal.classList.remove('hidden');
+            textarea.focus();
+        }
+
+        function openEditPostModal(button) {
+            if (!button || !button.dataset) return;
+            const postId = button.dataset.postId;
+            const content = button.dataset.postContent || '';
+            const groupId = button.dataset.groupId;
+            toggleEditPostModal(postId, content, groupId);
         }
 
         async function likePost(groupId, postId) {

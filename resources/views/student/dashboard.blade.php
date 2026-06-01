@@ -67,8 +67,12 @@
                             <div class="flex items-center gap-3">
                                 <div class="portal-stat-icon bg-amber-100"><i class="fas fa-book text-amber-600"></i></div>
                                 <div>
-                                    <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Courses</p>
-                                    <p class="font-bold text-gray-900">6 Enrolled</p>
+                                    <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Groups</p>
+                                    <p class="font-bold text-gray-900">
+                                        <a href="{{ route('community-hub') }}" class="inline-flex items-center gap-2 text-gray-900 hover:text-uthm-blue">
+                                            {{ $groupsCount ?? 0 }} Joined <i class="fas fa-arrow-right text-xs"></i>
+                                        </a>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -240,7 +244,7 @@
                                     <div class="portal-stat-icon bg-uthm-blue-light"><i class="fas fa-fire text-uthm-blue"></i></div>
                                     <div>
                                         <p class="text-xs text-gray-500 font-medium">Trending</p>
-                                        <p class="font-bold text-gray-900 text-sm">Campus Fest 2024</p>
+                                        <p class="font-bold text-gray-900 text-sm">{{ $trendingTitle ?? 'No trending announcements' }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -249,7 +253,7 @@
                                     <div class="portal-stat-icon bg-green-50"><i class="fas fa-chart-line text-uthm-green"></i></div>
                                     <div>
                                         <p class="text-xs text-gray-500 font-medium">Faculty Updates</p>
-                                        <p class="font-bold text-gray-900">{{ $announcements->count() ?? 0 }} New</p>
+                                        <p class="font-bold text-gray-900">{{ $facultyUpdatesCount ?? 0 }} New</p>
                                     </div>
                                 </div>
                             </div>
@@ -258,7 +262,7 @@
                                     <div class="portal-stat-icon bg-amber-50"><i class="fas fa-bell text-amber-500"></i></div>
                                     <div>
                                         <p class="text-xs text-gray-500 font-medium">Urgent</p>
-                                        <p class="font-bold text-gray-900">{{ $announcements->where('priority', 'urgent')->count() ?? 0 }} Unread</p>
+                                        <p class="font-bold text-gray-900">{{ $urgentCount ?? 0 }} Unread</p>
                                     </div>
                                 </div>
                             </div>
@@ -273,47 +277,51 @@
                                 <a href="{{ route('student.calendar') }}" class="text-uthm-blue hover:text-blue-800 text-xs font-semibold">View Calendar <i class="fas fa-arrow-right ml-1"></i></a>
                             </div>
                             <div class="space-y-3">
-                                <div class="event-card flex items-center gap-4 p-4 bg-amber-50/80 rounded-xl">
-                                    <div class="bg-amber-100 p-3 rounded-xl text-center min-w-[56px]">
-                                        <div class="font-bold text-lg leading-none">15</div>
-                                        <div class="text-[10px] uppercase font-semibold text-amber-700 mt-0.5">DEC</div>
+                                @forelse($upcomingEvents ?? [] as $event)
+                                    <div class="event-card flex items-center gap-4 p-4 bg-white/5 rounded-xl">
+                                        <div class="bg-amber-100 p-3 rounded-xl text-center min-w-[56px]">
+                                            <div class="font-bold text-lg leading-none">{{ optional($event->start_date)->format('j') }}</div>
+                                            <div class="text-[10px] uppercase font-semibold text-amber-700 mt-0.5">{{ optional($event->start_date)->format('M') }}</div>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="font-semibold text-gray-900 text-sm">{{ $event->title }}</h4>
+                                            <p class="text-xs text-gray-500 mt-0.5">
+                                                @if($event->start_time)
+                                                    {{ optional($event->start_time)->format('g:i A') }}
+                                                @else
+                                                    All Day
+                                                @endif
+                                                @if($event->location)
+                                                    · {{ $event->location }}
+                                                @endif
+                                            </p>
+                                        </div>
+                                        <a href="{{ route('calendar') }}" class="portal-btn-primary text-xs px-3 py-1.5 shrink-0">View</a>
                                     </div>
-                                    <div class="flex-1 min-w-0">
-                                        <h4 class="font-semibold text-gray-900 text-sm">Career Workshop</h4>
-                                        <p class="text-xs text-gray-500 mt-0.5">2:00 PM · Main Hall</p>
+                                @empty
+                                    <div class="text-center py-6">
+                                        <p class="text-sm text-gray-500">No upcoming events</p>
                                     </div>
-                                    <button type="button" class="portal-btn-primary text-xs px-3 py-1.5 shrink-0">Attend</button>
-                                </div>
-                                <div class="event-card flex items-center gap-4 p-4 bg-purple-50/80 rounded-xl">
-                                    <div class="bg-purple-100 p-3 rounded-xl text-center min-w-[56px]">
-                                        <div class="font-bold text-lg leading-none">20</div>
-                                        <div class="text-[10px] uppercase font-semibold text-purple-700 mt-0.5">DEC</div>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <h4 class="font-semibold text-gray-900 text-sm">FYP Submission</h4>
-                                        <p class="text-xs text-gray-500 mt-0.5">All Day · Faculty Offices</p>
-                                    </div>
-                                    <button type="button" class="portal-btn-primary text-xs px-3 py-1.5 shrink-0">Remind</button>
-                                </div>
+                                @endforelse
                             </div>
                         </div>
 
                         <div class="portal-card">
                             <h3 class="portal-section-title mb-3">Quick Links</h3>
                             <div class="grid grid-cols-2 gap-2">
-                                <a href="#" class="portal-quick-link bg-blue-50 hover:bg-blue-100">
-                                    <i class="fas fa-graduation-cap text-blue-600 text-lg mb-2 block"></i>
-                                    <p class="text-xs font-semibold text-gray-800">Academic Portal</p>
+                                <a href="{{ route('announcements.index') }}" class="portal-quick-link bg-blue-50 hover:bg-blue-100">
+                                    <i class="fas fa-newspaper text-blue-600 text-lg mb-2 block"></i>
+                                    <p class="text-xs font-semibold text-gray-800">Announcements</p>
                                 </a>
-                                <a href="#" class="portal-quick-link bg-green-50 hover:bg-green-100">
-                                    <i class="fas fa-book text-green-600 text-lg mb-2 block"></i>
-                                    <p class="text-xs font-semibold text-gray-800">E-Library</p>
+                                <a href="{{ route('announcements.my-announcements') }}" class="portal-quick-link bg-green-50 hover:bg-green-100">
+                                    <i class="fas fa-user-edit text-green-600 text-lg mb-2 block"></i>
+                                    <p class="text-xs font-semibold text-gray-800">My Announcements</p>
                                 </a>
-                                <a href="#" class="portal-quick-link bg-amber-50 hover:bg-amber-100">
-                                    <i class="fas fa-file-alt text-amber-600 text-lg mb-2 block"></i>
-                                    <p class="text-xs font-semibold text-gray-800">Assignments</p>
+                                <a href="{{ route('calendar') }}" class="portal-quick-link bg-amber-50 hover:bg-amber-100">
+                                    <i class="fas fa-calendar-alt text-amber-600 text-lg mb-2 block"></i>
+                                    <p class="text-xs font-semibold text-gray-800">Calendar</p>
                                 </a>
-                                <a href="{{ route('student.community-hub') }}" class="portal-quick-link bg-purple-50 hover:bg-purple-100">
+                                <a href="{{ route('community-hub') }}" class="portal-quick-link bg-purple-50 hover:bg-purple-100">
                                     <i class="fas fa-users text-purple-600 text-lg mb-2 block"></i>
                                     <p class="text-xs font-semibold text-gray-800">Community Hub</p>
                                 </a>

@@ -178,7 +178,47 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->take(5)
                 ->get();
 
-            return view('student.dashboard', compact('user', 'announcements', 'featuredAnnouncements'));
+            // Upcoming events: public events or created by the user, starting today or later
+            $upcomingEvents = App\Models\Event::with('creator')
+                ->whereDate('start_date', '>=', now()->toDateString())
+                ->where(function ($q) use ($user) {
+                    $q->where('visibility', 'public')
+                      ->orWhere('user_id', $user->id);
+                })
+                ->orderBy('start_date')
+                ->take(3)
+                ->get();
+
+            // Quick stats
+            $trendingAnnouncement = App\Models\Announcement::published()->orderBy('view_count', 'desc')->first();
+            $trendingTitle = $trendingAnnouncement ? $trendingAnnouncement->title : null;
+
+            $facultyUpdatesCount = 0;
+            if ($user->faculty) {
+                $facultyUpdatesCount = App\Models\Announcement::where('faculty', $user->faculty)
+                    ->visibleOnBoard()
+                    ->whereDate('created_at', '>=', now()->subDays(7))
+                    ->count();
+            } else {
+                // fallback: recent announcements across board
+                $facultyUpdatesCount = App\Models\Announcement::visibleOnBoard()
+                    ->whereDate('created_at', '>=', now()->subDays(7))
+                    ->count();
+            }
+
+            $urgentCount = App\Models\Announcement::where('priority', 'urgent')
+                ->visibleOnBoard()
+                ->count();
+
+            // Groups: count of groups the user is an approved member of
+            $groupsCount = App\Models\GroupMember::where('user_id', $user->id)
+                ->where('status', 'approved')
+                ->count();
+
+            return view('student.dashboard', compact(
+                'user', 'announcements', 'featuredAnnouncements', 'upcomingEvents',
+                'trendingTitle', 'facultyUpdatesCount', 'urgentCount', 'groupsCount'
+            ));
         })->name('student.dashboard');
         
         Route::get('/student/calendar', function () {

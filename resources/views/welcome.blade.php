@@ -225,13 +225,7 @@
     </a>
 </div>
                 
-                <!-- Desktop Navigation -->
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="#" class="nav-link active text-gray-700 hover:text-uthm-blue font-medium">Home</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-uthm-blue font-medium">Announcements</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-uthm-blue font-medium">Events</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-uthm-blue font-medium">Calendar</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-uthm-blue font-medium">Clubs</a>
+            
                     
                     <!-- Auth Buttons -->
                     <div class="flex items-center space-x-3">
@@ -253,11 +247,7 @@
             <!-- Enhanced Mobile Menu with slide animation -->
             <div id="mobile-menu" class="mobile-menu md:hidden">
                 <div class="flex flex-col space-y-1 pt-2 border-t border-gray-100">
-                    <a href="#" class="text-gray-700 hover:text-uthm-blue hover:bg-uthm-blue-light font-medium py-3 px-4 rounded-lg transition-colors">Home</a>
-                    <a href="#" class="text-gray-700 hover:text-uthm-blue hover:bg-uthm-blue-light font-medium py-3 px-4 rounded-lg transition-colors">Announcements</a>
-                    <a href="#" class="text-gray-700 hover:text-uthm-blue hover:bg-uthm-blue-light font-medium py-3 px-4 rounded-lg transition-colors">Events</a>
-                    <a href="#" class="text-gray-700 hover:text-uthm-blue hover:bg-uthm-blue-light font-medium py-3 px-4 rounded-lg transition-colors">Calendar</a>
-                    <a href="#" class="text-gray-700 hover:text-uthm-blue hover:bg-uthm-blue-light font-medium py-3 px-4 rounded-lg transition-colors">Clubs</a>
+                    
                     <div class="pt-4 mt-2 border-t border-gray-100 space-y-3">
                         <a href="{{ route('login') }}" class="block px-4 py-3 text-center text-uthm-blue border-2 border-uthm-blue rounded-lg hover:bg-uthm-blue hover:text-white transition-all font-medium">Login</a>
                         <a href="{{ route('register') }}" class="block px-4 py-3 text-center bg-uthm-blue text-white rounded-lg hover:bg-uthm-blue-dark transition-all font-medium">Register</a>
@@ -291,37 +281,30 @@
                                 <div class="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
                                 <div class="w-3 h-3 rounded-full bg-green-500"></div>
                             </div>
-                            <h3 class="text-xl font-bold text-gray-800 mb-4">Latest Announcements</h3>
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Latest Official Announcements</h3>
                             
-                            <!-- Sample Announcements -->
+                            <!-- Official Announcements -->
                             <div class="space-y-4">
-                                <div class="p-4 bg-uthm-blue-light rounded-xl hover:shadow-md transition-shadow cursor-pointer">
-                                    <div class="flex items-center mb-2">
-                                        <span class="bg-uthm-blue text-white text-xs px-2.5 py-1 rounded-full mr-2 font-medium">University</span>
-                                        <span class="text-xs text-gray-500">Today</span>
+                                @forelse($latestAnnouncements as $announcement)
+                                    @php
+                                        $postedAt = $announcement->published_at ?? $announcement->created_at;
+                                    @endphp
+                                    <div class="p-4 bg-uthm-blue-light rounded-xl hover:shadow-md transition-shadow">
+                                        <div class="flex items-center mb-2">
+                                            <span class="bg-uthm-blue text-white text-xs px-2.5 py-1 rounded-full mr-2 font-medium">University</span>
+                                            <span class="text-xs text-gray-500">{{ $postedAt->diffForHumans() }}</span>
+                                        </div>
+                                        <p class="font-semibold text-gray-800">{{ $announcement->title }}</p>
                                     </div>
-                                    <p class="font-semibold text-gray-800">Mid-Semester Break Schedule Released</p>
-                                </div>
-                                
-                                <div class="p-4 bg-uthm-green-light rounded-xl hover:shadow-md transition-shadow cursor-pointer">
-                                    <div class="flex items-center mb-2">
-                                        <span class="bg-uthm-green text-white text-xs px-2.5 py-1 rounded-full mr-2 font-medium">FCSIT</span>
-                                        <span class="text-xs text-gray-500">2 days ago</span>
+                                @empty
+                                    <div class="p-4 bg-gray-50 rounded-xl text-center">
+                                        <p class="text-gray-500 text-sm">No official announcements yet. Check back soon!</p>
                                     </div>
-                                    <p class="font-semibold text-gray-800">Final Year Project Submission Deadline</p>
-                                </div>
-                                
-                                <div class="p-4 bg-yellow-50 rounded-xl hover:shadow-md transition-shadow cursor-pointer">
-                                    <div class="flex items-center mb-2">
-                                        <span class="bg-yellow-500 text-white text-xs px-2.5 py-1 rounded-full mr-2 font-medium">Event</span>
-                                        <span class="text-xs text-gray-500">3 days ago</span>
-                                    </div>
-                                    <p class="font-semibold text-gray-800">Career Fair 2024 - Registration Open</p>
-                                </div>
+                                @endforelse
                             </div>
                             
                             <div class="mt-6 text-center">
-                                <a href="#" class="inline-flex items-center text-uthm-blue font-semibold hover:underline group">
+                                <a href="{{ auth()->check() ? route('announcements.index') : route('login') }}" class="inline-flex items-center text-uthm-blue font-semibold hover:underline group">
                                     View All Announcements 
                                     <i class="fas fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i>
                                 </a>
@@ -339,25 +322,25 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div class="stat-card rounded-2xl p-6 text-center reveal">
                     <div class="text-4xl font-extrabold text-uthm-blue mb-2">
-                        <span class="counter" data-target="1250">0</span>+
+                        <span class="counter" data-target="{{ $stats['active_users'] }}">0</span>
                     </div>
                     <div class="text-gray-600 font-medium">Active Users</div>
                 </div>
                 <div class="stat-card rounded-2xl p-6 text-center reveal">
                     <div class="text-4xl font-extrabold text-uthm-green mb-2">
-                        <span class="counter" data-target="324">0</span>
+                        <span class="counter" data-target="{{ $stats['announcements_this_month'] }}">0</span>
                     </div>
                     <div class="text-gray-600 font-medium">Announcements This Month</div>
                 </div>
                 <div class="stat-card rounded-2xl p-6 text-center reveal">
                     <div class="text-4xl font-extrabold text-purple-600 mb-2">
-                        <span class="counter" data-target="45">0</span>
+                        <span class="counter" data-target="{{ $stats['upcoming_events'] }}">0</span>
                     </div>
                     <div class="text-gray-600 font-medium">Upcoming Events</div>
                 </div>
                 <div class="stat-card rounded-2xl p-6 text-center reveal">
                     <div class="text-4xl font-extrabold text-uthm-yellow mb-2">
-                        <span class="counter" data-target="28">0</span>
+                        <span class="counter" data-target="{{ $stats['active_clubs'] }}">0</span>
                     </div>
                     <div class="text-gray-600 font-medium">Active Clubs</div>
                 </div>
@@ -369,7 +352,7 @@
     <section id="features" class="py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16 reveal">
-                <h2 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-4">Why Use UTHM Digital Bulletin?</h2>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-gray-800 mb-4">Why Use UTHM Digital Bulletin Board?</h2>
                 <p class="text-gray-600 max-w-2xl mx-auto text-lg">Designed specifically for the UTHM community to streamline communication and enhance campus engagement.</p>
             </div>
             

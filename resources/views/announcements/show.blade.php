@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $announcement->title ?? 'Announcement Details' }} - UTHM Bulletin Board</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -82,6 +83,17 @@
     <!-- Main Content -->
     <div class="min-h-screen py-8">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            @if(($announcement->status === 'banned' || $announcement->is_banned) && $announcement->author_id === auth()->id())
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-red-800 font-semibold"><i class="fas fa-ban mr-2"></i>This post has been banned by an administrator</p>
+                    @if($announcement->ban_reason)
+                        <p class="text-sm text-red-700 mt-2"><strong>Reason:</strong> {{ $announcement->ban_reason }}</p>
+                    @endif
+                    @if($announcement->banned_at)
+                        <p class="text-xs text-red-600 mt-1">Banned on {{ $announcement->banned_at->format('F j, Y \\a\\t g:i A') }}</p>
+                    @endif
+                </div>
+            @endif
             <!-- Announcement Container -->
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <!-- Announcement Header -->
@@ -130,6 +142,21 @@
                                 <span>{{ optional($announcement->created_at)->format('g:i A') ?? '' }}</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Image Section -->
+                <div class="bg-gray-50 p-8 border-b border-gray-200">
+                    <div class="w-full max-w-4xl mx-auto bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center shadow-lg">
+                        @if(isset($announcement->image) && $announcement->image)
+                            <img src="{{ asset('storage/' . $announcement->image) }}" alt="{{ $announcement->title }}" class="w-full h-auto object-contain">
+                        @else
+                            <div class="flex flex-col items-center justify-center text-gray-400 w-full py-32 bg-gradient-to-br from-gray-100 to-gray-200">
+                                <i class="fas fa-image text-8xl mb-6 opacity-40"></i>
+                                <p class="text-2xl font-bold mb-2 opacity-50">No image available</p>
+                                <p class="text-base opacity-40">Image placeholder</p>
+                            </div>
+                        @endif
                     </div>
                 </div>
 
@@ -183,18 +210,39 @@
                                     {{ optional($announcement->updated_at)->format('F j, Y \\a\\t g:i A') ?? 'Date unavailable' }}
                                 </p>
                             </div>
-                            <div class="p-4 bg-green-50 rounded-lg">
-                                <p class="text-sm text-green-700 font-medium mb-1">Status</p>
-                                <p class="text-green-900">
-                                    <span class="inline-flex items-center">
-                                        <span class="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
-                                        Active
-                                    </span>
+                            <div class="p-4 {{ ($announcement->status === 'banned' || $announcement->is_banned) ? 'bg-red-50' : ($announcement->status === 'expired' ? 'bg-gray-50' : 'bg-green-50') }} rounded-lg">
+                                <p class="text-sm {{ ($announcement->status === 'banned' || $announcement->is_banned) ? 'text-red-700' : ($announcement->status === 'expired' ? 'text-gray-700' : 'text-green-700') }} font-medium mb-1">Status</p>
+                                <p class="{{ ($announcement->status === 'banned' || $announcement->is_banned) ? 'text-red-900' : ($announcement->status === 'expired' ? 'text-gray-900' : 'text-green-900') }}">
+                                    @if($announcement->status === 'banned' || $announcement->is_banned)
+                                        <span class="inline-flex items-center">
+                                            <span class="h-2 w-2 bg-red-500 rounded-full mr-2"></span>
+                                            Banned
+                                        </span>
+                                    @elseif($announcement->status === 'expired')
+                                        <span class="inline-flex items-center">
+                                            <span class="h-2 w-2 bg-gray-500 rounded-full mr-2"></span>
+                                            Expired
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center">
+                                            <span class="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
+                                            {{ ucfirst(str_replace('_', ' ', $announcement->status ?? 'active')) }}
+                                        </span>
+                                    @endif
                                 </p>
+                                @if($announcement->expiry_date)
+                                    <p class="text-xs text-gray-600 mt-2">Expires: {{ $announcement->expiry_date->format('M d, Y') }}</p>
+                                @endif
                             </div>
                             <div class="p-4 bg-purple-50 rounded-lg">
                                 <p class="text-sm text-purple-700 font-medium mb-1">Visibility</p>
-                                <p class="purple-900">All Users</p>
+                                <p class="text-purple-900">
+                                    @if($announcement->status === 'expired')
+                                        Hidden from main board (author only)
+                                    @else
+                                        All Users
+                                    @endif
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -210,11 +258,32 @@
                             </p>
                         </div>
                         <div class="flex flex-wrap gap-3">
+                            @include('announcements.partials.calendar-dropdown', [
+                                'announcement' => $announcement,
+                                'calendar' => $calendar,
+                                'compact' => false,
+                            ])
+
                             <a href="{{ route('announcements.index') }}" 
                                class="inline-flex items-center px-5 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
                                 <i class="fas fa-list mr-2"></i>
                                 Back to All Announcements
                             </a>
+
+                            @if($canReport ?? false)
+                                @if($hasReported ?? false)
+                                    <span class="inline-flex items-center px-5 py-3 bg-gray-100 text-gray-500 font-medium rounded-lg cursor-not-allowed">
+                                        <i class="fas fa-flag mr-2"></i>
+                                        Reported
+                                    </span>
+                                @else
+                                    <button type="button" onclick="openReportModal()"
+                                            class="inline-flex items-center px-5 py-3 bg-red-50 text-red-700 font-medium rounded-lg hover:bg-red-100 transition-colors border border-red-200">
+                                        <i class="fas fa-flag mr-2"></i>
+                                        Report
+                                    </button>
+                                @endif
+                            @endif
                             
                             @if(auth()->user()->role === 'admin' || auth()->user()->role === 'staff')
                                 <a href="{{ route('announcements.edit', $announcement) }}" 
@@ -241,6 +310,43 @@
         </div>
     </div>
 
+    <!-- Report Modal -->
+    <div id="reportModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Report Announcement</h3>
+                <button type="button" onclick="closeReportModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">Help us keep the bulletin board safe. Your report will be reviewed by an administrator.</p>
+            <form id="reportForm" class="space-y-4">
+                <div>
+                    <label for="reportCategory" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <select id="reportCategory" name="category" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                        <option value="">Select a reason</option>
+                        <option value="spam">Spam or misleading</option>
+                        <option value="inappropriate">Inappropriate content</option>
+                        <option value="harassment">Harassment or hate speech</option>
+                        <option value="misinformation">False or misleading information</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="reportReason" class="block text-sm font-medium text-gray-700 mb-1">Details</label>
+                    <textarea id="reportReason" name="reason" rows="4" required minlength="10" maxlength="1000"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                              placeholder="Please describe why you are reporting this announcement (at least 10 characters)..."></textarea>
+                </div>
+                <p id="reportError" class="text-sm text-red-600 hidden"></p>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeReportModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" id="submitReportBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Submit Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-white border-t border-gray-200 py-6 mt-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -252,6 +358,57 @@
     </footer>
 
     <script>
+        function openReportModal() {
+            document.getElementById('reportModal').classList.remove('hidden');
+            document.getElementById('reportError').classList.add('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+            document.getElementById('reportForm').reset();
+        }
+
+        document.getElementById('reportForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitReportBtn');
+            const errorEl = document.getElementById('reportError');
+            errorEl.classList.add('hidden');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            fetch('{{ route('announcements.report', $announcement) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    category: document.getElementById('reportCategory').value,
+                    reason: document.getElementById('reportReason').value,
+                }),
+            })
+            .then(r => r.json().then(data => ({ ok: r.ok, data })))
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
+                    closeReportModal();
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    errorEl.textContent = data.message || 'Failed to submit report.';
+                    errorEl.classList.remove('hidden');
+                }
+            })
+            .catch(() => {
+                errorEl.textContent = 'Something went wrong. Please try again.';
+                errorEl.classList.remove('hidden');
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = 'Submit Report';
+            });
+        });
+
         function shareAnnouncement() {
             const title = document.querySelector('h1').textContent;
             const url = window.location.href;
@@ -286,5 +443,6 @@
             }
         });
     </script>
+    @include('announcements.partials.calendar-assets')
 </body>
 </html>

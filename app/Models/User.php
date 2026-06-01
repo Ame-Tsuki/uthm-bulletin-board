@@ -20,7 +20,14 @@ class User extends Authenticatable implements MustVerifyEmail
         'faculty',
         'profile_picture',
         'is_verified',
+        'is_banned',
         'password',
+        'google_id',
+        'google_token',
+        'google_refresh_token',
+        'google_token_expires_at',
+        'google_calendar_id',
+        'google_calendar_synced',
     ];
 
     protected $hidden = [
@@ -31,6 +38,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_verified' => 'boolean',
+        'is_banned' => 'boolean',
     ];
 
     public function isAdmin()
@@ -63,8 +71,21 @@ class User extends Authenticatable implements MustVerifyEmail
     return $this->email; // This should return the correct email
 }
 
+/**
+ * Get the memberships for the user.
+ */
+public function groupMemberships()
+{
+    return $this->hasMany(\App\Models\GroupMember::class, 'user_id');
+}
+
     public function isVerifiedMember()
     {
         return $this->is_verified;
+    }
+
+    public function isBanned(): bool
+    {
+        return (bool) $this->is_banned;
     }
 }

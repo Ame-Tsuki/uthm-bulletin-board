@@ -123,4 +123,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'moderation_api_url' => env('MODERATION_API_URL', 'http://localhost:5279'),
+
 ];

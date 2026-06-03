@@ -14,11 +14,6 @@
                 <p class="text-gray-600 mt-2">Review announcements that have been rejected and the reasons for rejection.</p>
             </div>
             <div class="flex space-x-3">
-                <a href="{{ route('announcements.verification-queue') }}" 
-                   class="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700">
-                    <i class="fas fa-clock mr-2"></i>
-                    Pending Queue
-                </a>
                 <a href="{{ route('announcements.index') }}" 
                    class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
                     <i class="fas fa-arrow-left mr-2"></i>
@@ -255,10 +250,10 @@
                 <h3 class="text-xl font-medium text-gray-900 mb-2">No Rejected Announcements</h3>
                 <p class="text-gray-600">All announcements have been approved or are pending verification.</p>
                 <div class="mt-6">
-                    <a href="{{ route('announcements.verification-queue') }}" 
+                    <a href="{{ route('announcements.index') }}" 
                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-clock mr-2"></i>
-                        Go to Verification Queue
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Announcements
                     </a>
                 </div>
             </div>
@@ -276,7 +271,7 @@
             </button>
         </div>
         <p class="text-gray-600 mb-4">Are you sure you want to resubmit this announcement for approval?</p>
-        <p class="text-sm text-gray-500 mb-6">The announcement will be sent back to the verification queue for review.</p>
+        <p class="text-sm text-gray-500 mb-6">The announcement will be sent for admin/staff review.</p>
         <div class="flex justify-end gap-3">
             <button onclick="closeResubmitModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
                 Cancel

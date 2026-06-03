@@ -231,11 +231,12 @@ public function store(Request $request): RedirectResponse
     } elseif ($announcement->status === 'pending_verification') {
 
         // Only notify moderators for official announcements that need verification
+        // Link moderators directly to the announcement post so they can review there
         if ($announcement->is_official) {
             $moderators = User::whereIn('role', ['admin', 'staff'])->get();
             $title = "📋 Verification Required";
             $message = "A new official notice titled '{$announcement->title}' requires review.";
-            $url = route('announcements.verification-queue');
+            $url = route('announcements.show', $announcement->id);
 
             Notification::send($moderators, new AnnouncementNotification($title, $message, $url, $announcement->id));
 
@@ -885,8 +886,8 @@ public function approve(Request $request, $id)
                 ]);
             }
             
-            // Redirect back to verification queue
-            return redirect()->route('announcements.verification-queue')
+            // Redirect back to announcements index (verification queue removed)
+            return redirect()->route('announcements.index')
                 ->with('success', $message);
                 
         } catch (\Exception $e) {
@@ -898,38 +899,7 @@ public function approve(Request $request, $id)
         }
     }
 
-    /**
-     * Show verification queue for admin/staff
-     */
-    public function verificationQueue(Request $request): View
-    {
-        $user = auth()->user();
-        
-        // Only admin/staff can see verification queue
-        if (!in_array($user->role, ['admin', 'staff'])) {
-            abort(403, 'Unauthorized action.');
-        }
-        
-        $query = Announcement::with('author')
-            ->where('status', 'pending_verification')
-            ->orderBy('created_at', 'asc');
-        
-        // Optional filtering
-        if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->search . '%')
-                  ->orWhere('content', 'like', '%' . $request->search . '%');
-            });
-        }
-        
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
-        }
-        
-        $announcements = $query->paginate(10);
-        
-        return view('announcements.verification-queue', compact('announcements', 'user'));
-    }
+    // Verification queue removed: moderators review the announcement post directly.
 
     /**
      * Get pending count for API

@@ -179,18 +179,7 @@
                                class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.drafts') ? 'tab-active' : 'tab-inactive' }}">
                                 <i class="fas fa-edit mr-2"></i>Drafts
                             </a>
-                            @if(in_array($user->role ?? 'guest', ['admin', 'staff']))
-                            <a href="{{ route('announcements.verification-queue') }}" 
-                               class="px-4 py-2 rounded-lg text-sm font-medium {{ request()->routeIs('announcements.verification-queue') ? 'tab-active' : 'tab-inactive' }}">
-                                <i class="fas fa-clock mr-2"></i>Verification Queue
-                                @php
-                                    $pendingCount = \App\Models\Announcement::where('status', 'pending_verification')->count();
-                                @endphp
-                                @if($pendingCount > 0)
-                                    <span class="ml-1 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">{{ $pendingCount }}</span>
-                                @endif
-                            </a>
-                            @endif
+                            {{-- Verification Queue removed: moderators review posts directly on the announcement page. --}}
                         </div>
                     </div>
                 </div>

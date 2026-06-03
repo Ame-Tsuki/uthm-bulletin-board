@@ -222,7 +222,9 @@ public function store(Request $request): RedirectResponse
         $allUsers = User::where('id', '!=', $announcement->author_id)->get();
         $title = "📢 New Announcement";
         $message = "A new announcement has been posted: '" . $announcement->title . "'";
-        $url = route('announcements.show', $announcement->id);
+        // Route notifications to the admin announcements page so clicking
+        // the notification navigates to the admin announcements list.
+        $url = route('admin.announcements.index');
 
         Notification::send($allUsers, new AnnouncementNotification($title, $message, $url, $announcement->id));
 
@@ -802,8 +804,10 @@ public function approve(Request $request, $id)
         $allUsers = \App\Models\User::where('id', '!=', $announcement->author_id)->get();
         $title = "📢 New Official Announcement";
         $message = "A new official announcement has been posted: '" . $announcement->title . "'";
-        $url = route('announcements.show', $announcement->id);
-        
+        // Send approval notifications that link to the admin announcements page
+        // so moderators/users are directed to the admin announcements list.
+        $url = route('admin.announcements.index');
+
         \Illuminate\Support\Facades\Notification::send($allUsers, new \App\Notifications\AnnouncementNotification($title, $message, $url, $announcement->id));
         
         Log::info("Approval notification sent to " . $allUsers->count() . " users for announcement #{$announcement->id}");

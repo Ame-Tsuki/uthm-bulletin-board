@@ -23,10 +23,7 @@
                     {{ $headerActions }}
                 @endif
 
-                <button type="button" class="relative p-2.5 text-gray-500 hover:text-uthm-blue hover:bg-uthm-blue-light rounded-xl transition-colors" aria-label="Notifications">
-                    <i class="fas fa-bell text-lg"></i>
-                    <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
-                </button>
+                @include('layouts.partials.notification-bell')
 
                 <div class="relative">
                     <button id="user-menu-button" type="button" class="flex items-center space-x-2 p-1.5 pr-3 rounded-xl hover:bg-gray-100 transition-colors">

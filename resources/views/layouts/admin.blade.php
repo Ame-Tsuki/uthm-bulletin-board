@@ -121,7 +121,7 @@
                             <i class="fas fa-tachometer-alt mr-3 text-gray-300 w-5"></i>
                             <span>Dashboard</span>
                         </a>
-                        <a href="{{ url('admin.users') }}" class="flex items-center sidebar-link rounded-xl {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.users') }}" class="flex items-center sidebar-link rounded-xl {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                             <i class="fas fa-users mr-3 text-gray-300 w-5"></i>
                             <span>User Management</span>
                         </a>
@@ -292,7 +292,7 @@
                                 <i class="fas fa-tachometer-alt mr-3 w-5"></i>
                                 <span>Dashboard</span>
                             </a>
-                            <a href="{{ url('admin.users') }}" class="flex items-center sidebar-link rounded-xl py-3 {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.users') }}" class="flex items-center sidebar-link rounded-xl py-3 {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
                                 <i class="fas fa-users mr-3 w-5"></i>
                                 <span>User Management</span>
                             </a>

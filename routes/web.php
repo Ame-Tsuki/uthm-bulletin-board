@@ -53,6 +53,9 @@ Route::middleware('auth')->group(function () {
     })->middleware(['throttle:6,1'])->name('verification.send');
 });
 
+// Logout (allow authenticated users, including unverified, to sign out)
+Route::middleware('auth')->post('/logout', [CustomLoginController::class, 'logout'])->name('logout');
+
 // ============================================
 // NOTIFICATION ROUTES (Available to ALL authenticated users)
 // ============================================
@@ -106,8 +109,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
     });
 
-    // Logout
-    Route::post('/logout', [CustomLoginController::class, 'logout'])->name('logout');
+    // Logout route moved above to allow unverified users to sign out.
     
     // Dashboard Routes (Role-based)
     Route::get('/dashboard', function () {

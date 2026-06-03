@@ -751,64 +751,77 @@ public function update(Request $request, Announcement $announcement): RedirectRe
     }
 
     /**
-     * APPROVE announcement (Admin & Staff)
-     * Convert from pending_verification to published
-     */
-    public function approve(Request $request, $id)
-    {
-        try {
-            // Add debug logging
-            Log::info('Approve method called for ID: ' . $id);
-            Log::info('Request method: ' . $request->method());
-            Log::info('User: ' . auth()->user()->id . ', Role: ' . auth()->user()->role);
-            
-            $announcement = Announcement::findOrFail($id);
-            $user = auth()->user();
-            
-            // Check authorization
-            if (!in_array($user->role, ['admin', 'staff'])) {
-                Log::warning('Unauthorized user tried to approve: ' . $user->role);
-                return response()->json(['success' => false, 'message' => 'Unauthorized. Only admin/staff can approve announcements.'], 403);
-            }
-            
-            // Check if announcement is pending verification
-            if ($announcement->status !== 'pending_verification') {
-                Log::warning('Announcement not pending: ' . $announcement->status);
-                return response()->json([
-                    'success' => false, 
-                    'message' => 'Only pending announcements can be approved. Current status: ' . $announcement->status
-                ], 400);
-            }
-            
-            // Update announcement
-            $announcement->update([
-                'status' => 'published',
-                'is_official' => true,
-                'needs_verification' => false,
-                'verified_at' => now(),
-                'verified_by' => $user->id,
-                'rejection_reason' => null,
-                'rejected_at' => null,
-                'rejected_by' => null,
-            ]);
-            
-            Log::info('Announcement approved successfully: ' . $announcement->id);
-            
-            return response()->json([
-                'success' => true, 
-                'message' => 'Announcement "' . $announcement->title . '" has been approved and published.',
-                'data' => $announcement
-            ]);
-            
-        } catch (\Exception $e) {
-            Log::error('Approval failed: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+ * APPROVE announcement (Admin & Staff)
+ * Convert from pending_verification to published
+ */
+public function approve(Request $request, $id)
+{
+    try {
+        // Add debug logging
+        Log::info('Approve method called for ID: ' . $id);
+        Log::info('Request method: ' . $request->method());
+        Log::info('User: ' . auth()->user()->id . ', Role: ' . auth()->user()->role);
+        
+        $announcement = Announcement::findOrFail($id);
+        $user = auth()->user();
+        
+        // Check authorization
+        if (!in_array($user->role, ['admin', 'staff'])) {
+            Log::warning('Unauthorized user tried to approve: ' . $user->role);
+            return response()->json(['success' => false, 'message' => 'Unauthorized. Only admin/staff can approve announcements.'], 403);
+        }
+        
+        // Check if announcement is pending verification
+        if ($announcement->status !== 'pending_verification') {
+            Log::warning('Announcement not pending: ' . $announcement->status);
             return response()->json([
                 'success' => false, 
-                'message' => 'Error approving announcement: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Only pending announcements can be approved. Current status: ' . $announcement->status
+            ], 400);
         }
+        
+        // Update announcement
+        $announcement->update([
+            'status' => 'published',
+            'is_official' => true,
+            'needs_verification' => false,
+            'verified_at' => now(),
+            'verified_by' => $user->id,
+            'rejection_reason' => null,
+            'rejected_at' => null,
+            'rejected_by' => null,
+        ]);
+        
+        Log::info('Announcement approved successfully: ' . $announcement->id);
+        
+        // ============================================
+        // SEND NOTIFICATION TO ALL USERS AFTER APPROVAL
+        // ============================================
+        $allUsers = \App\Models\User::where('id', '!=', $announcement->author_id)->get();
+        $title = "📢 New Official Announcement";
+        $message = "A new official announcement has been posted: '" . $announcement->title . "'";
+        $url = route('announcements.show', $announcement->id);
+        
+        \Illuminate\Support\Facades\Notification::send($allUsers, new \App\Notifications\AnnouncementNotification($title, $message, $url, $announcement->id));
+        
+        Log::info("Approval notification sent to " . $allUsers->count() . " users for announcement #{$announcement->id}");
+        // ============================================
+        
+        return response()->json([
+            'success' => true, 
+            'message' => 'Announcement "' . $announcement->title . '" has been approved and published.',
+            'data' => $announcement
+        ]);
+        
+    } catch (\Exception $e) {
+        Log::error('Approval failed: ' . $e->getMessage());
+        Log::error('Stack trace: ' . $e->getTraceAsString());
+        return response()->json([
+            'success' => false, 
+            'message' => 'Error approving announcement: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * REJECT announcement (Admin & Staff)

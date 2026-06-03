@@ -12,13 +12,15 @@ class AnnouncementNotification extends Notification
     protected $title;
     protected $message;
     protected $url;
+    protected $announcementId;
 
     // We pass the title, message, and target link dynamically
-    public function __construct($title, $message, $url = '#')
+    public function __construct($title, $message, $url = '#', $announcementId = null)
     {
         $this->title = $title;
         $this->message = $message;
         $this->url = $url;
+        $this->announcementId = $announcementId;
     }
 
     // Set the channel to 'database'
@@ -34,6 +36,7 @@ class AnnouncementNotification extends Notification
             'title' => $this->title,
             'message' => $this->message,
             'url' => $this->url,
+            'announcement_id' => $this->announcementId,
         ];
     }
 }

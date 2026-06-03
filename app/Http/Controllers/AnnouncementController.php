@@ -214,29 +214,22 @@ public function store(Request $request): RedirectResponse
     Announcement::expireDueAnnouncements();
     
     // =========================================================================
-    // NOTIFICATION LOGIC SYSTEM - UPDATED: Only official announcements get notifications
+    // NOTIFICATION LOGIC: Send notifications for published announcements
     // =========================================================================
     if ($announcement->status === 'published') {
-        
-        // ONLY send notifications for OFFICIAL announcements
-        // (Removed the 'important' category trigger - only official announcements)
-        if ($announcement->is_official) {
-            
-            // Get all users except the author
-            $allUsers = User::where('id', '!=', auth()->id())->get();
-            $title = "📢 New Official Announcement";
-            $message = "A new official announcement has been posted: '" . $announcement->title . "'";
-            $url = route('announcements.show', $announcement->id);
-            
-            Notification::send($allUsers, new AnnouncementNotification($title, $message, $url));
-            
-            Log::info("Notification sent for OFFICIAL announcement #{$announcement->id}: '{$announcement->title}'");
-        } else {
-            Log::info("No notification sent for UNOFFICIAL announcement #{$announcement->id}: '{$announcement->title}'");
-        }
-        
+
+        // Send notifications to all users except the author
+        $allUsers = User::where('id', '!=', $announcement->author_id)->get();
+        $title = "📢 New Announcement";
+        $message = "A new announcement has been posted: '" . $announcement->title . "'";
+        $url = route('announcements.show', $announcement->id);
+
+        Notification::send($allUsers, new AnnouncementNotification($title, $message, $url, $announcement->id));
+
+        Log::info("Notification sent for announcement #{$announcement->id}: '{$announcement->title}'");
+
     } elseif ($announcement->status === 'pending_verification') {
-        
+
         // Only notify moderators for official announcements that need verification
         if ($announcement->is_official) {
             $moderators = User::whereIn('role', ['admin', 'staff'])->get();
@@ -244,8 +237,8 @@ public function store(Request $request): RedirectResponse
             $message = "A new official notice titled '{$announcement->title}' requires review.";
             $url = route('announcements.verification-queue');
 
-            Notification::send($moderators, new AnnouncementNotification($title, $message, $url));
-            
+            Notification::send($moderators, new AnnouncementNotification($title, $message, $url, $announcement->id));
+
             Log::info("Moderator notification sent for verification of official announcement #{$announcement->id}");
         }
     }

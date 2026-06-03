@@ -96,10 +96,7 @@
                             </div>
                         </div>
                         
-                        <button class="relative p-2 text-gray-600 hover:text-uthm-blue">
-                            <i class="fas fa-bell text-lg"></i>
-                            <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        @include('layouts.partials.notification-bell')
                         
                         <div class="relative">
                             <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100">

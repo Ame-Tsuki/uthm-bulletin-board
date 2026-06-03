@@ -59,6 +59,7 @@
                     </a>
                 </div>
                 <div class="flex items-center space-x-4">
+                    @include('layouts.partials.notification-bell')
                     <div class="flex items-center text-sm text-gray-700">
                         <i class="fas fa-user-circle mr-2 text-gray-500"></i>
                         <span class="font-medium">{{ $user->name ?? 'Guest' }}</span>

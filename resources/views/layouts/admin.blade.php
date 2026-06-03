@@ -183,55 +183,7 @@
                         
                         <div class="flex items-center space-x-5">
                             
-                            <div class="relative" id="notificationDropdown">
-                                <button id="notificationToggle" class="relative text-gray-600 hover:text-gray-800 focus:outline-none transition mt-1">
-                                    <i class="fas fa-bell text-xl"></i>
-                                    @if(Auth::check() && Auth::user()->unreadNotifications->count() > 0)
-                                        <span class="absolute -top-1 -right-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 border-2 border-white rounded-full">
-                                            {{ Auth::user()->unreadNotifications->count() }}
-                                        </span>
-                                    @endif
-                                </button>
-
-                                <div id="notificationMenu" class="hidden absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-xl z-50 border border-gray-100 overflow-hidden">
-                                    <div class="py-3 px-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                                        <span class="text-sm font-bold text-gray-700">Notifications</span>
-                                        @if(Auth::check() && Auth::user()->unreadNotifications->count() > 0)
-                                            <form action="{{ route('notifications.markAllRead') }}" method="POST" class="inline">
-                                                @csrf
-                                                <button type="submit" class="text-xs font-semibold text-blue-600 hover:text-blue-800 focus:outline-none">Mark all read</button>
-                                            </form>
-                                        @endif
-                                    </div>
-                                    
-                                    <div class="max-h-72 overflow-y-auto">
-                                        @if(Auth::check() && Auth::user()->unreadNotifications->count() > 0)
-                                            @foreach(Auth::user()->unreadNotifications as $notification)
-                                                <a href="{{ $notification->data['url'] ?? '#' }}" class="block px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition {{ $loop->index % 2 == 0 ? 'bg-blue-50/30' : 'bg-white' }}">
-                                                    <p class="text-sm text-gray-800 font-medium leading-tight">
-                                                        <i class="fas fa-exclamation-circle text-orange-500 mr-1.5"></i> 
-                                                        {{ $notification->data['message'] ?? 'New notification' }}
-                                                    </p>
-                                                    @if(isset($notification->data['reason']))
-                                                        <p class="text-xs text-gray-500 mt-1 truncate pl-6">Reason: {{ $notification->data['reason'] }}</p>
-                                                    @endif
-                                                    <p class="text-[11px] text-gray-400 mt-1 pl-6">{{ $notification->created_at->diffForHumans() }}</p>
-                                                </a>
-                                            @endforeach
-                                        @else
-                                            <div class="px-4 py-8 text-center text-gray-500 flex flex-col items-center">
-                                                <i class="far fa-bell-slash text-3xl mb-2 text-gray-300"></i>
-                                                <p class="text-sm">You have no new notifications.</p>
-                                            </div>
-                                        @endif
-                                    </div>
-                                    @if(Auth::check() && Auth::user()->notifications->count() > 0)
-                                    <div class="py-2 px-4 bg-gray-50 border-t border-gray-100 text-center">
-                                        <a href="{{ route('admin.moderation') }}" class="text-xs font-semibold text-gray-600 hover:text-gray-800">View all notifications</a>
-                                    </div>
-                                    @endif
-                                </div>
-                            </div>
+                            @include('layouts.partials.notification-bell')
                             <div class="relative">
                                 <button id="userMenu" class="flex items-center space-x-3 focus:outline-none hover:bg-gray-50 px-3 py-2 rounded-lg transition">
                                     <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-base shadow-md">

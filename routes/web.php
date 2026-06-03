@@ -66,6 +66,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::match(['get', 'post'], '/notifications/{id}/read', [NotificationController::class, 'markAsRead'])
         ->name('notifications.read');
     
+    // Get all notifications (JSON / paginated view)
+    Route::get('/notifications', [NotificationController::class, 'index'])
+        ->name('notifications.index');
+
     // Get unread notifications count
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])
         ->name('notifications.unread-count');

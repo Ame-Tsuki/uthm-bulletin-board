@@ -57,3 +57,20 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Operational Notifications
+
+This project includes an `OperationalNotification` class for sending system/operational messages (maintenance notices, urgent system updates) that appear in the in-app notification bell (Community Hub).
+
+You can send an operational notification from the command line for testing or administrative use:
+
+```bash
+php artisan notify:operational "Title here" "Message body" --url="/dashboard" --severity=warning --audience=all
+```
+
+Options:
+- `--url` — link users will be redirected to when opening the notification (default `#`).
+- `--severity` — `info`, `warning`, or `critical` (default `info`).
+- `--audience` — `all`, `staff`, or `students` (default `all`).
+
+Notifications are stored in the database and will show up in the Community Hub notifications menu.

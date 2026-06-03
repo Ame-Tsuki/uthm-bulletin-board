@@ -344,42 +344,48 @@ class AdminController extends Controller
      * Get all users with pagination
      */
     public function getUsers(Request $request)
-    {
-        $perPage = $request->get('per_page', 15);
-        $search = $request->get('search', '');
-        $role = $request->get('role', '');
-        $verified = $request->get('verified', '');
-        $banned = $request->get('banned', '');
+{
+    $perPage = $request->get('per_page', 15);
+    $search = $request->get('search', '');
+    $role = $request->get('role', '');
+    $verified = $request->get('verified', '');
+    $banned = $request->get('banned', '');
 
-        $query = User::query();
+    $query = User::query();
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('uthm_id', 'like', "%{$search}%");
-            });
-        }
+    if ($search) {
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%")
+              ->orWhere('uthm_id', 'like', "%{$search}%");
+        });
+    }
 
-        if ($role) {
-            $query->where('role', $role);
-        }
+    if ($role) {
+        $query->where('role', $role);
+    }
 
-        if ($verified !== '') {
-            $query->where('is_verified', $verified === 'true' || $verified === '1');
-        }
+    if ($verified !== '') {
+        $query->where('is_verified', $verified === 'true' || $verified === '1');
+    }
 
-        if ($banned !== '') {
-            $query->where('is_banned', $banned === 'true' || $banned === '1');
-        }
+    if ($banned !== '') {
+        $query->where('is_banned', $banned === 'true' || $banned === '1');
+    }
 
-        $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
+    $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
+    // If this is an AJAX request (from DataTables or API), return JSON
+    if ($request->ajax() || $request->wantsJson()) {
         return response()->json([
             'success' => true,
             'data' => $users
         ]);
     }
+
+    // Otherwise, return the HTML view for the admin panel
+    return view('admin.users.index', compact('users', 'search', 'role', 'verified', 'banned'));
+}
 
     /**
      * Get single user details

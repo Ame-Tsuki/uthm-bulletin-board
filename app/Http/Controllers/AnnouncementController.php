@@ -236,7 +236,8 @@ public function store(Request $request): RedirectResponse
             $moderators = User::whereIn('role', ['admin', 'staff'])->get();
             $title = "📋 Verification Required";
             $message = "A new official notice titled '{$announcement->title}' requires review.";
-            $url = route('announcements.show', $announcement->id);
+            // Route moderator notifications to the admin announcements page
+            $url = route('admin.announcements.index');
 
             Notification::send($moderators, new AnnouncementNotification($title, $message, $url, $announcement->id));
 

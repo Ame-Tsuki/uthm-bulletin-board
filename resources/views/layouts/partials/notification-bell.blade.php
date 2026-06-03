@@ -119,10 +119,11 @@
                 const items = notifs.map(n => {
                     const title = (n.data && (n.data.title || n.data.message)) ? (n.data.title ?? n.data.message) : 'Notification';
                     const message = n.data && n.data.message ? n.data.message : '';
-                    const url = n.data && n.data.url ? n.data.url : '#';
                     const created = n.created_at ?? n.updated_at ?? '';
+                    // Use the mark-as-read route so clicks go through the server and notifications are persisted as read/deleted
+                    const readUrl = `/notifications/${n.id}/read`;
 
-                    return `<a href="${escapeHtml(url)}" class="block px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition">
+                    return `<a href="${escapeHtml(readUrl)}" class="block px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition">
                                 <p class="text-sm text-gray-800 font-medium leading-tight">${escapeHtml(title)}</p>
                                 ${message ? `<p class="text-xs text-gray-500 mt-1 truncate">${escapeHtml(message)}</p>` : ''}
                                 <p class="text-[11px] text-gray-400 mt-1">${escapeHtml(created)}</p>

@@ -14,24 +14,27 @@ class NotificationController extends Controller
     public function markAsRead($id)
     {
         $notification = auth()->user()->notifications()->findOrFail($id);
-        
-        // Check if this is an announcement notification
+
+        // Extract redirect URL from JSON payload or default to dashboard
+        $destinationUrl = $notification->data['url'] ?? route('dashboard');
+
+        // If this is an announcement notification, delete it so it is removed permanently
         if (isset($notification->data['announcement_id'])) {
             $announcement = Announcement::find($notification->data['announcement_id']);
-            
-            // If announcement is unofficial, delete the notification instead of marking as read
+
+            // If announcement is unofficial, delete the notification and redirect to dashboard
             if ($announcement && !$announcement->is_official) {
                 $notification->delete();
                 return redirect()->route('dashboard')->with('info', 'Unofficial announcement notification removed.');
             }
+
+            // For official announcement notifications, delete the notification to fully remove it
+            $notification->delete();
+            return redirect($destinationUrl);
         }
-        
-        // Mark as read for official announcements
+
+        // Non-announcement notifications: mark as read
         $notification->markAsRead();
-        
-        // Extract redirect URL from JSON payload or default to dashboard
-        $destinationUrl = $notification->data['url'] ?? route('dashboard');
-        
         return redirect($destinationUrl);
     }
 
@@ -48,19 +51,24 @@ class NotificationController extends Controller
         $deletedCount = 0;
         
         foreach ($notifications as $notification) {
-            // Check if this is an announcement notification
+            // If this is an announcement notification, delete it so it's removed permanently
             if (isset($notification->data['announcement_id'])) {
                 $announcement = Announcement::find($notification->data['announcement_id']);
-                
+
                 // If announcement is unofficial, delete the notification
                 if ($announcement && !$announcement->is_official) {
                     $notification->delete();
                     $deletedCount++;
                     continue;
                 }
+
+                // Official announcement notification: delete (fully remove)
+                $notification->delete();
+                $deletedCount++;
+                continue;
             }
-            
-            // Mark official notifications as read
+
+            // Non-announcement notifications: mark as read
             $notification->markAsRead();
             $markedCount++;
         }

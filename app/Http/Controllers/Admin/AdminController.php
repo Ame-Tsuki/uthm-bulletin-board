@@ -27,6 +27,12 @@ class AdminController extends Controller
         $staff = \App\Models\User::where('role', 'staff')->count();
         $pendingReports = \App\Models\AnnouncementReport::where('status', 'pending')->count();
 
+// 1.2. Safely get pending reports (only if table exists)
+    $pendingReports = 0;
+    if (\Illuminate\Support\Facades\Schema::hasTable('announcement_reports')) {
+        $pendingReports = \App\Models\AnnouncementReport::where('status', 'pending')->count();
+    }
+
         // 2. Calculate Role Percentages (safely avoiding division by zero)
         $studentPercentage = $totalUsers > 0 ? round(($students / $totalUsers) * 100, 1) : 0;
         $staffPercentage = $totalUsers > 0 ? round(($staff / $totalUsers) * 100, 1) : 0;
@@ -90,38 +96,38 @@ class AdminController extends Controller
 
 
     /**
-     * Get recent activity data for dashboard
-     */
-    private function getRecentActivityData()
-    {
-        $activities = [];
-        
-        // Get recent user registrations
-        $recentUsers = \App\Models\User::orderBy('created_at', 'desc')->take(3)->get();
-        foreach ($recentUsers as $user) {
-            $activities[] = [
-                'icon_bg' => 'bg-blue-100',
-                'icon' => 'fas fa-user-plus',
-                'icon_color' => 'text-blue-600',
-                'message' => "New user registered: {$user->name}",
-                'time_ago' => $user->created_at->diffForHumans(),
-            ];
-        }
-        
-        // Get recent announcements
-        $recentAnnouncements = \App\Models\Announcement::orderBy('created_at', 'desc')->take(2)->get();
-        foreach ($recentAnnouncements as $announcement) {
-            $activities[] = [
-                'icon_bg' => 'bg-green-100',
-                'icon' => 'fas fa-megaphone',
-                'icon_color' => 'text-green-600',
-                'message' => "New announcement: {$announcement->title}",
-                'time_ago' => $announcement->created_at->diffForHumans(),
-            ];
-        }
-        
-        return $activities;
+ * Get recent activity data for dashboard
+ */
+private function getRecentActivityData() 
+{
+    $activities = [];
+
+    // Get recent user registrations
+    $recentUsers = \App\Models\User::orderBy('created_at', 'desc')->take(3)->get();
+    foreach ($recentUsers as $user) {
+        $activities[] = [
+            'icon_bg' => 'bg-blue-100',
+            'icon' => 'fas fa-user-plus',
+            'icon_color' => 'text-blue-600',
+            'message' => "New user registered: {$user->name}",
+            'time_ago' => $user->created_at->diffForHumans(),
+        ];
     }
+
+    // Get recent announcements
+    $recentAnnouncements = \App\Models\Announcement::orderBy('created_at', 'desc')->take(2)->get();
+    foreach ($recentAnnouncements as $announcement) {
+        $activities[] = [
+            'icon_bg' => 'bg-green-100',
+            'icon' => 'fas fa-megaphone',
+            'icon_color' => 'text-green-600',
+            'message' => "New announcement: {$announcement->title}",
+            'time_ago' => $announcement->created_at->diffForHumans(),
+        ];
+    }
+
+    return $activities;
+}
 
     /**
      * Show moderation page with hydrated data queues

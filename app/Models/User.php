@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Helpers\MailHelper;	
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -51,11 +53,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'staff';
     }
 
-    public function isClubAdmin()
-    {
-        return $this->role === 'club_admin';
-    }
-
     public function isStudent()
     {
         return $this->role === 'student';
@@ -88,4 +85,55 @@ public function groupMemberships()
     {
         return (bool) $this->is_banned;
     }
+
+    /**
+     * Send the email verification notification.
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $verificationUrl = $this->verificationUrl();
+        
+        MailHelper::send(
+            $this->email,
+            'Verify Your Email Address - UTHM Bulletin Board',
+            "<h1>Verify Your Email</h1>
+             <p>Click the link below to verify your email address:</p>
+             <a href='{$verificationUrl}'>Verify Email</a>
+             <p>If you did not create an account, ignore this email.</p>"
+        );
+    }
+
+ /**
+     * Send the password reset notification.
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $resetUrl = url('/password/reset/' . $token . '?email=' . urlencode($this->email));
+        
+        MailHelper::send(
+            $this->email,
+            'Reset Your Password - UTHM Bulletin Board',
+            "<h1>Reset Your Password</h1>
+             <p>Click the link below to reset your password:</p>
+             <a href='{$resetUrl}'>Reset Password</a>
+             <p>This link expires in 60 minutes.</p>
+             <p>If you did not request a password reset, ignore this email.</p>"
+        );
+    }
+
+    /**
+     * Get the email verification URL.
+     */
+    protected function verificationUrl()
+    {
+        return URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(config('auth.verification.expire', 60)),
+            [
+                'id' => $this->getKey(),
+                'hash' => sha1($this->getEmailForVerification()),
+            ]
+        );
+    }
 }
+

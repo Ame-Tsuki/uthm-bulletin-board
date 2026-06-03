@@ -62,8 +62,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])
         ->name('notifications.markAllRead');
     
-    // Mark a single notification as read
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])
+    // Mark a single notification as read (allow GET for link redirects and POST for forms)
+    Route::match(['get', 'post'], '/notifications/{id}/read', [NotificationController::class, 'markAsRead'])
         ->name('notifications.read');
     
     // Get unread notifications count

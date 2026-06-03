@@ -119,7 +119,7 @@ public function store(Request $request): RedirectResponse
     // MODERATION CHECK - USING .NET API
     // ============================================
     $textToCheck = $validated['title'] . ' ' . $validated['content'];
-    $moderationResult = $this->moderationService->moderate($textToCheck);
+    $moderationResult = $this->moderationService->moderate($textToCheck, auth()->id());
     
     // If moderation fails, block the announcement
     if (!$moderationResult['allowed']) {
@@ -485,7 +485,7 @@ public function update(Request $request, Announcement $announcement): RedirectRe
     // MODERATION CHECK - Using .NET API
     // ============================================
     $textToCheck = $validated['title'] . ' ' . $validated['content'];
-    $moderationResult = $this->moderationService->moderate($textToCheck);
+    $moderationResult = $this->moderationService->moderate($textToCheck, auth()->id());
     
     // If moderation fails, block the update
     if (!$moderationResult['allowed']) {

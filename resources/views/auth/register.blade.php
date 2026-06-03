@@ -257,6 +257,7 @@
                             <option value="FKMP">Fakulti Kejuruteraan Mekanikal dan Pembuatan</option>
                             <option value="FKAAB">Fakulti Kejuruteraan Arkitek dan Alam Sekitar Bangunan</option>
                             <option value="FPTP">Fakulti Pengurusan Teknologi dan Perniagaan</option>
+				<option value="FPTV">Fakulti Pendidikan Teknikal dan Vokasional</option>
                             <option value="FKEE">Fakulti Kejuruteraan Elektrik dan Elektronik</option>
                             <option value="FAST">Fakulti Sains Gunaan dan Teknologi</option>
                             <option value="FTK">Fakulti Teknologi Kejuruteraan</option>

@@ -12,31 +12,42 @@ class NotificationController extends Controller
      * Skips unofficial announcement notifications.
      */
     public function markAsRead($id)
-    {
-        $notification = auth()->user()->notifications()->findOrFail($id);
-
-        // Extract redirect URL from JSON payload or default to dashboard
-        $destinationUrl = $notification->data['url'] ?? route('dashboard');
-
-        // If this is an announcement notification, delete it so it is removed permanently
-        if (isset($notification->data['announcement_id'])) {
-            $announcement = Announcement::find($notification->data['announcement_id']);
-
-            // If announcement is unofficial, delete the notification and redirect to dashboard
-            if ($announcement && !$announcement->is_official) {
-                $notification->delete();
-                return redirect()->route('dashboard')->with('info', 'Unofficial announcement notification removed.');
-            }
-
-            // For official announcement notifications, delete the notification to fully remove it
-            $notification->delete();
-            return redirect($destinationUrl);
+{
+    $notification = auth()->user()->notifications()->findOrFail($id);
+    
+    // Get the data (already decoded by Laravel)
+    $data = $notification->data;
+    
+    // Default redirect to dashboard
+    $destinationUrl = route('dashboard');
+    
+    // For announcement notifications (with valid announcement_id)
+    if (isset($data['announcement_id']) && $data['announcement_id']) {
+        $announcementId = $data['announcement_id'];
+        $announcement = Announcement::find($announcementId);
+        
+        if ($announcement) {
+            $destinationUrl = route('announcements.show', $announcementId);
+        } else {
+            $destinationUrl = route('announcements.index');
         }
-
-        // Non-announcement notifications: mark as read
-        $notification->markAsRead();
+        
+        // Delete the notification
+        $notification->delete();
+        
         return redirect($destinationUrl);
     }
+    
+    // For other notifications with valid URL
+    if (isset($data['url']) && filter_var($data['url'], FILTER_VALIDATE_URL)) {
+        $destinationUrl = $data['url'];
+    }
+    
+    // Mark as read and redirect
+    $notification->markAsRead();
+    
+    return redirect($destinationUrl);
+}
 
     /**
      * Clear all unread notifications for the authenticated user at once.

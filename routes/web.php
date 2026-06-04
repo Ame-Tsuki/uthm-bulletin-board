@@ -456,9 +456,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     });
     
-<<<<<<< HEAD
-}); // END of authenticated routes group
-=======
     Route::get('/debug/events', function () {
         $events = App\Models\Event::where('user_id', auth()->id())->get();
         return response()->json([
@@ -504,4 +501,3 @@ Route::middleware(['auth', 'verified'])->group(function () {
 })->middleware('auth');
     
 }); // END of authenticated routes group
->>>>>>> ea81c098816bc8e4260ed883a1ea51206ac96ed2

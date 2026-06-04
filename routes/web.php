@@ -456,4 +456,52 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     });
     
+<<<<<<< HEAD
 }); // END of authenticated routes group
+=======
+    Route::get('/debug/events', function () {
+        $events = App\Models\Event::where('user_id', auth()->id())->get();
+        return response()->json([
+            'user' => auth()->user(),
+            'events_count' => $events->count(),
+            'events' => $events
+        ]);
+    });
+
+    Route::get('/debug/session', function () {
+        return response()->json([
+            'session' => session()->all(),
+            'auth' => auth()->check(),
+            'user' => auth()->user()
+        ]);
+    });
+
+    Route::get('/test-csrf', function () {
+        return response()->json([
+            'csrf_token' => csrf_token(),
+            'session_token' => session()->token(),
+            'has_csrf_field' => isset($_COOKIE['XSRF-TOKEN'])
+        ]);
+    });
+
+    Route::get('/up', function () {
+        return response()->json(['status' => 'ok']);
+    });
+
+
+    Route::get('/test-notifications', function () {
+    if (!auth()->check()) {
+        return 'Please login as a student first';
+    }
+    $user = auth()->user();
+    $notifications = $user->notifications()->take(5)->get();
+    return response()->json([
+        'user' => $user->name,
+        'notification_count' => $user->notifications->count(),
+        'unread_count' => $user->unreadNotifications->count(),
+        'notifications' => $notifications
+    ]);
+})->middleware('auth');
+    
+}); // END of authenticated routes group
+>>>>>>> ea81c098816bc8e4260ed883a1ea51206ac96ed2

@@ -455,38 +455,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'name' => auth()->user()->name
         ]);
     });
-
-    // ============================================
-    // DEBUG ROUTES (Remove in production)
-    // ============================================
-    
-    Route::get('/debug/events', function () {
-        $events = App\Models\Event::where('user_id', auth()->id())->get();
-        return response()->json([
-            'user' => auth()->user(),
-            'events_count' => $events->count(),
-            'events' => $events
-        ]);
-    });
-
-    Route::get('/debug/session', function () {
-        return response()->json([
-            'session' => session()->all(),
-            'auth' => auth()->check(),
-            'user' => auth()->user()
-        ]);
-    });
-
-    Route::get('/test-csrf', function () {
-        return response()->json([
-            'csrf_token' => csrf_token(),
-            'session_token' => session()->token(),
-            'has_csrf_field' => isset($_COOKIE['XSRF-TOKEN'])
-        ]);
-    });
-
-    Route::get('/up', function () {
-        return response()->json(['status' => 'ok']);
-    });
     
 }); // END of authenticated routes group

@@ -488,5 +488,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/up', function () {
         return response()->json(['status' => 'ok']);
     });
+
+
+    Route::get('/test-notifications', function () {
+    if (!auth()->check()) {
+        return 'Please login as a student first';
+    }
+    $user = auth()->user();
+    $notifications = $user->notifications()->take(5)->get();
+    return response()->json([
+        'user' => $user->name,
+        'notification_count' => $user->notifications->count(),
+        'unread_count' => $user->unreadNotifications->count(),
+        'notifications' => $notifications
+    ]);
+})->middleware('auth');
     
 }); // END of authenticated routes group

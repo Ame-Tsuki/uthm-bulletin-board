@@ -454,48 +454,6 @@
    THEMING & COLOR PREFERENCES (Operational on all non-admin pages)
    ========================================================================== */
 
-/* Blue Theme Accent & Background */
-[data-theme="blue"] {
-    --uthm-blue: #0056a6;
-    --uthm-blue-dark: #003d75;
-    --uthm-blue-light: #e6f0fa;
-}
-[data-theme="blue"] .portal-body {
-    background: linear-gradient(160deg, #ebf2fa 0%, #f5f9ff 45%, #e1edf8 100%) !important;
-}
-
-/* Green Theme Accent & Background */
-[data-theme="green"] {
-    --uthm-blue: #059669;
-    --uthm-blue-dark: #047857;
-    --uthm-blue-light: #ecfdf5;
-}
-[data-theme="green"] .portal-body {
-    background: linear-gradient(160deg, #e6f6ec 0%, #f3faf6 45%, #dbf5e5 100%) !important;
-}
-[data-theme="green"] .bg-uthm-blue { background-color: #059669 !important; }
-[data-theme="green"] .text-uthm-blue { color: #059669 !important; }
-[data-theme="green"] .bg-uthm-blue-light { background-color: #ecfdf5 !important; }
-[data-theme="green"] .hover\:bg-blue-700:hover { background-color: #047857 !important; }
-[data-theme="green"] .hover\:bg-uthm-blue-dark:hover { background-color: #047857 !important; }
-[data-theme="green"] .peer-checked\:bg-uthm-blue:checked { background-color: #059669 !important; }
-
-/* Purple Theme Accent & Background */
-[data-theme="purple"] {
-    --uthm-blue: #7c3aed;
-    --uthm-blue-dark: #6d28d9;
-    --uthm-blue-light: #ede9fe;
-}
-[data-theme="purple"] .portal-body {
-    background: linear-gradient(160deg, #f3effe 0%, #f9f8ff 45%, #ebdfff 100%) !important;
-}
-[data-theme="purple"] .bg-uthm-blue { background-color: #7c3aed !important; }
-[data-theme="purple"] .text-uthm-blue { color: #7c3aed !important; }
-[data-theme="purple"] .bg-uthm-blue-light { background-color: #ede9fe !important; }
-[data-theme="purple"] .hover\:bg-blue-700:hover { background-color: #6d28d9 !important; }
-[data-theme="purple"] .hover\:bg-uthm-blue-dark:hover { background-color: #6d28d9 !important; }
-[data-theme="purple"] .peer-checked\:bg-uthm-blue:checked { background-color: #7c3aed !important; }
-
 /* Dark Theme (Comprehensive slate-based premium interface) */
 [data-theme="dark"] {
     --bg-primary: #0f172a;

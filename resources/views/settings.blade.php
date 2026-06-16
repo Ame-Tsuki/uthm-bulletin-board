@@ -163,15 +163,6 @@
                                 <button onclick="setTheme('dark')" class="theme-option w-12 h-12 rounded-full bg-gray-900 border-2 border-gray-300 hover:border-uthm-blue flex items-center justify-center shadow-sm" data-theme="dark" id="themeDark">
                                     <i class="fas fa-moon text-white text-lg"></i>
                                 </button>
-                                <button onclick="setTheme('blue')" class="theme-option w-12 h-12 rounded-full bg-blue-600 border-2 border-gray-300 hover:border-uthm-blue flex items-center justify-center shadow-sm" data-theme="blue" id="themeBlue">
-                                    <i class="fas fa-palette text-white text-lg"></i>
-                                </button>
-                                <button onclick="setTheme('green')" class="theme-option w-12 h-12 rounded-full bg-green-600 border-2 border-gray-300 hover:border-uthm-blue flex items-center justify-center shadow-sm" data-theme="green" id="themeGreen">
-                                    <i class="fas fa-leaf text-white text-lg"></i>
-                                </button>
-                                <button onclick="setTheme('purple')" class="theme-option w-12 h-12 rounded-full bg-purple-600 border-2 border-gray-300 hover:border-uthm-blue flex items-center justify-center shadow-sm" data-theme="purple" id="themePurple">
-                                    <i class="fas fa-gem text-white text-lg"></i>
-                                </button>
                             </div>
                         </div>
                     </div>

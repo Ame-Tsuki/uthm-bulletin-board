@@ -49,9 +49,6 @@
                         <select id="siteTheme" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                             <option value="light">Light</option>
                             <option value="dark">Dark</option>
-                            <option value="blue">Blue Accent</option>
-                            <option value="green">Green Accent</option>
-                            <option value="purple">Purple Accent</option>
                         </select>
                     </div>
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">

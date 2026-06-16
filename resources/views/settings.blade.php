@@ -9,6 +9,72 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @include('layouts.partials.portal-head')
     <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        [data-theme="dark"] .portal-card {
+            background: var(--bg-card);
+            border-color: var(--border-color);
+        }
+        [data-theme="dark"] .text-gray-900 { color: #f1f5f9; }
+        [data-theme="dark"] .text-gray-800 { color: #e2e8f0; }
+        [data-theme="dark"] .text-gray-700 { color: #cbd5e1; }
+        [data-theme="dark"] .text-gray-600 { color: #94a3b8; }
+        [data-theme="dark"] .text-gray-500 { color: #64748b; }
+        [data-theme="dark"] .text-gray-400 { color: #475569; }
+        [data-theme="dark"] .bg-white { background: var(--bg-card); }
+        [data-theme="dark"] .bg-gray-50 { background: #1e293b; }
+        [data-theme="dark"] .border-gray-100 { border-color: var(--border-color); }
+        [data-theme="dark"] .border-gray-300 { border-color: var(--border-color); }
+        [data-theme="dark"] .hover\\:bg-gray-50:hover { background: #334155; }
+        [data-theme="dark"] .portal-body { background: var(--bg-primary); }
+
+        [data-theme="blue"] {
+            --primary: #0056a6;
+            --primary-light: #e8f0fe;
+            --primary-dark: #003d7a;
+        }
+        [data-theme="blue"] .bg-uthm-blue { background: #0056a6; }
+        [data-theme="blue"] .bg-uthm-blue-light { background: #e8f0fe; }
+        [data-theme="blue"] .text-uthm-blue { color: #0056a6; }
+        [data-theme="blue"] .hover\\:bg-blue-700:hover { background: #003d7a; }
+        [data-theme="blue"] .peer-checked\\:bg-uthm-blue:checked { background: #0056a6; }
+
+        [data-theme="green"] {
+            --primary: #059669;
+            --primary-light: #ecfdf5;
+            --primary-dark: #047857;
+        }
+        [data-theme="green"] .bg-uthm-blue { background: #059669; }
+        [data-theme="green"] .bg-uthm-blue-light { background: #ecfdf5; }
+        [data-theme="green"] .text-uthm-blue { color: #059669; }
+        [data-theme="green"] .hover\\:bg-blue-700:hover { background: #047857; }
+        [data-theme="green"] .peer-checked\\:bg-uthm-blue:checked { background: #059669; }
+
+        [data-theme="purple"] {
+            --primary: #7c3aed;
+            --primary-light: #ede9fe;
+            --primary-dark: #6d28d9;
+        }
+        [data-theme="purple"] .bg-uthm-blue { background: #7c3aed; }
+        [data-theme="purple"] .bg-uthm-blue-light { background: #ede9fe; }
+        [data-theme="purple"] .text-uthm-blue { color: #7c3aed; }
+        [data-theme="purple"] .hover\\:bg-blue-700:hover { background: #6d28d9; }
+        [data-theme="purple"] .peer-checked\\:bg-uthm-blue:checked { background: #7c3aed; }
+
         .settings-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
@@ -17,7 +83,7 @@
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
         .toggle-checkbox:checked + .toggle-label {
-            background-color: #0056a6;
+            background-color: var(--primary, #0056a6);
         }
         .toggle-checkbox:checked + .toggle-label .toggle-dot {
             transform: translateX(100%);
@@ -26,12 +92,25 @@
             border: 2px solid #fee2e2;
             background: linear-gradient(135deg, #fef2f2 0%, #fff 100%);
         }
-        .danger-zone:hover {
-            border-color: #fca5a5;
+        [data-theme="dark"] .danger-zone {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         }
         .modal-overlay {
             backdrop-filter: blur(4px);
         }
+        .theme-option {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .theme-option:hover {
+            transform: scale(1.05);
+        }
+        .theme-option.active {
+            ring: 2px solid var(--primary, #0056a6);
+            ring-offset: 2px;
+        }
+
         @media (max-width: 640px) {
             .settings-card {
                 padding: 1rem;
@@ -39,7 +118,7 @@
         }
     </style>
 </head>
-<body class="portal-body bg-gray-50">
+<body class="portal-body bg-gray-50" id="appBody">
     @include('layouts.partials.portal-sidebar', ['user' => $user ?? Auth::user()])
 
     <div id="main-content" class="content-collapsed min-h-screen content-transition">
@@ -51,8 +130,8 @@
         <div class="mb-6">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-gray-900">Account Settings</h2>
-                    <p class="text-sm text-gray-500 mt-1">Manage your account preferences and security settings</p>
+                    <h2 class="text-2xl font-bold text-gray-900" id="pageTitle">Account Settings</h2>
+                    <p class="text-sm text-gray-500 mt-1" id="pageSubtitle">Manage your account preferences and security settings</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full">
@@ -127,34 +206,31 @@
                     </div>
                 </div>
 
-                <!-- Language & Theme -->
+                <!-- Theme Selection -->
                 <div class="portal-card settings-card p-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center text-green-600 shrink-0">
-                                <i class="fas fa-globe"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-800">Language</h4>
-                                <p class="text-sm text-gray-500">Choose your preferred language</p>
-                                <select class="mt-1 text-sm border-gray-300 rounded-lg focus:ring-uthm-blue focus:border-uthm-blue">
-                                    <option value="en">English</option>
-                                    <option value="ms">Bahasa Malaysia</option>
-                                </select>
-                            </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
+                            <i class="fas fa-palette"></i>
                         </div>
-                        <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 shrink-0">
-                                <i class="fas fa-palette"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-800">Theme</h4>
-                                <p class="text-sm text-gray-500">Choose your preferred theme</p>
-                                <div class="flex gap-2 mt-1">
-                                    <button class="w-8 h-8 rounded-full bg-white border-2 border-uthm-blue ring-2 ring-uthm-blue ring-offset-2" title="Light"></button>
-                                    <button class="w-8 h-8 rounded-full bg-gray-900 border-2 border-gray-300 hover:border-gray-500" title="Dark"></button>
-                                    <button class="w-8 h-8 rounded-full bg-gradient-to-br from-gray-900 to-blue-600 border-2 border-gray-300 hover:border-gray-500" title="System"></button>
-                                </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-800">Theme</h4>
+                            <p class="text-sm text-gray-500">Choose your preferred theme color</p>
+                            <div class="flex flex-wrap gap-3 mt-3">
+                                <button onclick="setTheme('light')" class="theme-option w-12 h-12 rounded-full bg-white border-2 border-gray-300 hover:border-uthm-blue flex items-center justify-center shadow-sm" data-theme="light" id="themeLight">
+                                    <i class="fas fa-sun text-yellow-500 text-lg"></i>
+                                </button>
+                                <button onclick="setTheme('dark')" class="theme-option w-12 h-12 rounded-full bg-gray-900 border-2 border-gray-300 hover:border-uthm-blue flex items-center justify-center shadow-sm" data-theme="dark" id="themeDark">
+                                    <i class="fas fa-moon text-white text-lg"></i>
+                                </button>
+                                <button onclick="setTheme('blue')" class="theme-option w-12 h-12 rounded-full bg-blue-600 border-2 border-gray-300 hover:border-uthm-blue flex items-center justify-center shadow-sm" data-theme="blue" id="themeBlue">
+                                    <i class="fas fa-palette text-white text-lg"></i>
+                                </button>
+                                <button onclick="setTheme('green')" class="theme-option w-12 h-12 rounded-full bg-green-600 border-2 border-gray-300 hover:border-uthm-blue flex items-center justify-center shadow-sm" data-theme="green" id="themeGreen">
+                                    <i class="fas fa-leaf text-white text-lg"></i>
+                                </button>
+                                <button onclick="setTheme('purple')" class="theme-option w-12 h-12 rounded-full bg-purple-600 border-2 border-gray-300 hover:border-uthm-blue flex items-center justify-center shadow-sm" data-theme="purple" id="themePurple">
+                                    <i class="fas fa-gem text-white text-lg"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -281,7 +357,7 @@
         </div>
     </div>
 
-    <!-- Success Toast -->
+    <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-4 right-4 z-50 hidden">
         <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
             <i class="fas fa-check-circle"></i>
@@ -290,6 +366,58 @@
     </div>
 
     <script>
+        // Theme Management
+        function setTheme(theme) {
+            // Remove active class from all theme options
+            document.querySelectorAll('.theme-option').forEach(el => {
+                el.classList.remove('active');
+                el.style.ring = 'none';
+            });
+            
+            // Add active class to selected theme
+            const selected = document.getElementById('theme' + theme.charAt(0).toUpperCase() + theme.slice(1));
+            if (selected) {
+                selected.classList.add('active');
+                selected.style.ring = '2px solid var(--primary, #0056a6)';
+                selected.style.ringOffset = '2px';
+            }
+            
+            // Apply theme to body
+            const body = document.getElementById('appBody');
+            
+            // Remove all theme attributes
+            body.removeAttribute('data-theme');
+            
+            // Apply new theme
+            if (theme !== 'light') {
+                body.setAttribute('data-theme', theme);
+            }
+            
+            // Save preference
+            localStorage.setItem('userTheme', theme);
+            
+            showToast('Theme updated to ' + theme.charAt(0).toUpperCase() + theme.slice(1));
+        }
+
+        // Load saved theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('userTheme') || 'light';
+            
+            // Apply theme
+            if (savedTheme !== 'light') {
+                document.getElementById('appBody').setAttribute('data-theme', savedTheme);
+            }
+            
+            // Highlight selected theme
+            const themeId = 'theme' + savedTheme.charAt(0).toUpperCase() + savedTheme.slice(1);
+            const selected = document.getElementById(themeId);
+            if (selected) {
+                selected.classList.add('active');
+                selected.style.ring = '2px solid var(--primary, #0056a6)';
+                selected.style.ringOffset = '2px';
+            }
+        });
+
         // Toggle Notifications
         function toggleNotifications(checkbox) {
             const status = document.getElementById('notificationStatus');
@@ -335,7 +463,6 @@
                 return;
             }
 
-            // Simulate password update
             error.classList.add('hidden');
             showToast('Password updated successfully!');
             closePasswordModal();

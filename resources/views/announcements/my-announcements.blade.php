@@ -559,5 +559,114 @@
         });
     </script>
     @include('announcements.partials.calendar-assets')
+<!-- Mobile Sidebar Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const mobileToggle = document.getElementById('mobile-menu-toggle');
+    
+    if (!sidebar || !mobileToggle) {
+        console.warn('Sidebar or toggle not found');
+        return;
+    }
+    
+    // Create overlay if not exists
+    let overlay = document.querySelector('.mobile-sidebar-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'mobile-sidebar-overlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:999;display:none;';
+        document.body.appendChild(overlay);
+    }
+    
+    // Ensure sidebar has correct styles on mobile
+    function applyMobileStyles() {
+        if (window.innerWidth < 768) {
+            sidebar.style.position = 'fixed';
+            sidebar.style.top = '0';
+            sidebar.style.left = '0';
+            sidebar.style.height = '100vh';
+            sidebar.style.width = '280px';
+            sidebar.style.transform = 'translateX(-100%)';
+            sidebar.style.transition = 'transform 0.3s ease-in-out';
+            sidebar.style.zIndex = '1000';
+            sidebar.style.background = '#fff';
+            sidebar.style.overflowY = 'auto';
+            sidebar.style.boxShadow = '2px 0 10px rgba(0,0,0,0.1)';
+        } else {
+            sidebar.style.transform = 'translateX(0)';
+            sidebar.style.position = '';
+            sidebar.style.height = '';
+            sidebar.style.width = '';
+            sidebar.style.zIndex = '';
+            sidebar.style.background = '';
+            sidebar.style.overflowY = '';
+            sidebar.style.boxShadow = '';
+        }
+    }
+    
+    applyMobileStyles();
+    
+    function openSidebar() {
+        sidebar.style.transform = 'translateX(0)';
+        overlay.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeSidebar() {
+        sidebar.style.transform = 'translateX(-100%)';
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    mobileToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (sidebar.style.transform === 'translateX(0px)') {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
+    });
+    
+    overlay.addEventListener('click', closeSidebar);
+    
+    // Close on link click on mobile
+    sidebar.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', function() {
+            if (window.innerWidth < 768) {
+                closeSidebar();
+            }
+        });
+    });
+    
+    // Handle resize
+    window.addEventListener('resize', function() {
+        applyMobileStyles();
+        if (window.innerWidth >= 768) {
+            closeSidebar();
+        }
+    });
+});
+</script>
+
+<style>
+/* Ensure toggle button is above overlay */
+#mobile-menu-toggle {
+    position: relative;
+    z-index: 1001 !important;
+}
+
+.mobile-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+}
+</style>
 </body>
 </html>

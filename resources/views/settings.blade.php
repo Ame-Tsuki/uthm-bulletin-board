@@ -17,63 +17,6 @@
             --border-color: #e5e7eb;
             --shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        [data-theme="dark"] {
-            --bg-primary: #0f172a;
-            --bg-card: #1e293b;
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --border-color: #334155;
-            --shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        [data-theme="dark"] .portal-card {
-            background: var(--bg-card);
-            border-color: var(--border-color);
-        }
-        [data-theme="dark"] .text-gray-900 { color: #f1f5f9; }
-        [data-theme="dark"] .text-gray-800 { color: #e2e8f0; }
-        [data-theme="dark"] .text-gray-700 { color: #cbd5e1; }
-        [data-theme="dark"] .text-gray-600 { color: #94a3b8; }
-        [data-theme="dark"] .text-gray-500 { color: #64748b; }
-        [data-theme="dark"] .text-gray-400 { color: #475569; }
-        [data-theme="dark"] .bg-white { background: var(--bg-card); }
-        [data-theme="dark"] .bg-gray-50 { background: #1e293b; }
-        [data-theme="dark"] .border-gray-100 { border-color: var(--border-color); }
-        [data-theme="dark"] .border-gray-300 { border-color: var(--border-color); }
-        [data-theme="dark"] .hover\\:bg-gray-50:hover { background: #334155; }
-        [data-theme="dark"] .portal-body { background: var(--bg-primary); }
-
-        [data-theme="blue"] {
-            --primary: #0056a6;
-            --primary-light: #e8f0fe;
-            --primary-dark: #003d7a;
-        }
-        [data-theme="blue"] .bg-uthm-blue { background: #0056a6; }
-        [data-theme="blue"] .bg-uthm-blue-light { background: #e8f0fe; }
-        [data-theme="blue"] .text-uthm-blue { color: #0056a6; }
-        [data-theme="blue"] .hover\\:bg-blue-700:hover { background: #003d7a; }
-        [data-theme="blue"] .peer-checked\\:bg-uthm-blue:checked { background: #0056a6; }
-
-        [data-theme="green"] {
-            --primary: #059669;
-            --primary-light: #ecfdf5;
-            --primary-dark: #047857;
-        }
-        [data-theme="green"] .bg-uthm-blue { background: #059669; }
-        [data-theme="green"] .bg-uthm-blue-light { background: #ecfdf5; }
-        [data-theme="green"] .text-uthm-blue { color: #059669; }
-        [data-theme="green"] .hover\\:bg-blue-700:hover { background: #047857; }
-        [data-theme="green"] .peer-checked\\:bg-uthm-blue:checked { background: #059669; }
-
-        [data-theme="purple"] {
-            --primary: #7c3aed;
-            --primary-light: #ede9fe;
-            --primary-dark: #6d28d9;
-        }
-        [data-theme="purple"] .bg-uthm-blue { background: #7c3aed; }
-        [data-theme="purple"] .bg-uthm-blue-light { background: #ede9fe; }
-        [data-theme="purple"] .text-uthm-blue { color: #7c3aed; }
-        [data-theme="purple"] .hover\\:bg-blue-700:hover { background: #6d28d9; }
-        [data-theme="purple"] .peer-checked\\:bg-uthm-blue:checked { background: #7c3aed; }
 
         .settings-card {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -92,9 +35,7 @@
             border: 2px solid #fee2e2;
             background: linear-gradient(135deg, #fef2f2 0%, #fff 100%);
         }
-        [data-theme="dark"] .danger-zone {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        }
+
         .modal-overlay {
             backdrop-filter: blur(4px);
         }
@@ -382,15 +323,12 @@
                 selected.style.ringOffset = '2px';
             }
             
-            // Apply theme to body
-            const body = document.getElementById('appBody');
-            
-            // Remove all theme attributes
-            body.removeAttribute('data-theme');
+            // Apply theme to document element
+            document.documentElement.removeAttribute('data-theme');
             
             // Apply new theme
             if (theme !== 'light') {
-                body.setAttribute('data-theme', theme);
+                document.documentElement.setAttribute('data-theme', theme);
             }
             
             // Save preference
@@ -405,7 +343,7 @@
             
             // Apply theme
             if (savedTheme !== 'light') {
-                document.getElementById('appBody').setAttribute('data-theme', savedTheme);
+                document.documentElement.setAttribute('data-theme', savedTheme);
             }
             
             // Highlight selected theme

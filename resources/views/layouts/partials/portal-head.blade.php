@@ -1,7 +1,18 @@
+@php
+    $siteTheme = \App\Models\Setting::where('key', 'site_theme')->value('value') ?? 'light';
+@endphp
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ asset('css/portal.css') }}">
+<script>
+    (function() {
+        const savedTheme = localStorage.getItem('userTheme') || "{{ $siteTheme }}";
+        if (savedTheme && savedTheme !== 'light') {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+    })();
+</script>
 <script>
     tailwind.config = {
         theme: {

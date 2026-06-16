@@ -410,6 +410,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/settings', function () {
             return view('admin.settings');
         })->name('settings.index');
+        Route::get('/settings/data', [AdminController::class, 'getSettings'])->name('settings.data');
+        Route::put('/settings/update', [AdminController::class, 'updateSettings'])->name('settings.update');
         
         // User Management Page View
         Route::view('/users', 'admin.users')->name('users');

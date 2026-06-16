@@ -44,6 +44,16 @@
                             <option value="Asia/Bangkok">Asia/Bangkok</option>
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Default Site Theme</label>
+                        <select id="siteTheme" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="blue">Blue Accent</option>
+                            <option value="green">Green Accent</option>
+                            <option value="purple">Purple Accent</option>
+                        </select>
+                    </div>
                     <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                         <label class="flex items-center cursor-pointer">
                             <input type="checkbox" id="maintenanceMode" class="w-4 h-4 text-blue-600">
@@ -171,6 +181,7 @@
             settings.site_description = document.getElementById('siteDescription').value;
             settings.timezone = document.getElementById('timezone').value;
             settings.maintenance_mode = document.getElementById('maintenanceMode').checked;
+            settings.site_theme = document.getElementById('siteTheme').value;
         } else if (section === 'email') {
             settings.smtp_host = document.getElementById('smtpHost').value;
             settings.smtp_port = document.getElementById('smtpPort').value;
@@ -210,6 +221,56 @@
             alert('Error saving settings');
         });
     }
+
+    // Load saved settings on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/admin/settings/data')
+            .then(response => response.json())
+            .then(response => {
+                if (response.success && response.data) {
+                    const data = response.data;
+                    if (data.site_name) document.getElementById('siteName').value = data.site_name;
+                    if (data.site_description) document.getElementById('siteDescription').value = data.site_description;
+                    if (data.timezone) document.getElementById('timezone').value = data.timezone;
+                    if (data.maintenance_mode) {
+                        document.getElementById('maintenanceMode').checked = data.maintenance_mode === 'true' || data.maintenance_mode === true || data.maintenance_mode === '1';
+                    }
+                    if (data.site_theme) document.getElementById('siteTheme').value = data.site_theme;
+                    
+                    // Email settings
+                    if (data.smtp_host) document.getElementById('smtpHost').value = data.smtp_host;
+                    if (data.smtp_port) document.getElementById('smtpPort').value = data.smtp_port;
+                    if (data.smtp_username) document.getElementById('smtpUsername').value = data.smtp_username;
+                    if (data.smtp_password) document.getElementById('smtpPassword').value = data.smtp_password;
+                    if (data.from_email) document.getElementById('fromEmail').value = data.from_email;
+                    
+                    // Notifications settings
+                    if (data.email_notifications) {
+                        document.getElementById('emailNotifications').checked = data.email_notifications === 'true' || data.email_notifications === true || data.email_notifications === '1';
+                    }
+                    if (data.notify_announcements) {
+                        document.getElementById('notifyAnnouncements').checked = data.notify_announcements === 'true' || data.notify_announcements === true || data.notify_announcements === '1';
+                    }
+                    if (data.notify_events) {
+                        document.getElementById('notifyEvents').checked = data.notify_events === 'true' || data.notify_events === true || data.notify_events === '1';
+                    }
+                    if (data.notify_registration) {
+                        document.getElementById('notifyRegistration').checked = data.notify_registration === 'true' || data.notify_registration === true || data.notify_registration === '1';
+                    }
+                    
+                    // Security settings
+                    if (data.session_timeout) document.getElementById('sessionTimeout').value = data.session_timeout;
+                    if (data.max_login_attempts) document.getElementById('maxLoginAttempts').value = data.max_login_attempts;
+                    if (data.require_email_verification) {
+                        document.getElementById('requireEmailVerification').checked = data.require_email_verification === 'true' || data.require_email_verification === true || data.require_email_verification === '1';
+                    }
+                    if (data.enable_two_factor) {
+                        document.getElementById('enableTwoFactor').checked = data.enable_two_factor === 'true' || data.enable_two_factor === true || data.enable_two_factor === '1';
+                    }
+                }
+            })
+            .catch(error => console.error('Error fetching settings:', error));
+    });
 </script>
 
 <style>

@@ -16,6 +16,7 @@ class SettingsSeeder extends Seeder
             ['key' => 'maintenance_mode', 'value' => 'false'],
             ['key' => 'enable_comments', 'value' => 'true'],
             ['key' => 'max_upload_size', 'value' => '5242880'],
+            ['key' => 'site_theme', 'value' => 'light'],
         ];
 
         foreach ($settings as $setting) {

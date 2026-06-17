@@ -7,198 +7,115 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    @include('layouts.partials.portal-head')
     <style>
-        /* Custom colors */
-        .uthm-blue { color: #0056a6; }
-        .bg-uthm-blue { background-color: #0056a6; }
-        .bg-uthm-blue-light { background-color: #e6f0fa; }
-        
-        /* Form styles */
-        .form-label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: #374151;
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            transition: border-color 0.15s ease-in-out;
-        }
-        
-        .form-input:focus {
+        .form-input-focus:focus {
             outline: none;
             border-color: #0056a6;
-            ring: 2px;
-            ring-color: rgba(0, 86, 166, 0.2);
+            box-shadow: 0 0 0 3px rgba(0, 86, 166, 0.15);
         }
         
-        .form-input.moderation-warning {
-            border-color: #dc2626;
-            background-color: #fef2f2;
+        .moderation-warning {
+            border-color: #dc2626 !important;
+            background-color: #fef2f2 !important;
         }
         
-        .form-input.moderation-safe {
-            border-color: #10b981;
-            background-color: #f0fdf4;
+        .moderation-safe {
+            border-color: #10b981 !important;
+            background-color: #f0fdf4 !important;
         }
         
-        .form-error {
-            color: #dc2626;
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
+        .moderation-message {
+            animation: slideDown 0.25s ease-out;
         }
         
-        /* Radio button styles */
-        .radio-option {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 0.75rem;
-            margin-bottom: 0.75rem;
-            cursor: pointer;
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Interactive selection card transitions */
+        .select-dot {
             transition: all 0.2s ease;
         }
         
-        .radio-option:hover {
-            border-color: #9ca3af;
-            background-color: #f9fafb;
-        }
-        
-        .radio-option.selected {
-            border-color: #0056a6;
-            background-color: #e6f0fa;
-        }
-        
-        .radio-input {
-            margin-right: 1rem;
-            transform: scale(1.2);
-        }
-        
-        .radio-content {
-            flex: 1;
-        }
-        
-        .radio-title {
-            font-weight: 600;
-            color: #111827;
-            margin-bottom: 0.25rem;
-        }
-        
-        .radio-description {
-            color: #6b7280;
-            font-size: 0.875rem;
-        }
-        
-        /* Badge styles */
         .badge-admin { background-color: #dc2626; color: white; }
         .badge-staff { background-color: #2563eb; color: white; }
         .badge-student { background-color: #059669; color: white; }
         .badge-guest { background-color: #6b7280; color: white; }
-        
-        /* Verification info styles */
-        .verification-info {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-top: 1rem;
-        }
-        
-        .verification-official {
-            background-color: #f0f9ff;
-            border: 1px solid #bae6fd;
-        }
-        
-        .verification-unofficial {
-            background-color: #fefce8;
-            border: 1px solid #fef08a;
-        }
-        
-        /* Moderation animation */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .moderation-message {
-            animation: fadeIn 0.3s ease;
-        }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Simple Navigation -->
-    <nav class="bg-white shadow">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="{{ route('announcements.index') }}" class="flex items-center mr-8">
-                        <i class="fas fa-arrow-left text-gray-600 mr-2"></i>
-                        <span class="text-gray-700">Back to Announcements</span>
-                    </a>
-                    <h1 class="text-xl font-bold text-gray-900">Create New Announcement</h1>
-                </div>
-                
-                <div class="flex items-center">
-                    <span class="text-sm text-gray-600 mr-4">
-                        Welcome, {{ $user?->name ?? 'User' }}
-                    </span>
-                    <div class="w-8 h-8 bg-uthm-blue-light rounded-full flex items-center justify-center">
-                        <span class="font-bold uthm-blue">{{ strtoupper(substr($user?->name ?? 'G', 0, 1)) }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
+<body class="portal-body">
+    @include('layouts.partials.portal-sidebar', ['user' => $user ?? Auth::user()])
 
     <!-- Main Content -->
-    <div class="py-8">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Page Header -->
-            <div class="mb-8">
-                <div class="bg-gradient-to-r from-blue-50 to-uthm-blue-light border border-blue-200 rounded-xl p-6">
-                    <div class="flex items-center">
-                        <div class="bg-uthm-blue text-white p-3 rounded-lg mr-4">
-                            <i class="fas fa-bullhorn text-xl"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-900">Create a New Announcement</h2>
-                            <p class="mt-2 text-gray-600">
-                                Share information, updates, or events with the UTHM community.
-                            </p>
-                            
-                            <!-- User role info -->
-                            @if($user)
-                                <div class="mt-3 flex items-center">
-                                    <span class="text-sm text-gray-500">Your role:</span>
-                                    <span class="ml-2 px-3 py-1 rounded-full text-xs font-medium badge-{{ $user->role }}">
-                                        {{ ucfirst($user->role) }}
-                                    </span>
-                                    <span class="ml-4 text-sm text-gray-500">
-                                        @if(in_array($user->role, ['admin', 'staff']))
-                                            You can create official announcements without verification.
-                                        @else
-                                            Official announcements require admin/staff verification.
-                                        @endif
-                                    </span>
+    <div id="main-content" class="content-collapsed min-h-screen content-transition">
+        <!-- Top Navigation Bar -->
+        <nav class="bg-white shadow">
+            <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center min-w-0">
+                        <a href="{{ route('announcements.index') }}" class="mr-4 p-2 text-gray-500 hover:text-uthm-blue hover:bg-uthm-blue-light rounded-lg transition-all" aria-label="Go back">
+                            <i class="fas fa-arrow-left text-lg"></i>
+                        </a>
+                        <h1 class="text-xl font-bold text-gray-900 truncate">Create Announcement</h1>
+                        <span class="mx-2 text-gray-300 hidden sm:inline">/</span>
+                        <span class="text-gray-500 text-sm hidden sm:inline truncate">New announcement creation board</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 sm:space-x-4">
+                        @include('layouts.partials.notification-bell')
+                        
+                        <div class="relative">
+                            <button id="user-menu-button" type="button" class="flex items-center space-x-2 p-1.5 pr-3 rounded-xl hover:bg-gray-100 transition-colors">
+                                <div class="w-8 h-8 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
+                                    <span class="font-bold text-uthm-blue text-sm">{{ strtoupper(substr(Auth::user()->name ?? 'G', 0, 1)) }}</span>
                                 </div>
-                            @endif
+                                <div class="hidden md:block text-left">
+                                    <p class="text-sm font-semibold text-gray-900 leading-tight">{{ Auth::user()->name ?? 'Guest' }}</p>
+                                    <p class="text-xs text-gray-500">{{ Auth::user()->uthm_id ?? 'UTHM Member' }}</p>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-400 text-xs hidden md:inline"></i>
+                            </button>
+                            
+                            <div id="user-menu" class="portal-dropdown absolute right-0 mt-2 w-52 py-2 hidden z-50">
+                                <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-user mr-2"></i> My Profile
+                                </a>
+                                <a href="{{ route('announcements.my-announcements') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-file-alt mr-2"></i> My Announcements
+                                </a>
+                                <a href="{{ route('settings') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-cog mr-2"></i> Settings
+                                </a>
+                                <div class="border-t border-gray-200 my-2"></div>
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </nav>
 
+        @include('layouts.partials.portal-content-open')
+
+        <!-- Container Grid -->
+        <div class="max-w-7xl mx-auto py-2">
+            
             <!-- Moderation Global Error Display -->
             @error('moderation')
-                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl shadow-sm">
                     <div class="flex items-start">
-                        <i class="fas fa-shield-alt text-red-600 mt-0.5 mr-3 text-lg"></i>
+                        <i class="fas fa-shield-alt text-red-600 mt-1 mr-3 text-xl"></i>
                         <div>
                             <strong class="text-red-800 font-semibold block mb-1">⚠️ Content Blocked</strong>
-                            <p class="text-red-700">{{ $message }}</p>
-                            <p class="text-sm text-red-600 mt-2">
+                            <p class="text-red-700 text-sm">{{ $message }}</p>
+                            <p class="text-xs text-red-600 mt-2">
                                 <i class="fas fa-info-circle mr-1"></i>
                                 Please remove any inappropriate language before submitting.
                             </p>
@@ -207,360 +124,323 @@
                 </div>
             @enderror
 
-            <!-- Form Section -->
-            <div class="bg-white rounded-xl shadow p-6">
-                <form action="{{ route('announcements.store') }}" method="POST" enctype="multipart/form-data" id="announcement-form">
-                    @csrf
-                    
-                    <!-- Announcement Type Selection -->
-                    <div class="mb-8">
-                        <label class="form-label mb-4">
-                            Announcement Type <span class="text-red-500">*</span>
-                        </label>
-                        
-                        <!-- Official Option -->
-                        <div class="radio-option" id="official-option" onclick="selectType('official')">
-                            <input type="radio" 
-                                   id="type_official" 
-                                   name="announcement_type" 
-                                   value="official"
-                                   class="radio-input"
-                                   {{ old('announcement_type', 'unofficial') == 'official' ? 'checked' : '' }}
-                                   required>
-                            <div class="radio-content">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <div class="radio-title flex items-center">
-                                            <i class="fas fa-check-circle text-green-600 mr-2"></i>
-                                            Official Announcement
-                                        </div>
-                                        <div class="radio-description">
-                                            For important university announcements, policy changes, or official communications
-                                        </div>
-                                    </div>
-                                    <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                                        <i class="fas fa-shield-alt mr-1"></i> Verified
-                                    </span>
-                                </div>
-                                
-                                <div id="official-info" class="verification-info verification-official mt-3" 
-                                     style="{{ old('announcement_type', 'unofficial') == 'official' ? 'display: block;' : 'display: none;' }}">
-                                    <div class="flex items-start">
-                                        <i class="fas fa-info-circle text-blue-500 mr-2 mt-0.5"></i>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-900 mb-1">
-                                                @if(in_array($user?->role, ['admin', 'staff']))
-                                                    ✅ As {{ $user->role }}, your official announcement will be published immediately.
-                                                @else
-                                                    ⏳ Official announcements require verification from admin/staff.
-                                                    <br>
-                                                    <span class="text-sm text-gray-600">
-                                                        Your announcement will be reviewed before being published to all users.
-                                                    </span>
-                                                @endif
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Unofficial Option -->
-                        <div class="radio-option" id="unofficial-option" onclick="selectType('unofficial')">
-                            <input type="radio" 
-                                   id="type_unofficial" 
-                                   name="announcement_type" 
-                                   value="unofficial"
-                                   class="radio-input"
-                                   {{ old('announcement_type', 'unofficial') == 'unofficial' ? 'checked' : 'selected' }}
-                                   required>
-                            <div class="radio-content">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <div class="radio-title flex items-center">
-                                            <i class="fas fa-users text-blue-600 mr-2"></i>
-                                            Unofficial Announcement
-                                        </div>
-                                        <div class="radio-description">
-                                            For club activities, personal notices, informal updates, or community events
-                                        </div>
-                                    </div>
-                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                                        <i class="fas fa-user-friends mr-1"></i> Community
-                                    </span>
-                                </div>
-                                
-                                <div id="unofficial-info" class="verification-info verification-unofficial mt-3"
-                                     style="{{ old('announcement_type', 'unofficial') == 'unofficial' ? 'display: block;' : 'display: none;' }}">
-                                    <div class="flex items-start">
-                                        <i class="fas fa-bolt text-yellow-500 mr-2 mt-0.5"></i>
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-900 mb-1">
-                                                ⚡ Unofficial announcements are published immediately.
-                                            </p>
-                                            <p class="text-sm text-gray-600">
-                                                Your announcement will be visible to all users right after publishing.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        @error('announcement_type')
-                            <p class="form-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Title Field with Moderation -->
-                    <div class="mb-6">
-                        <label for="title" class="form-label">
-                            Announcement Title <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text" 
-                               id="title" 
-                               name="title" 
-                               value="{{ old('title') }}"
-                               class="form-input"
-                               placeholder="Enter a clear and descriptive title"
-                               required>
-                        <div id="title-moderation-message" class="mt-2 text-sm hidden moderation-message"></div>
-                        @error('title')
-                            <p class="form-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Content Field with Moderation -->
-                    <div class="mb-6">
-                        <label for="content" class="form-label">
-                            Announcement Content <span class="text-red-500">*</span>
-                        </label>
-                        <textarea id="content" 
-                                  name="content" 
-                                  rows="8"
-                                  class="form-input"
-                                  placeholder="Provide detailed information about your announcement..."
-                                  required>{{ old('content') }}</textarea>
-                        <div id="content-moderation-message" class="mt-2 text-sm hidden moderation-message"></div>
-                        <div class="flex justify-between mt-2">
-                            <p class="text-sm text-gray-500">
-                                <i class="fas fa-lightbulb mr-1"></i>
-                                Be clear and concise. Include all necessary details.
-                            </p>
-                            <p id="char-counter" class="text-sm text-gray-500">0 characters</p>
-                        </div>
-                        @error('content')
-                            <p class="form-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Category Field -->
-                    <div class="mb-6">
-                        <label for="category" class="form-label">
-                            Category <span class="text-red-500">*</span>
-                        </label>
-                        <select id="category" name="category" class="form-input" required>
-                            <option value="" disabled selected>Select a category</option>
-                            <option value="academic" {{ old('category') == 'academic' ? 'selected' : '' }}>Academic</option>
-                            <option value="events" {{ old('category') == 'events' ? 'selected' : '' }}>Events</option>
-                            <option value="general" {{ old('category') == 'general' ? 'selected' : '' }}>General</option>
-                            <option value="club" {{ old('category') == 'club' ? 'selected' : '' }}>Club</option>
-                        </select>
-                        @error('category')
-                            <p class="form-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Priority Field -->
-                    <div class="mb-6">
-                        <label for="priority" class="form-label">
-                            Priority Level
-                        </label>
-                        <select id="priority" name="priority" class="form-input">
-                            <option value="normal" {{ old('priority') == 'normal' ? 'selected' : '' }} selected>Normal</option>
-                            <option value="important" {{ old('priority') == 'important' ? 'selected' : '' }}>Important</option>
-                            <option value="urgent" {{ old('priority') == 'urgent' ? 'selected' : '' }}>Urgent</option>
-                        </select>
-                        @error('priority')
-                            <p class="form-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Image Field (Optional) -->
-                    <div class="mb-6">
-                        <label for="image" class="form-label">
-                            Cover Image (Optional)
-                        </label>
-                        
-                        <input type="file" 
-                               id="image" 
-                               name="image"
-                               class="hidden"
-                               accept=".jpg,.jpeg,.png,.gif,.webp">
-                        
-                        <div id="image-preview-container" class="hidden mb-4">
-                            <div class="relative rounded-lg overflow-hidden shadow-lg" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                <img id="image-preview" src="" alt="Image preview" class="w-full h-auto max-h-96 object-cover">
-                                <div class="absolute top-3 right-3 flex gap-2">
-                                    <button type="button" 
-                                            onclick="removeImage()" 
-                                            class="bg-red-500 hover:bg-red-600 text-white rounded-full p-2 transition-colors shadow-lg">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                                    <p class="text-white text-sm font-medium">
-                                        <i class="fas fa-image mr-2"></i>
-                                        <span id="image-filename">Image selected</span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="image-placeholder-container" 
-                             onclick="document.getElementById('image').click()" 
-                             class="mb-4 rounded-lg overflow-hidden shadow-lg cursor-pointer transition-transform hover:scale-105" 
-                             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                            <div class="w-full h-64 md:h-80 flex flex-col items-center justify-center text-center px-6 py-12">
-                                <div class="bg-white/20 rounded-full p-6 mb-4 backdrop-blur-sm">
-                                    <i class="fas fa-image text-white text-5xl"></i>
-                                </div>
-                                <h3 class="text-white text-xl font-bold mb-2">Add Cover Image</h3>
-                                <p class="text-white/90 text-sm mb-4">Upload an image that represents your announcement</p>
-                                <div class="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                                    <p class="text-white text-xs font-medium">Click to upload or drag & drop</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <p class="mt-2 text-sm text-gray-500">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Supported formats: JPG, JPEG, PNG, GIF, WEBP (Max: 5MB)
-                        </p>
-                        
-                        @error('image')
-                            <p class="form-error">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <!-- Expiry Date -->
-                    <div class="mb-6">
-                        <label for="expiry_date" class="form-label">
-                            Expiry Date (Optional)
-                        </label>
-                        <input type="date"
-                               id="expiry_date"
-                               name="expiry_date"
-                               value="{{ old('expiry_date') }}"
-                               min="{{ now()->format('Y-m-d') }}"
-                               class="form-input">
-                        @error('expiry_date')
-                            <p class="form-error">{{ $message }}</p>
-                        @enderror
-                        <p class="mt-2 text-sm text-gray-500">
-                            Visible through this day; removed from the main board the next day and shown as Expired on My Announcements.
-                        </p>
-                    </div>
-
-                    <!-- Additional Information -->
-                    <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h3 class="font-medium text-gray-900 mb-2">
-                            <i class="fas fa-info-circle text-blue-600 mr-2"></i>
-                            Important Information
-                        </h3>
-                        <ul class="text-sm text-gray-600 space-y-1">
-                            <li>• All announcements will be visible to the UTHM community</li>
-                            <li>• <strong class="text-green-600">✓ Content moderation is active</strong> - inappropriate content will be automatically blocked</li>
-                            <li>• Official announcements may require verification before publishing</li>
-                            <li>• Unofficial announcements are published immediately</li>
-                            <li>• Set an expiry date to automatically remove the post from the main board when it ends</li>
-                            <li>• Be respectful and follow community guidelines</li>
-                        </ul>
-                    </div>
-
-                    <!-- Form Actions -->
-                    <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-                        <a href="{{ route('announcements.index') }}" 
-                           class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors">
-                            Cancel
-                        </a>
-                        
-                        <button type="submit" 
-                                name="status" 
-                                value="draft"
-                                class="px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors">
-                            <i class="fas fa-save mr-2"></i>
-                            Save as Draft
-                        </button>
-                        
-                        <button type="submit" 
-                                name="status" 
-                                value="published"
-                                class="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
-                                id="publish-button">
-                            <i class="fas fa-paper-plane mr-2"></i>
-                            <span id="publish-text">Publish Announcement</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Type Comparison Table -->
-            <div class="mt-8 bg-white rounded-xl shadow p-6">
-                <h3 class="font-bold text-gray-900 text-lg mb-4">
-                    <i class="fas fa-balance-scale text-gray-600 mr-2"></i>
-                    Official vs Unofficial Announcements
-                </h3>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Feature</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Official Announcement</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unofficial Announcement</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr><td class="px-4 py-3 text-sm font-medium text-gray-900">Purpose</td>
-                                <td class="px-4 py-3 text-sm text-gray-600">University policy, official notices, important updates</td>
-                                <td class="px-4 py-3 text-sm text-gray-600">Club activities, personal notices, informal updates</td>
-                            </tr>
-                            <tr><td class="px-4 py-3 text-sm font-medium text-gray-900">Verification</td>
-                                <td class="px-4 py-3 text-sm text-gray-600">Requires admin/staff verification</td>
-                                <td class="px-4 py-3 text-sm text-gray-600">Published immediately</td>
-                            </tr>
-                            <tr><td class="px-4 py-3 text-sm font-medium text-gray-900">Content Moderation</td>
-                                <td class="px-4 py-3 text-sm text-gray-600" colspan="2">✓ Active for all announcements - inappropriate content blocked</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Editor Card Form (Left 2/3) -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="portal-card bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                        <div class="border-b border-gray-100 pb-4 mb-6">
+                            <h2 class="text-xl font-bold text-gray-900">Announcement Details</h2>
+                            <p class="text-gray-500 text-sm mt-1">Fill in the fields to compose and share your notice with UTHM.</p>
+                        </div>
+
+                        <form action="{{ route('announcements.store') }}" method="POST" enctype="multipart/form-data" id="announcement-form" class="space-y-6">
+                            @csrf
+                            
+                            <!-- Announcement Type Selection Cards -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-3">
+                                    Announcement Type <span class="text-red-500">*</span>
+                                </label>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Official Option -->
+                                    <div id="official-card" onclick="selectType('official')" class="relative border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-uthm-blue transition-all duration-200 flex flex-col justify-between">
+                                        <input type="radio" 
+                                               id="type_official" 
+                                               name="announcement_type" 
+                                               value="official"
+                                               class="sr-only"
+                                               {{ old('announcement_type', 'unofficial') == 'official' ? 'checked' : '' }}
+                                               required>
+                                        <div class="flex items-start mb-3">
+                                            <div class="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center shrink-0 shadow-inner">
+                                                <i class="fas fa-shield-alt text-lg"></i>
+                                            </div>
+                                            <div class="ml-4">
+                                                <h4 class="font-bold text-gray-900 text-sm">Official Announcement</h4>
+                                                <p class="text-xs text-gray-500 mt-1 leading-relaxed">For university policy changes, official notices, and administration procedures.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-4 right-4 w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center select-dot">
+                                            <div class="w-2 h-2 rounded-full bg-white hidden selection-inner"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Unofficial Option -->
+                                    <div id="unofficial-card" onclick="selectType('unofficial')" class="relative border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-uthm-blue transition-all duration-200 flex flex-col justify-between">
+                                        <input type="radio" 
+                                               id="type_unofficial" 
+                                               name="announcement_type" 
+                                               value="unofficial"
+                                               class="sr-only"
+                                               {{ old('announcement_type', 'unofficial') == 'unofficial' ? 'checked' : '' }}
+                                               required>
+                                        <div class="flex items-start mb-3">
+                                            <div class="w-10 h-10 rounded-full bg-blue-50 text-uthm-blue flex items-center justify-center shrink-0 shadow-inner">
+                                                <i class="fas fa-user-friends text-lg"></i>
+                                            </div>
+                                            <div class="ml-4">
+                                                <h4 class="font-bold text-gray-900 text-sm">Unofficial Announcement</h4>
+                                                <p class="text-xs text-gray-500 mt-1 leading-relaxed">For student club events, social initiatives, and department notices.</p>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-4 right-4 w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center select-dot">
+                                            <div class="w-2 h-2 rounded-full bg-white hidden selection-inner"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Official Info Banner -->
+                                <div id="official-info" class="mt-4 p-4 rounded-xl border bg-blue-50/50 border-blue-100 text-blue-800 transition-all duration-300">
+                                    <div class="flex items-start">
+                                        <i class="fas fa-info-circle text-blue-500 mt-0.5 mr-2.5"></i>
+                                        <div class="text-xs">
+                                            @if(in_array(Auth::user()->role ?? 'guest', ['admin', 'staff']))
+                                                <span class="font-semibold text-blue-900">Pre-Verified:</span> As a staff/admin, your announcement is automatically official and publishes immediately.
+                                            @else
+                                                <span class="font-semibold text-blue-900">Verification Queued:</span> This announcement will require verification from admin/staff before it appears on the official notice board.
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Unofficial Info Banner -->
+                                <div id="unofficial-info" class="mt-4 p-4 rounded-xl border bg-amber-50/50 border-amber-100 text-amber-800 transition-all duration-300">
+                                    <div class="flex items-start">
+                                        <i class="fas fa-bolt text-amber-500 mt-0.5 mr-2.5"></i>
+                                        <div class="text-xs">
+                                            <span class="font-semibold text-amber-900">Immediate Publishing:</span> Unofficial notices skip administrative checks and go live immediately upon submission.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Title Input -->
+                            <div>
+                                <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Announcement Title <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" 
+                                       id="title" 
+                                       name="title" 
+                                       value="{{ old('title') }}"
+                                       class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-uthm-blue/15 focus:border-uthm-blue transition-all shadow-sm"
+                                       placeholder="e.g. UTHM Campus Fest 2026 Registration Opens"
+                                       required>
+                                <div id="title-moderation-message" class="mt-2 text-xs hidden moderation-message"></div>
+                                @error('title')
+                                    <p class="text-red-500 text-xs mt-1"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Category and Priority Row -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="category" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Category <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="category" name="category" required class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-uthm-blue/15 focus:border-uthm-blue transition-all shadow-sm bg-white">
+                                        <option value="" disabled selected>Select Category</option>
+                                        <option value="academic" {{ old('category') == 'academic' ? 'selected' : '' }}>Academic</option>
+                                        <option value="events" {{ old('category') == 'events' ? 'selected' : '' }}>Events</option>
+                                        <option value="general" {{ old('category') == 'general' ? 'selected' : '' }}>General</option>
+                                        <option value="club" {{ old('category') == 'club' ? 'selected' : '' }}>Club</option>
+                                    </select>
+                                    @error('category')
+                                        <p class="text-red-500 text-xs mt-1"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="priority" class="block text-sm font-semibold text-gray-700 mb-2">
+                                        Priority Level
+                                    </label>
+                                    <select id="priority" name="priority" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-uthm-blue/15 focus:border-uthm-blue transition-all shadow-sm bg-white">
+                                        <option value="normal" {{ old('priority') == 'normal' ? 'selected' : '' }} selected>Normal</option>
+                                        <option value="important" {{ old('priority') == 'important' ? 'selected' : '' }}>Important</option>
+                                        <option value="urgent" {{ old('priority') == 'urgent' ? 'selected' : '' }}>Urgent</option>
+                                    </select>
+                                    @error('priority')
+                                        <p class="text-red-500 text-xs mt-1"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- Expiry Date -->
+                            <div>
+                                <label for="expiry_date" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Expiry Date <span class="text-gray-450 text-xs font-normal">(Optional)</span>
+                                </label>
+                                <input type="date"
+                                       id="expiry_date"
+                                       name="expiry_date"
+                                       value="{{ old('expiry_date') }}"
+                                       min="{{ now()->format('Y-m-d') }}"
+                                       class="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-uthm-blue/15 focus:border-uthm-blue transition-all shadow-sm">
+                                <p class="text-gray-400 text-[11px] mt-1.5"><i class="fas fa-info-circle mr-1"></i>This announcement will be automatically archived from the notice board after the chosen day.</p>
+                                @error('expiry_date')
+                                    <p class="text-red-500 text-xs mt-1"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Cover Image Selector -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Cover Image <span class="text-gray-450 text-xs font-normal">(Optional)</span>
+                                </label>
+                                
+                                <input type="file" 
+                                       id="image" 
+                                       name="image"
+                                       class="hidden"
+                                       accept=".jpg,.jpeg,.png,.gif,.webp">
+                                
+                                <!-- Selected preview container -->
+                                <div id="image-preview-container" class="hidden relative group rounded-xl overflow-hidden shadow-sm border border-gray-100 max-w-xl">
+                                    <img id="image-preview" src="" alt="Image Preview" class="w-full h-48 object-cover">
+                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button type="button" 
+                                                onclick="removeImage()" 
+                                                class="bg-red-650 hover:bg-red-700 text-white rounded-full px-4 py-2 text-xs font-semibold shadow-lg transition-transform hover:scale-105">
+                                            <i class="fas fa-trash mr-1.5"></i>Remove Image
+                                        </button>
+                                    </div>
+                                    <div class="absolute bottom-0 left-0 right-0 bg-black/60 px-4 py-2 text-white text-xs truncate" id="image-filename"></div>
+                                </div>
+
+                                <!-- Drag zone placeholder -->
+                                <div id="image-placeholder-container" 
+                                     onclick="document.getElementById('image').click()" 
+                                     class="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-uthm-blue hover:bg-uthm-blue-light/10 transition-all duration-200 group max-w-xl">
+                                    <div class="w-12 h-12 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center mx-auto mb-3 group-hover:bg-uthm-blue-light group-hover:text-uthm-blue transition-colors">
+                                        <i class="fas fa-cloud-upload-alt text-xl"></i>
+                                    </div>
+                                    <h5 class="text-gray-700 font-bold text-sm">Upload Cover Image</h5>
+                                    <p class="text-gray-400 text-xs mt-1">Drag and drop image here, or click to browse files</p>
+                                    <p class="text-gray-400 text-[10px] mt-2">JPG, PNG, GIF or WEBP up to 5MB</p>
+                                </div>
+                                @error('image')
+                                    <p class="text-red-500 text-xs mt-1"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Announcement Content Content -->
+                            <div>
+                                <label for="content" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Announcement Content <span class="text-red-500">*</span>
+                                </label>
+                                <textarea id="content" 
+                                          name="content" 
+                                          rows="8"
+                                          class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-uthm-blue/15 focus:border-uthm-blue transition-all shadow-sm resize-y min-h-[150px]"
+                                          placeholder="Detail the event schedule, requirements, guidelines or updates..."
+                                          required>{{ old('content') }}</textarea>
+                                <div id="content-moderation-message" class="mt-2 text-xs hidden moderation-message"></div>
+                                <div class="flex justify-between items-center mt-2 text-xs text-gray-400">
+                                    <span><i class="far fa-keyboard mr-1.5"></i>Draft clear, error-free instructions.</span>
+                                    <span id="char-counter">0 characters</span>
+                                </div>
+                                @error('content')
+                                    <p class="text-red-500 text-xs mt-1"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="flex flex-wrap gap-3 justify-end pt-4 border-t border-gray-100">
+                                <a href="{{ route('announcements.index') }}" 
+                                   class="px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                                    Cancel
+                                </a>
+                                <button type="submit" 
+                                        name="status" 
+                                        value="draft"
+                                        class="px-5 py-2.5 bg-gray-150 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-colors">
+                                    <i class="fas fa-save mr-1.5"></i>Save Draft
+                                </button>
+                                <button type="submit" 
+                                        name="status" 
+                                        value="published"
+                                        id="publish-button"
+                                        class="px-6 py-2.5 bg-uthm-blue hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow flex items-center">
+                                    <i class="fas fa-paper-plane mr-1.5" id="publish-icon"></i>
+                                    <i class="fas fa-spinner fa-spin mr-1.5 hidden" id="publish-spinner"></i>
+                                    <span id="publish-text">Publish Announcement</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
+
+                <!-- Helper & Guide Side panel (Right 1/3) -->
+                <div class="space-y-6">
+                    
+                    <!-- Writing Advice -->
+                    <div class="portal-card bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                        <div class="flex items-center space-x-2.5 mb-4 border-b border-gray-50 pb-3">
+                            <div class="text-uthm-blue"><i class="fas fa-lightbulb text-lg"></i></div>
+                            <h3 class="font-bold text-gray-900 text-sm">Writing Guidelines</h3>
+                        </div>
+                        <div class="space-y-4 text-xs leading-relaxed text-gray-600">
+                            <p>Follow these best practices to ensure your announcement is professional, clear, and highly engaging:</p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2 shrink-0"><i class="fas fa-check-circle"></i></span>
+                                    <span><strong>Start Strong:</strong> Summarize the core update or request in the first paragraph. Users scan listings quickly.</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2 shrink-0"><i class="fas fa-check-circle"></i></span>
+                                    <span><strong>Choose Categories Wisely:</strong> Align categories with contents. Academic procedures go to <em>Academic</em>, club meetings to <em>Club</em>.</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <span class="text-green-500 mr-2 shrink-0"><i class="fas fa-check-circle"></i></span>
+                                    <span><strong>Call to Action:</strong> If steps are required (such as registrations or submissions), detail links, dates, and contact emails clearly.</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Safety checks dynamic badge -->
+                    <div class="portal-card bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                        <div class="flex items-center space-x-2.5 mb-4 border-b border-gray-50 pb-3">
+                            <div class="text-green-600"><i class="fas fa-shield-alt text-lg"></i></div>
+                            <h3 class="font-bold text-gray-900 text-sm">AI Content Safety</h3>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-gray-500">Checker Engine:</span>
+                                <span class="px-2.5 py-0.5 rounded-full bg-green-50 text-green-700 font-semibold text-[10px]"><i class="fas fa-circle text-[7px] mr-1.5 animate-pulse"></i>Active</span>
+                            </div>
+                            <p class="text-gray-550 text-[11px] leading-relaxed">
+                                To maintain a respectful campus environment, a real-time safety filter validates your text for spam or inappropriate wording before submission.
+                            </p>
+                            <div class="pt-2.5 border-t border-gray-50 flex items-center justify-between text-xs">
+                                <span class="text-gray-400">Security Status:</span>
+                                <span id="moderation-summary-badge" class="font-semibold text-gray-500">Idle</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
             </div>
         </div>
+
+        @include('layouts.partials.portal-content-close')
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 py-6 mt-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center text-gray-500 text-sm">
-                <p>UTHM Digital Bulletin Board &copy; {{ date('Y') }}</p>
-                <p class="mt-1">Content moderation is active. Please keep your announcements respectful.</p>
-            </div>
-        </div>
-    </footer>
+    @include('layouts.partials.portal-scripts')
 
-    <!-- Moderation JavaScript -->
+    <!-- Moderation & Image Preview Scripts -->
     <script>
         let moderationTimeouts = {};
 
         document.addEventListener('DOMContentLoaded', function() {
             const titleInput = document.getElementById('title');
             const contentInput = document.getElementById('content');
-            const publishButton = document.getElementById('publish-button');
-            const submitBtns = document.querySelectorAll('button[type="submit"]');
+            const form = document.getElementById('announcement-form');
             
-            // Initialize type selection
+            // Initialize selected card states
             initializeTypeSelection();
             
             // Character counter for content
@@ -579,7 +459,7 @@
                 contentInput.dispatchEvent(new Event('input'));
             }
             
-            // Real-time moderation for title
+            // Real-time checks
             if (titleInput) {
                 titleInput.addEventListener('input', function() {
                     clearTimeout(moderationTimeouts.title);
@@ -589,7 +469,6 @@
                 });
             }
             
-            // Real-time moderation for content
             if (contentInput) {
                 contentInput.addEventListener('input', function() {
                     clearTimeout(moderationTimeouts.content);
@@ -599,36 +478,43 @@
                 });
             }
             
-            // Form validation
-            const form = document.getElementById('announcement-form');
-            form.addEventListener('submit', function(e) {
-                const titleInput = document.getElementById('title');
-                const contentInput = document.getElementById('content');
-                let isValid = true;
-                
-                if (!titleInput.value.trim()) {
-                    titleInput.classList.add('border-red-500');
-                    isValid = false;
-                }
-                
-                if (!contentInput.value.trim()) {
-                    contentInput.classList.add('border-red-500');
-                    isValid = false;
-                }
-                
-                const announcementType = document.querySelector('input[name="announcement_type"]:checked');
-                if (!announcementType) {
-                    alert('Please select an announcement type (Official or Unofficial).');
-                    isValid = false;
-                }
-                
-                if (!isValid) {
-                    e.preventDefault();
-                    alert('Please fill in all required fields marked with *.');
-                }
-            });
+            // Validate and show submit spinner
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    let isValid = true;
+                    
+                    if (!titleInput.value.trim()) {
+                        titleInput.classList.add('border-red-500');
+                        isValid = false;
+                    }
+                    
+                    if (!contentInput.value.trim()) {
+                        contentInput.classList.add('border-red-500');
+                        isValid = false;
+                    }
+                    
+                    const typeRadio = document.querySelector('input[name="announcement_type"]:checked');
+                    if (!typeRadio) {
+                        alert('Please select an announcement type (Official or Unofficial).');
+                        isValid = false;
+                    }
+                    
+                    if (!isValid) {
+                        e.preventDefault();
+                    } else {
+                        // Show publish loading spinner
+                        const spinner = document.getElementById('publish-spinner');
+                        const icon = document.getElementById('publish-icon');
+                        if (spinner && icon) {
+                            spinner.classList.remove('hidden');
+                            icon.classList.add('hidden');
+                        }
+                        disableSubmitButtons();
+                    }
+                });
+            }
             
-            // Image upload handler
+            // Image upload triggers
             const imageInput = document.getElementById('image');
             const imagePlaceholder = document.getElementById('image-placeholder-container');
             
@@ -638,17 +524,17 @@
                 if (imagePlaceholder) {
                     imagePlaceholder.addEventListener('dragover', function(e) {
                         e.preventDefault();
-                        this.classList.add('opacity-75');
+                        this.classList.add('opacity-75', 'border-uthm-blue');
                     });
                     
                     imagePlaceholder.addEventListener('dragleave', function(e) {
                         e.preventDefault();
-                        this.classList.remove('opacity-75');
+                        this.classList.remove('opacity-75', 'border-uthm-blue');
                     });
                     
                     imagePlaceholder.addEventListener('drop', function(e) {
                         e.preventDefault();
-                        this.classList.remove('opacity-75');
+                        this.classList.remove('opacity-75', 'border-uthm-blue');
                         const files = e.dataTransfer.files;
                         if (files.length > 0) {
                             imageInput.files = files;
@@ -662,6 +548,7 @@
         async function checkContent(text, field) {
             if (!text || text.length < 5) {
                 removeModerationWarning(field);
+                updateSecurityBadge();
                 enableSubmitButtons();
                 return;
             }
@@ -687,10 +574,12 @@
                 }
                 
                 updateFieldStyle(field, result.flagged);
+                updateSecurityBadge();
                 
             } catch (error) {
                 console.error('Moderation check failed:', error);
                 hideCheckingIndicator(field);
+                updateSecurityBadge();
                 enableSubmitButtons();
             }
         }
@@ -698,15 +587,21 @@
         function showCheckingIndicator(field) {
             const messageDiv = document.getElementById(`${field}-moderation-message`);
             if (messageDiv) {
-                messageDiv.className = 'mt-2 text-sm text-blue-600 flex items-center moderation-message';
-                messageDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Checking content...';
+                messageDiv.className = 'mt-2 text-xs text-blue-650 flex items-center moderation-message';
+                messageDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i> Scanning field...';
                 messageDiv.classList.remove('hidden');
+            }
+            
+            const badge = document.getElementById('moderation-summary-badge');
+            if (badge) {
+                badge.className = "font-semibold text-blue-600";
+                badge.innerHTML = "<i class='fas fa-spinner fa-spin mr-1.5'></i>Scanning...";
             }
         }
         
         function hideCheckingIndicator(field) {
             const messageDiv = document.getElementById(`${field}-moderation-message`);
-            if (messageDiv && messageDiv.innerHTML.includes('Checking')) {
+            if (messageDiv && messageDiv.innerHTML.includes('Scanning')) {
                 messageDiv.classList.add('hidden');
             }
         }
@@ -715,13 +610,13 @@
             const messageDiv = document.getElementById(`${field}-moderation-message`);
             if (messageDiv) {
                 const violationTypes = violations.map(v => v.classifier).join(', ');
-                messageDiv.className = 'mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 moderation-message';
+                messageDiv.className = 'mt-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-750 moderation-message';
                 messageDiv.innerHTML = `
                     <div class="flex items-start">
-                        <i class="fas fa-exclamation-triangle mt-0.5 mr-2"></i>
+                        <i class="fas fa-exclamation-triangle mt-0.5 mr-2 text-red-500"></i>
                         <div>
-                            <strong class="font-semibold">Inappropriate ${field} detected:</strong>
-                            <span class="ml-1">Please avoid ${violationTypes} language.</span>
+                            <strong class="font-semibold text-red-800">Flagged content:</strong>
+                            <span class="ml-1">Please avoid ${violationTypes} keywords.</span>
                         </div>
                     </div>
                 `;
@@ -751,6 +646,34 @@
             }
         }
         
+        function updateSecurityBadge() {
+            const titleWarning = document.getElementById('title-moderation-message');
+            const contentWarning = document.getElementById('content-moderation-message');
+            const badge = document.getElementById('moderation-summary-badge');
+            
+            const titleFlagged = titleWarning && !titleWarning.classList.contains('hidden') && titleWarning.innerHTML.includes('Flagged');
+            const contentFlagged = contentWarning && !contentWarning.classList.contains('hidden') && contentWarning.innerHTML.includes('Flagged');
+            
+            const titleScanning = titleWarning && !titleWarning.classList.contains('hidden') && titleWarning.innerHTML.includes('Scanning');
+            const contentScanning = contentWarning && !contentWarning.classList.contains('hidden') && contentWarning.innerHTML.includes('Scanning');
+            
+            if (badge) {
+                if (titleFlagged || contentFlagged) {
+                    badge.className = "font-semibold text-red-600";
+                    badge.innerHTML = "<i class='fas fa-exclamation-triangle mr-1'></i>Flagged";
+                } else if (titleScanning || contentScanning) {
+                    badge.className = "font-semibold text-blue-600";
+                    badge.innerHTML = "<i class='fas fa-spinner fa-spin mr-1'></i>Scanning...";
+                } else if (document.getElementById('title').value.length > 5 || document.getElementById('content').value.length > 5) {
+                    badge.className = "font-semibold text-green-600";
+                    badge.innerHTML = "<i class='fas fa-check-circle mr-1'></i>Safe";
+                } else {
+                    badge.className = "font-semibold text-gray-500";
+                    badge.innerHTML = "Idle";
+                }
+            }
+        }
+
         function disableSubmitButtons() {
             const submitButtons = document.querySelectorAll('button[type="submit"]');
             submitButtons.forEach(btn => {
@@ -763,8 +686,8 @@
             const titleWarning = document.getElementById('title-moderation-message');
             const contentWarning = document.getElementById('content-moderation-message');
             
-            const titleBlocked = titleWarning && !titleWarning.classList.contains('hidden') && titleWarning.innerHTML.includes('Inappropriate');
-            const contentBlocked = contentWarning && !contentWarning.classList.contains('hidden') && contentWarning.innerHTML.includes('Inappropriate');
+            const titleBlocked = titleWarning && !titleWarning.classList.contains('hidden') && titleWarning.innerHTML.includes('Flagged');
+            const contentBlocked = contentWarning && !contentWarning.classList.contains('hidden') && contentWarning.innerHTML.includes('Flagged');
             
             if (!titleBlocked && !contentBlocked) {
                 const submitButtons = document.querySelectorAll('button[type="submit"]');
@@ -775,7 +698,6 @@
             }
         }
         
-        // Image upload functions
         function handleImageUpload(file) {
             if (!file) return;
             
@@ -796,7 +718,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('image-preview').src = e.target.result;
-                document.getElementById('image-filename').textContent = file.name;
+                document.getElementById('image-filename').innerHTML = `<i class='fas fa-image mr-1.5'></i>${file.name}`;
                 document.getElementById('image-preview-container').classList.remove('hidden');
                 document.getElementById('image-placeholder-container').classList.add('hidden');
             };
@@ -807,6 +729,7 @@
             document.getElementById('image').value = '';
             document.getElementById('image-preview-container').classList.add('hidden');
             document.getElementById('image-placeholder-container').classList.remove('hidden');
+            document.getElementById('image-preview').src = '';
         };
         
         function initializeTypeSelection() {
@@ -815,15 +738,36 @@
         }
         
         window.selectType = function(type) {
-            document.getElementById(`type_${type}`).checked = true;
-            document.getElementById('official-option').classList.remove('selected');
-            document.getElementById('unofficial-option').classList.remove('selected');
-            document.getElementById(`${type}-option`).classList.add('selected');
+            const radio = document.getElementById(`type_${type}`);
+            if (radio) radio.checked = true;
+
+            const officialCard = document.getElementById('official-card');
+            const unofficialCard = document.getElementById('unofficial-card');
+            
+            if (type === 'official') {
+                officialCard.className = "relative border-2 border-green-500 bg-green-50/15 rounded-xl p-5 cursor-pointer transition-all duration-200 flex flex-col justify-between";
+                unofficialCard.className = "relative border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-uthm-blue transition-all duration-200 flex flex-col justify-between";
+                
+                officialCard.querySelector('.select-dot').className = "absolute top-4 right-4 w-4 h-4 rounded-full border-2 border-green-500 flex items-center justify-center select-dot bg-green-500";
+                officialCard.querySelector('.selection-inner').classList.remove('hidden');
+                
+                unofficialCard.querySelector('.select-dot').className = "absolute top-4 right-4 w-4 h-4 rounded-full border-2 border-gray-300 flex items-center justify-center select-dot bg-transparent";
+                unofficialCard.querySelector('.selection-inner').classList.add('hidden');
+            } else {
+                unofficialCard.className = "relative border-2 border-uthm-blue bg-blue-50/10 rounded-xl p-5 cursor-pointer transition-all duration-200 flex flex-col justify-between";
+                officialCard.className = "relative border-2 border-gray-200 rounded-xl p-5 cursor-pointer hover:border-uthm-blue transition-all duration-200 flex flex-col justify-between";
+                
+                unofficialCard.querySelector('.select-dot').className = "absolute top-4 right-4 w-4 h-4 rounded-full border-2 border-uthm-blue flex items-center justify-center select-dot bg-uthm-blue";
+                unofficialCard.querySelector('.selection-inner').classList.remove('hidden');
+                
+                officialCard.querySelector('.select-dot').className = "absolute top-4 right-4 w-4 h-4 rounded-full border-2 border-gray-300 flex items-center justify-center select-dot bg-transparent";
+                officialCard.querySelector('.selection-inner').classList.add('hidden');
+            }
             
             document.getElementById('official-info').style.display = type === 'official' ? 'block' : 'none';
             document.getElementById('unofficial-info').style.display = type === 'unofficial' ? 'block' : 'none';
             
-            const userRole = "{{ $user?->role ?? 'guest' }}";
+            const userRole = "{{ Auth::user()->role ?? 'guest' }}";
             const isAdminOrStaff = ['admin', 'staff'].includes(userRole);
             const publishText = document.getElementById('publish-text');
             
@@ -833,12 +777,6 @@
                 publishText.textContent = 'Publish Announcement';
             }
         };
-        
-        document.querySelectorAll('.radio-input').forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.checked) selectType(this.value);
-            });
-        });
     </script>
 </body>
 </html>

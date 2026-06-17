@@ -302,7 +302,7 @@
                                     <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                         <button type="button" 
                                                 onclick="removeImage()" 
-                                                class="bg-red-650 hover:bg-red-700 text-white rounded-full px-4 py-2 text-xs font-semibold shadow-lg transition-transform hover:scale-105">
+                                                class="bg-red-600 hover:bg-red-700 text-white rounded-full px-4 py-2 text-xs font-semibold shadow-lg transition-transform hover:scale-105">
                                             <i class="fas fa-trash mr-1.5"></i>Remove Image
                                         </button>
                                     </div>
@@ -587,7 +587,7 @@
         function showCheckingIndicator(field) {
             const messageDiv = document.getElementById(`${field}-moderation-message`);
             if (messageDiv) {
-                messageDiv.className = 'mt-2 text-xs text-blue-650 flex items-center moderation-message';
+                messageDiv.className = 'mt-2 text-xs text-blue-600 flex items-center moderation-message';
                 messageDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i> Scanning field...';
                 messageDiv.classList.remove('hidden');
             }
@@ -610,7 +610,7 @@
             const messageDiv = document.getElementById(`${field}-moderation-message`);
             if (messageDiv) {
                 const violationTypes = violations.map(v => v.classifier).join(', ');
-                messageDiv.className = 'mt-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-750 moderation-message';
+                messageDiv.className = 'mt-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 moderation-message';
                 messageDiv.innerHTML = `
                     <div class="flex items-start">
                         <i class="fas fa-exclamation-triangle mt-0.5 mr-2 text-red-500"></i>

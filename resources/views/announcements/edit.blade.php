@@ -386,7 +386,11 @@
                                     </div>
                                     <h5 class="text-gray-700 font-bold text-sm">Replace Cover Image</h5>
                                     <p class="text-gray-400 text-xs mt-1">Drag and drop image here, or click to browse files</p>
-                                    <p class="text-gray-400 text-[10px] mt-2">JPG, PNG, GIF or WEBP up to 5MB</p>
+                                    <p class="text-gray-400 text-[10px] mt-2">JPG, PNG, GIF or WEBP up to 2MB</p>
+                                </div>
+                                <div id="image-error-msg" class="hidden mt-2 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
+                                    <i class="fas fa-exclamation-triangle mr-1.5 text-red-500"></i>
+                                    <span id="image-error-text"></span>
                                 </div>
                                 @error('image')
                                     <p class="text-red-500 text-xs mt-1"><i class="fas fa-exclamation-circle mr-1"></i>{{ $message }}</p>
@@ -932,24 +936,43 @@
             }
         };
 
+        function showImageError(msg) {
+            const errDiv = document.getElementById('image-error-msg');
+            const errText = document.getElementById('image-error-text');
+            if (errDiv && errText) {
+                errText.textContent = msg;
+                errDiv.classList.remove('hidden');
+            }
+            disableSubmitButton();
+        }
+
+        function clearImageError() {
+            const errDiv = document.getElementById('image-error-msg');
+            if (errDiv) errDiv.classList.add('hidden');
+            enableSubmitButton();
+        }
+
         // Image upload handlers
         function handleImageUpload(file) {
             if (!file) return;
-            
-            const maxSize = 5 * 1024 * 1024;
+
+            // 2 MB — safe limit for shared Nginx hosting (client_max_body_size default)
+            const maxSize = 2 * 1024 * 1024;
             if (file.size > maxSize) {
-                alert('Image size exceeds 5MB limit.');
                 document.getElementById('image').value = '';
+                showImageError(`Image is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Please choose an image smaller than 2 MB.`);
                 return;
             }
-            
+
             const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
             if (!validTypes.includes(file.type)) {
-                alert('Invalid image format. Use JPG, PNG, GIF, or WEBP.');
                 document.getElementById('image').value = '';
+                showImageError('Invalid image format. Please use JPG, PNG, GIF, or WEBP.');
                 return;
             }
-            
+
+            clearImageError();
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('image-preview').src = e.target.result;

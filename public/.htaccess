@@ -23,3 +23,29 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# -------------------------------------------------------
+# PHP Upload Limit Overrides (fixes HTTP 413 on hosting)
+# -------------------------------------------------------
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size       12M
+    php_value memory_limit        256M
+    php_value max_execution_time  120
+</IfModule>
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size       12M
+    php_value memory_limit        256M
+    php_value max_execution_time  120
+</IfModule>
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size       12M
+    php_value memory_limit        256M
+    php_value max_execution_time  120
+</IfModule>
+
+# Web-server level body size limit (Apache 2.4+)
+# 12582912 bytes = 12 MB
+LimitRequestBody 12582912

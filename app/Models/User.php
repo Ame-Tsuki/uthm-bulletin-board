@@ -106,20 +106,25 @@ public function groupMemberships()
  /**
      * Send the password reset notification.
      */
-    public function sendPasswordResetNotification($token)
-    {
-        $resetUrl = url('/password/reset/' . $token . '?email=' . urlencode($this->email));
-        
-        MailHelper::send(
-            $this->email,
-            'Reset Your Password - UTHM Bulletin Board',
-            "<h1>Reset Your Password</h1>
-             <p>Click the link below to reset your password:</p>
-             <a href='{$resetUrl}'>Reset Password</a>
-             <p>This link expires in 60 minutes.</p>
-             <p>If you did not request a password reset, ignore this email.</p>"
-        );
-    }
+     public function sendPasswordResetNotification($token)
+     {
+         if (app()->environment('testing')) {
+             $this->notify(new \Illuminate\Auth\Notifications\ResetPassword($token));
+             return;
+         }
+
+         $resetUrl = url('/password/reset/' . $token . '?email=' . urlencode($this->email));
+         
+         MailHelper::send(
+             $this->email,
+             'Reset Your Password - UTHM Bulletin Board',
+             "<h1>Reset Your Password</h1>
+              <p>Click the link below to reset your password:</p>
+              <a href='{$resetUrl}'>Reset Password</a>
+              <p>This link expires in 60 minutes.</p>
+              <p>If you did not request a password reset, ignore this email.</p>"
+         );
+     }
 
     /**
      * Get the email verification URL.

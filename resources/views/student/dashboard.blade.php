@@ -209,8 +209,14 @@
                                         <div>
                                             <div class="flex items-center gap-2 mb-2 flex-wrap">
                                                 <h4 class="font-semibold text-gray-900 text-lg">{{ $announcement->title }}</h4>
-                                                @if($announcement->priority)
-                                                    <span class="px-2 py-0.5 text-xs font-semibold {{ $priorityColor }} rounded-full">{{ ucfirst($announcement->priority) }}</span>
+                                                @if($announcement->priority && $announcement->priority !== 'normal')
+                                                    <span class="px-2 py-0.5 text-xs font-semibold {{ $priorityColor }} rounded-full">
+                                                        @if($announcement->priority === 'urgent')
+                                                            <i class="fas fa-exclamation-circle mr-1 animate-pulse"></i>Urgent
+                                                        @else
+                                                            <i class="fas fa-star mr-1"></i>Important
+                                                        @endif
+                                                    </span>
                                                 @endif
                                             </div>
                                             <p class="text-gray-600 text-sm mb-3 leading-relaxed">{{ Str::limit(strip_tags($announcement->content), 150) }}</p>

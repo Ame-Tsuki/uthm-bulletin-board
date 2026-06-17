@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('phone')->nullable();
-            $table->enum('role', ['student', 'staff', 'admin', 'club_admin'])->default('student');
+            $table->enum('role', ['student', 'staff', 'admin'])->default('student');
             $table->string('faculty')->nullable();
             $table->string('profile_picture')->nullable();
             $table->boolean('is_verified')->default(false);

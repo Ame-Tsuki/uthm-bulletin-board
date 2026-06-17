@@ -20,12 +20,16 @@ class RegistrationTest extends TestCase
     {
         $response = $this->post('/register', [
             'name' => 'Test User',
-            'email' => 'test@example.com',
+            'email' => 'testuser@student.uthm.edu.my',
+            'uthm_id' => 'ST12345',
+            'role' => 'student',
+            'faculty' => 'FKMP',
+            'terms' => '1',
             'password' => 'password',
             'password_confirmation' => 'password',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('verification.notice', absolute: false));
     }
 }

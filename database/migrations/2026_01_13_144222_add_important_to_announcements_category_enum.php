@@ -13,7 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         // Modify the category enum to include 'important'
-        DB::statement("ALTER TABLE `announcements` MODIFY COLUMN `category` ENUM('academic', 'events', 'general', 'urgent', 'important') NOT NULL");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE `announcements` MODIFY COLUMN `category` ENUM('academic', 'events', 'general', 'urgent', 'important') NOT NULL");
+        }
     }
 
     /**
@@ -21,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Remove 'important' from the enum and convert existing 'important' values to 'general'
-        DB::statement("UPDATE `announcements` SET `category` = 'general' WHERE `category` = 'important'");
-        DB::statement("ALTER TABLE `announcements` MODIFY COLUMN `category` ENUM('academic', 'events', 'general', 'urgent') NOT NULL");
+        if (DB::getDriverName() === 'mysql') {
+            // Remove 'important' from the enum and convert existing 'important' values to 'general'
+            DB::statement("UPDATE `announcements` SET `category` = 'general' WHERE `category` = 'important'");
+            DB::statement("ALTER TABLE `announcements` MODIFY COLUMN `category` ENUM('academic', 'events', 'general', 'urgent') NOT NULL");
+        }
     }
 };

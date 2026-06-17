@@ -300,10 +300,9 @@ class Announcement extends Model
     public function getCategoryBadgeClass(): string
     {
         return match($this->category) {
-            'urgent' => 'bg-red-100 text-red-800',
-            'important' => 'bg-yellow-100 text-yellow-800',
             'academic' => 'bg-blue-100 text-blue-800',
             'events' => 'bg-purple-100 text-purple-800',
+            'club' => 'bg-green-100 text-green-800',
             default => 'bg-gray-100 text-gray-800',
         };
     }

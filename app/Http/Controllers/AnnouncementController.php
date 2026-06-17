@@ -47,6 +47,8 @@ class AnnouncementController extends Controller
         // Check if is_official column exists
         $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
         
+        $highPriorityAnnouncements = collect();
+        
         if ($hasOfficialColumn) {
             $query = Announcement::with('author');
 
@@ -62,13 +64,20 @@ class AnnouncementController extends Controller
             }
             
             $announcements = $query->latest()->paginate(10);
+            
+            // Get active high priority announcements for the Notice Board block
+            $hpQuery = Announcement::with('author')->visibleOnBoard()->whereIn('priority', ['urgent', 'important']);
+            if (Schema::hasColumn('announcements', 'is_banned')) {
+                $hpQuery->notBanned();
+            }
+            $highPriorityAnnouncements = $hpQuery->latest()->get();
         } else {
             // Show all announcements if column doesn't exist
             $announcements = Announcement::with('author')->latest()->paginate(10);
         }
         
         // Return view with data
-        return view('announcements.index', compact('announcements', 'user', 'hasOfficialColumn'));
+        return view('announcements.index', compact('announcements', 'user', 'hasOfficialColumn', 'highPriorityAnnouncements'));
     }
 
     /**
@@ -97,7 +106,7 @@ public function store(Request $request): RedirectResponse
         'title' => 'required|string|max:255',
         'content' => 'required|string',
         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-        'category' => 'required|in:urgent,academic,events,general,important',
+        'category' => 'required|in:academic,events,general,club',
         'priority' => 'nullable|in:urgent,important,normal',
         'department' => 'nullable|string|max:100',
         'publish_date' => 'nullable|date',
@@ -459,7 +468,7 @@ public function update(Request $request, Announcement $announcement): RedirectRe
         'title' => 'required|string|max:255',
         'content' => 'required|string',
         'image' => $request->hasFile('image') ? 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120' : 'nullable',
-        'category' => 'required|in:urgent,academic,events,general,important',
+        'category' => 'required|in:academic,events,general,club',
         'priority' => 'nullable|in:urgent,important,normal',
         'department' => 'nullable|string|max:100',
         'publish_date' => 'nullable|date',
@@ -1033,9 +1042,9 @@ public function update(Request $request, Announcement $announcement): RedirectRe
             abort(403, 'Unauthorized action.');
         }
         
-        // Only staff and club_admin can feature their own announcements
-        if ($user->role !== 'admin' && !in_array($user->role, ['staff', 'club_admin'])) {
-            abort(403, 'Only staff and club admins can feature their announcements.');
+        // Only staff can feature their own announcements
+        if ($user->role !== 'admin' && $user->role !== 'staff') {
+            abort(403, 'Only staff can feature their announcements.');
         }
         
         if (!Schema::hasColumn('announcements', 'is_featured')) {

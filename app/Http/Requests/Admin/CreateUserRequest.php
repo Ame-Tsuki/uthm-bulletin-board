@@ -25,7 +25,7 @@ class CreateUserRequest extends FormRequest
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|unique:users,email',
             'phone' => 'nullable|string|max:20',
-            'role' => ['required', Rule::in(['student', 'staff', 'admin', 'club_admin'])],
+            'role' => ['required', Rule::in(['student', 'staff', 'admin'])],
             'faculty' => 'nullable|string|max:255',
             'password' => 'required|string|min:8',
             'is_verified' => 'boolean',

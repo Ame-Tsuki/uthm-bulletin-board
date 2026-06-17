@@ -11,9 +11,6 @@
                 @case('staff')
                     @include('staff.calendar')
                     @break
-                @case('club_admin')
-                    @include('club.calendar')
-                    @break
                 @case('admin')
                     @include('admin.calendar')
                     @break

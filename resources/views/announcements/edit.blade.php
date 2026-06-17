@@ -271,11 +271,10 @@
                                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('category') border-red-500 @enderror"
                                         required>
                                     <option value="">Select Category</option>
-                                    <option value="urgent" {{ old('category', $announcement->category) == 'urgent' ? 'selected' : '' }}>Urgent</option>
                                     <option value="academic" {{ old('category', $announcement->category) == 'academic' ? 'selected' : '' }}>Academic</option>
                                     <option value="events" {{ old('category', $announcement->category) == 'events' ? 'selected' : '' }}>Events</option>
                                     <option value="general" {{ old('category', $announcement->category) == 'general' ? 'selected' : '' }}>General</option>
-                                    <option value="important" {{ old('category', $announcement->category) == 'important' ? 'selected' : '' }}>Important</option>
+                                    <option value="club" {{ old('category', $announcement->category) == 'club' ? 'selected' : '' }}>Club</option>
                                 </select>
                                 @error('category')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

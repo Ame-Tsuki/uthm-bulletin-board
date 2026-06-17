@@ -280,7 +280,7 @@
                                                             <i class="fas fa-edit mr-1"></i> Edit
                                                         </a>
                                                         @endif
-                                                        @if($announcement->status === 'published' && in_array(auth()->user()->role, ['staff', 'club_admin']))
+                                                        @if($announcement->status === 'published' && auth()->user()->role === 'staff')
                                                             <form action="{{ route('announcements.toggle-featured', $announcement) }}" 
                                                                   method="POST" 
                                                                   class="inline">

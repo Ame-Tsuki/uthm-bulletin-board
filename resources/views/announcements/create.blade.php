@@ -364,8 +364,7 @@
                             <option value="academic" {{ old('category') == 'academic' ? 'selected' : '' }}>Academic</option>
                             <option value="events" {{ old('category') == 'events' ? 'selected' : '' }}>Events</option>
                             <option value="general" {{ old('category') == 'general' ? 'selected' : '' }}>General</option>
-                            <option value="important" {{ old('category') == 'important' ? 'selected' : '' }}>Important</option>
-                            <option value="urgent" {{ old('category') == 'urgent' ? 'selected' : '' }}>Urgent</option>
+                            <option value="club" {{ old('category') == 'club' ? 'selected' : '' }}>Club</option>
                         </select>
                         @error('category')
                             <p class="form-error">{{ $message }}</p>

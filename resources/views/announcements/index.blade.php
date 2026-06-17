@@ -212,50 +212,112 @@
                 </div>
                 @endauth
 
+                <!-- High-Priority Notice Board -->
+                @if(isset($highPriorityAnnouncements) && $highPriorityAnnouncements->count() > 0)
+                <div class="mb-3 pinned-notice-board rounded-xl p-5 shadow-sm border">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="bg-red-500 text-white p-2 rounded-lg animate-pulse">
+                            <i class="fas fa-bullhorn text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-900 text-lg">📌 High-Priority Notice Board</h3>
+                            <p class="text-gray-600 text-sm">Please pay immediate attention to these urgent and important updates.</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        @foreach($highPriorityAnnouncements as $hpAnnouncement)
+                            <div class="bg-white/80 dark:bg-slate-800/80 rounded-lg p-4 border border-red-100 dark:border-red-900/30 hover:shadow-md transition-shadow relative overflow-hidden flex flex-col justify-between">
+                                <div class="absolute top-0 right-0 w-24 h-24 bg-red-500/5 dark:bg-red-500/10 rounded-full -mr-8 -mt-8 flex items-center justify-center">
+                                    @if($hpAnnouncement->priority === 'urgent')
+                                        <i class="fas fa-exclamation-circle text-red-500/20 text-3xl animate-pulse"></i>
+                                    @else
+                                        <i class="fas fa-star text-amber-500/20 text-3xl animate-spin-slow"></i>
+                                    @endif
+                                </div>
+                                <div>
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        @if($hpAnnouncement->priority === 'urgent')
+                                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">Urgent</span>
+                                        @else
+                                            <span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">Important</span>
+                                        @endif
+                                        <span class="text-xs text-gray-500">{{ $hpAnnouncement->created_at->diffForHumans() }}</span>
+                                    </div>
+                                    <h4 class="font-bold text-gray-900 text-md mb-1 line-clamp-1">{{ $hpAnnouncement->title }}</h4>
+                                    <p class="text-gray-600 text-sm line-clamp-2 mb-3">{{ Str::limit($hpAnnouncement->content, 120) }}</p>
+                                </div>
+                                <div class="flex items-center justify-between border-t border-gray-100 dark:border-slate-700/50 pt-2 mt-auto">
+                                    <span class="text-xs text-gray-500">By {{ $hpAnnouncement->author->name ?? 'Anonymous' }}</span>
+                                    <a href="{{ route('announcements.show', $hpAnnouncement) }}" class="text-xs font-semibold text-uthm-blue hover:text-blue-700">View Notice <i class="fas fa-chevron-right ml-1"></i></a>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+
                 <!-- Filters -->
                 <div class="mb-3 portal-card">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div class="flex flex-wrap gap-2">
-                            <button onclick="filterAnnouncements('all', 'all')" 
-                                    class="px-4 py-2 bg-uthm-blue text-white rounded-lg text-sm font-medium filter-btn-all">
-                                All Categories
-                            </button>
-                            <button onclick="filterAnnouncements('urgent', 'all')" 
-                                    class="px-4 py-2 bg-red-50 text-red-700 rounded-lg text-sm font-medium hover:bg-red-100 filter-btn-category">
-                                <i class="fas fa-exclamation-circle mr-2"></i>Urgent
-                            </button>
-                            <button onclick="filterAnnouncements('academic', 'all')" 
-                                    class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 filter-btn-category">
-                                <i class="fas fa-graduation-cap mr-2"></i>Academic
-                            </button>
-                            <button onclick="filterAnnouncements('events', 'all')" 
-                                    class="px-4 py-2 bg-purple-50 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-100 filter-btn-category">
-                                <i class="fas fa-calendar-alt mr-2"></i>Events
-                            </button>
-                            <button onclick="filterAnnouncements('general', 'all')" 
-                                    class="px-4 py-2 bg-uthm-blue-light text-uthm-blue rounded-lg text-sm font-medium hover:bg-blue-100 filter-btn-category">
-                                <i class="fas fa-newspaper mr-2"></i>General
-                            </button>
-                            
-                            <div class="border-l border-gray-300 pl-2 ml-2">
-                                <button onclick="filterAnnouncements('all', 'official')" 
-                                        class="px-4 py-2 bg-green-50 text-green-700 rounded-lg text-sm font-medium hover:bg-green-100 filter-btn-type">
-                                    <i class="fas fa-check-circle mr-2"></i>Official
+                    <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                        <div class="flex flex-wrap gap-2 items-center">
+                            <!-- Category Group -->
+                            <div class="flex flex-wrap gap-1 items-center bg-gray-50 dark:bg-slate-800 p-1 rounded-lg border border-gray-200 dark:border-slate-700">
+                                <button onclick="filterAnnouncements('all', undefined, undefined)" 
+                                        class="px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-all bg-uthm-blue text-white">
+                                    All Categories
                                 </button>
-                                <button onclick="filterAnnouncements('all', 'unofficial')" 
-                                        class="px-4 py-2 bg-yellow-50 text-yellow-700 rounded-lg text-sm font-medium hover:bg-yellow-100 filter-btn-type">
-                                    <i class="fas fa-users mr-2"></i>Unofficial
+                                <button onclick="filterAnnouncements('academic', undefined, undefined)" 
+                                        class="px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-category bg-blue-50 text-blue-700 hover:bg-blue-100">
+                                    <i class="fas fa-graduation-cap mr-1"></i>Academic
+                                </button>
+                                <button onclick="filterAnnouncements('events', undefined, undefined)" 
+                                        class="px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-category bg-purple-50 text-purple-700 hover:bg-purple-100">
+                                    <i class="fas fa-calendar-alt mr-1"></i>Events
+                                </button>
+                                <button onclick="filterAnnouncements('general', undefined, undefined)" 
+                                        class="px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-category bg-sky-50 text-sky-700 hover:bg-sky-100">
+                                    <i class="fas fa-newspaper mr-1"></i>General
+                                </button>
+                                <button onclick="filterAnnouncements('club', undefined, undefined)" 
+                                        class="px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-category bg-green-50 text-green-700 hover:bg-green-100">
+                                    <i class="fas fa-users mr-1"></i>Club
+                                </button>
+                            </div>
+
+                            <!-- Priority Group -->
+                            <div class="flex flex-wrap gap-1 items-center bg-gray-50 dark:bg-slate-800 p-1 rounded-lg border border-gray-200 dark:border-slate-700 ml-0 sm:ml-2">
+                                <span class="text-xs text-gray-500 px-2 font-medium">Priority:</span>
+                                <button onclick="filterAnnouncements(undefined, 'urgent', undefined)" 
+                                        class="px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-priority bg-red-50 text-red-700 hover:bg-red-100">
+                                    <i class="fas fa-exclamation-circle mr-1 animate-pulse"></i>Urgent
+                                </button>
+                                <button onclick="filterAnnouncements(undefined, 'important', undefined)" 
+                                        class="px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-priority bg-amber-50 text-amber-700 hover:bg-amber-100">
+                                    <i class="fas fa-star mr-1 text-amber-500"></i>Important
+                                </button>
+                            </div>
+                            
+                            <!-- Official/Unofficial Group -->
+                            <div class="flex flex-wrap gap-1 items-center bg-gray-50 dark:bg-slate-800 p-1 rounded-lg border border-gray-200 dark:border-slate-700 ml-0 sm:ml-2">
+                                <span class="text-xs text-gray-500 px-2 font-medium">Type:</span>
+                                <button onclick="filterAnnouncements(undefined, undefined, 'official')" 
+                                        class="px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-type bg-emerald-50 text-emerald-700 hover:bg-emerald-100">
+                                    <i class="fas fa-check-circle mr-1"></i>Official
+                                </button>
+                                <button onclick="filterAnnouncements(undefined, undefined, 'unofficial')" 
+                                        class="px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-type bg-yellow-50 text-yellow-700 hover:bg-yellow-100">
+                                    <i class="fas fa-users mr-1"></i>Unofficial
                                 </button>
                             </div>
                         </div>
                         
                         <div class="flex items-center">
-                            <div class="relative">
+                            <div class="relative w-full">
                                 <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                                 <input type="text" 
                                        id="search-input"
                                        placeholder="Search announcements..." 
-                                       class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64">
+                                       class="pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64">
                             </div>
                         </div>
                     </div>
@@ -268,7 +330,7 @@
                 <!-- Announcements Grid -->
                 <div id="announcements-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     @forelse($announcements as $announcement)
-                        <div class="announcement-card bg-white rounded-xl shadow hover:shadow-lg transition-shadow border border-gray-200" 
+                        <div class="announcement-card {{ $announcement->priority ?? 'normal' }} bg-white rounded-xl shadow hover:shadow-lg transition-shadow border border-gray-200" 
                              data-id="{{ $announcement->id }}"
                              data-type="{{ $announcement->is_official ? 'official' : 'unofficial' }}"
                              data-category="{{ $announcement->category }}"
@@ -594,66 +656,90 @@
 
         function initializeFilters() {
             // Initialize filter buttons
-            updateFilterButtonStyles('all', 'all');
+            updateFilterButtonStyles('all', 'all', 'all');
             updateActiveFilters();
         }
 
         let currentFilterCategory = 'all';
+        let currentFilterPriority = 'all';
         let currentFilterType = 'all';
         let currentSearchTerm = '';
 
-        window.filterAnnouncements = function(category, type) {
+        window.filterAnnouncements = function(category, priority, type) {
             if (category !== undefined) currentFilterCategory = category;
+            if (priority !== undefined) currentFilterPriority = priority;
             if (type !== undefined) currentFilterType = type;
             
-            updateFilterButtonStyles(currentFilterCategory, currentFilterType);
+            updateFilterButtonStyles(currentFilterCategory, currentFilterPriority, currentFilterType);
             updateActiveFilters();
             applyFilters();
         }
 
-        function updateFilterButtonStyles(category, type) {
+        function updateFilterButtonStyles(category, priority, type) {
             // Reset all filter buttons
-            document.querySelectorAll('.filter-btn-category, .filter-btn-type, .filter-btn-all').forEach(btn => {
+            document.querySelectorAll('.filter-btn-category, .filter-btn-priority, .filter-btn-type, .filter-btn-all').forEach(btn => {
                 btn.classList.remove('filter-btn-active', 'bg-uthm-blue', 'text-white');
                 
                 if (btn.classList.contains('filter-btn-all')) {
-                    btn.classList.add('bg-uthm-blue', 'text-white');
+                    if (category === 'all' && priority === 'all' && type === 'all') {
+                        btn.classList.add('bg-uthm-blue', 'text-white');
+                        btn.classList.remove('bg-gray-100', 'text-gray-600');
+                    } else {
+                        btn.classList.remove('bg-uthm-blue', 'text-white');
+                        btn.classList.add('bg-gray-100', 'text-gray-600');
+                    }
                 } else if (btn.classList.contains('filter-btn-category')) {
-                    const text = btn.textContent.toLowerCase();
-                    if (text.includes('urgent')) {
-                        btn.classList.add('bg-red-50', 'text-red-700');
-                    } else if (text.includes('academic')) {
-                        btn.classList.add('bg-blue-50', 'text-blue-700');
-                    } else if (text.includes('events')) {
-                        btn.classList.add('bg-purple-50', 'text-purple-700');
-                    } else if (text.includes('general')) {
-                        btn.classList.add('bg-uthm-blue-light', 'text-uthm-blue');
+                    const onclickStr = btn.getAttribute('onclick') || '';
+                    if (onclickStr.includes('academic')) {
+                        btn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-category bg-blue-50 text-blue-700 hover:bg-blue-100';
+                    } else if (onclickStr.includes('events')) {
+                        btn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-category bg-purple-50 text-purple-700 hover:bg-purple-100';
+                    } else if (onclickStr.includes('general')) {
+                        btn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-category bg-sky-50 text-sky-700 hover:bg-sky-100';
+                    } else if (onclickStr.includes('club')) {
+                        btn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-category bg-green-50 text-green-700 hover:bg-green-100';
+                    }
+                } else if (btn.classList.contains('filter-btn-priority')) {
+                    const onclickStr = btn.getAttribute('onclick') || '';
+                    if (onclickStr.includes('urgent')) {
+                        btn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-priority bg-red-50 text-red-700 hover:bg-red-100';
+                    } else if (onclickStr.includes('important')) {
+                        btn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-priority bg-amber-50 text-amber-700 hover:bg-amber-100';
                     }
                 } else if (btn.classList.contains('filter-btn-type')) {
-                    const text = btn.textContent.toLowerCase();
-                    if (text.includes('official')) {
-                        btn.classList.add('bg-green-50', 'text-green-700');
-                    } else if (text.includes('unofficial')) {
-                        btn.classList.add('bg-yellow-50', 'text-yellow-700');
+                    const onclickStr = btn.getAttribute('onclick') || '';
+                    if (onclickStr.includes('official')) {
+                        btn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-type bg-emerald-50 text-emerald-700 hover:bg-emerald-100';
+                    } else if (onclickStr.includes('unofficial')) {
+                        btn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-type bg-yellow-50 text-yellow-700 hover:bg-yellow-100';
                     }
                 }
             });
             
+            // Set active category button
             if (category !== 'all') {
                 const categoryBtn = Array.from(document.querySelectorAll('.filter-btn-category'))
-                    .find(btn => btn.textContent.toLowerCase().includes(category));
+                    .find(btn => btn.getAttribute('onclick').includes(`'${category}'`));
                 if (categoryBtn) {
-                    categoryBtn.classList.add('filter-btn-active', 'bg-uthm-blue', 'text-white');
-                    categoryBtn.classList.remove('bg-red-50', 'bg-blue-50', 'bg-purple-50', 'bg-uthm-blue-light');
+                    categoryBtn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-category filter-btn-active bg-uthm-blue text-white';
                 }
             }
             
+            // Set active priority button
+            if (priority !== 'all') {
+                const priorityBtn = Array.from(document.querySelectorAll('.filter-btn-priority'))
+                    .find(btn => btn.getAttribute('onclick').includes(`'${priority}'`));
+                if (priorityBtn) {
+                    priorityBtn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-priority filter-btn-active bg-uthm-blue text-white';
+                }
+            }
+            
+            // Set active type button
             if (type !== 'all') {
                 const typeBtn = Array.from(document.querySelectorAll('.filter-btn-type'))
-                    .find(btn => btn.textContent.toLowerCase().includes(type));
+                    .find(btn => btn.getAttribute('onclick').includes(`'${type}'`));
                 if (typeBtn) {
-                    typeBtn.classList.add('filter-btn-active', 'bg-uthm-blue', 'text-white');
-                    typeBtn.classList.remove('bg-green-50', 'bg-yellow-50');
+                    typeBtn.className = 'px-3 py-1.5 rounded-md text-xs font-semibold filter-btn-type filter-btn-active bg-uthm-blue text-white';
                 }
             }
         }
@@ -664,13 +750,20 @@
             
             container.innerHTML = '<div class="text-sm text-gray-600 mr-2">Active filters:</div>';
             
-            if (currentFilterCategory !== 'all' || currentFilterType !== 'all') {
+            if (currentFilterCategory !== 'all' || currentFilterPriority !== 'all' || currentFilterType !== 'all') {
                 container.classList.remove('hidden');
                 
                 if (currentFilterCategory !== 'all') {
                     const badge = document.createElement('span');
                     badge.className = 'px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full flex items-center';
                     badge.innerHTML = `<i class="fas fa-filter mr-2"></i>Category: ${currentFilterCategory.charAt(0).toUpperCase() + currentFilterCategory.slice(1)}`;
+                    container.appendChild(badge);
+                }
+                
+                if (currentFilterPriority !== 'all') {
+                    const badge = document.createElement('span');
+                    badge.className = 'px-3 py-1 bg-amber-100 text-amber-800 text-sm rounded-full flex items-center';
+                    badge.innerHTML = `<i class="fas fa-exclamation-triangle mr-2"></i>Priority: ${currentFilterPriority.charAt(0).toUpperCase() + currentFilterPriority.slice(1)}`;
                     container.appendChild(badge);
                 }
                 
@@ -684,7 +777,7 @@
                 const clearBtn = document.createElement('button');
                 clearBtn.className = 'px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-full hover:bg-gray-300 transition-colors ml-2';
                 clearBtn.innerHTML = '<i class="fas fa-times mr-1"></i>Clear Filters';
-                clearBtn.onclick = function() { filterAnnouncements('all', 'all'); };
+                clearBtn.onclick = function() { filterAnnouncements('all', 'all', 'all'); };
                 container.appendChild(clearBtn);
             } else {
                 container.classList.add('hidden');
@@ -700,15 +793,17 @@
             
             cards.forEach(card => {
                 const category = card.getAttribute('data-category');
+                const priority = card.getAttribute('data-priority');
                 const type = card.getAttribute('data-type');
                 const title = card.querySelector('h3')?.textContent.toLowerCase() || '';
                 const content = card.querySelector('p')?.textContent.toLowerCase() || '';
                 
                 const categoryMatch = currentFilterCategory === 'all' || category === currentFilterCategory;
+                const priorityMatch = currentFilterPriority === 'all' || priority === currentFilterPriority;
                 const typeMatch = currentFilterType === 'all' || type === currentFilterType;
                 const searchMatch = currentSearchTerm === '' || title.includes(currentSearchTerm) || content.includes(currentSearchTerm);
                 
-                if (categoryMatch && typeMatch && searchMatch) {
+                if (categoryMatch && priorityMatch && typeMatch && searchMatch) {
                     card.style.display = 'block';
                     visibleCount++;
                 } else {

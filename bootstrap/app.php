@@ -1,5 +1,10 @@
 <?php
 
+// PHP 8.2 Compatibility Stub for Laravel 12 PDO MySQL defaults
+if (!class_exists('Pdo\Mysql', false)) {
+    eval('namespace Pdo { class Mysql { const ATTR_SSL_CA = 1009; } }');
+}
+
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;

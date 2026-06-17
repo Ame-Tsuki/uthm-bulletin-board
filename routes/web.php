@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\FeaturedPostController;
 use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\WelcomeController;
+use App\Http\Controllers\Auth\ConfirmablePasswordController;
 
 // Public Routes (No Auth Required)
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
@@ -51,6 +52,11 @@ Route::middleware('auth')->group(function () {
         $request->user()->sendEmailVerificationNotification();
         return back()->with('message', 'Verification link sent!');
     })->middleware(['throttle:6,1'])->name('verification.send');
+
+    // Password Confirmation Routes
+    Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
+        ->name('password.confirm');
+    Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 });
 
 // Logout (allow authenticated users, including unverified, to sign out)
@@ -124,8 +130,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 return redirect()->route('admin.dashboard');
             case 'staff':
                 return redirect()->route('staff.dashboard');
-            case 'club_admin':
-                return redirect()->route('club.dashboard');
             case 'student':
                 return redirect()->route('student.dashboard');
             default:
@@ -261,7 +265,85 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('role:staff')->group(function () {
         Route::get('/staff/dashboard', function () {
             $user = auth()->user();
-            return view('staff.dashboard', compact('user'));
+
+            $featuredAnnouncements = App\Models\Announcement::with('author')
+                ->where('is_featured', 1)
+                ->where('is_active', 1)
+                ->where('is_banned', false)
+                ->visibleOnBoard()
+                ->where(function($query) {
+                    $query->whereNull('published_at')
+                          ->orWhere('published_at', '<=', now());
+                })
+                ->orderBy('featured_order', 'asc')
+                ->orderBy('featured_at', 'desc')
+                ->take(10)
+                ->get();
+
+            $announcements = App\Models\Announcement::with('author')
+                ->where('is_active', 1)
+                ->where('is_banned', false)
+                ->visibleOnBoard()
+                ->where(function($query) {
+                    $query->whereNull('published_at')
+                          ->orWhere('published_at', '<=', now());
+                })
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get();
+
+            $pendingAnnouncements = App\Models\Announcement::with('author')
+                ->where('status', 'pending_verification')
+                ->where('is_banned', false)
+                ->latest()
+                ->take(5)
+                ->get();
+
+            // Upcoming events: public events or created by the user, starting today or later
+            $upcomingEvents = App\Models\Event::with(['creator', 'attendees'])
+                ->whereDate('start_date', '>=', now()->toDateString())
+                ->where(function ($q) use ($user) {
+                    $q->where('visibility', 'public')
+                      ->orWhere('user_id', $user->id);
+                })
+                ->orderBy('start_date')
+                ->take(3)
+                ->get();
+
+            // Quick stats
+            $trendingAnnouncement = App\Models\Announcement::published()->orderBy('view_count', 'desc')->first();
+            $trendingTitle = $trendingAnnouncement ? $trendingAnnouncement->title : null;
+            $trendingViews = $trendingAnnouncement ? $trendingAnnouncement->view_count : 0;
+
+            $facultyUpdatesCount = 0;
+            if ($user->faculty) {
+                $facultyUpdatesCount = App\Models\Announcement::where('faculty', $user->faculty)
+                    ->visibleOnBoard()
+                    ->whereDate('created_at', '>=', now()->subDays(7))
+                    ->count();
+            } else {
+                $facultyUpdatesCount = App\Models\Announcement::visibleOnBoard()
+                    ->whereDate('created_at', '>=', now()->subDays(7))
+                    ->count();
+            }
+
+            $urgentCount = App\Models\Announcement::where('priority', 'urgent')
+                ->visibleOnBoard()
+                ->count();
+
+            // Staff specific activity stats
+            $myAnnouncementsCount = App\Models\Announcement::where('author_id', $user->id)->count();
+            $pendingReviewsCount = App\Models\Announcement::where('status', 'pending_verification')->count();
+            
+            $eventsThisMonthCount = App\Models\Event::whereMonth('start_date', now()->month)
+                ->whereYear('start_date', now()->year)
+                ->count();
+
+            return view('staff.dashboard', compact(
+                'user', 'announcements', 'featuredAnnouncements', 'upcomingEvents',
+                'trendingTitle', 'trendingViews', 'facultyUpdatesCount', 'urgentCount',
+                'pendingAnnouncements', 'myAnnouncementsCount', 'pendingReviewsCount', 'eventsThisMonthCount'
+            ));
         })->name('staff.dashboard');
         
         Route::get('/staff/calendar', function () {
@@ -299,8 +381,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 return redirect()->route('admin.calendar');
             case 'staff':
                 return redirect()->route('staff.calendar');
-            case 'club_admin':
-                return redirect()->route('club.calendar');
             case 'student':
                 return redirect()->route('student.calendar');
             default:
@@ -320,8 +400,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 return redirect()->route('admin.community-hub');
             case 'staff':
                 return redirect()->route('staff.community-hub');
-            case 'club_admin':
-                return redirect()->route('club.community-hub');
             case 'student':
                 return redirect()->route('student.community-hub');
             default:

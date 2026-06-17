@@ -327,17 +327,73 @@
 /* Announcements */
 .announcement-card {
     border-left: 4px solid;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
 }
 
 .announcement-card:hover {
-    transform: translateX(2px);
-    box-shadow: 0 4px 16px rgba(0, 86, 166, 0.08);
+    transform: translateY(-2px) translateX(2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 86, 166, 0.12), 0 8px 10px -6px rgba(0, 86, 166, 0.12);
 }
 
-.announcement-card.urgent { border-left-color: var(--uthm-red); }
-.announcement-card.important { border-left-color: var(--uthm-yellow); }
-.announcement-card.normal { border-left-color: var(--uthm-blue); }
+.announcement-card.urgent {
+    border-left-color: var(--uthm-red);
+    background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.06);
+}
+.announcement-card.urgent:hover {
+    box-shadow: 0 10px 25px -5px rgba(220, 53, 69, 0.15);
+}
+
+.announcement-card.important {
+    border-left-color: var(--uthm-yellow);
+    background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+    box-shadow: 0 4px 12px rgba(255, 199, 44, 0.06);
+}
+.announcement-card.important:hover {
+    box-shadow: 0 10px 25px -5px rgba(255, 199, 44, 0.15);
+}
+
+.announcement-card.normal {
+    border-left-color: var(--uthm-blue);
+    background: #ffffff;
+}
+
+/* badge categories styles */
+.badge-club { background-color: #dcfce7; color: #15803d; }
+[data-theme="dark"] .badge-club { background-color: rgba(21, 128, 61, 0.2) !important; color: #4ade80 !important; }
+
+/* Pinned Alert / Notice board container */
+.pinned-notice-board {
+    background: linear-gradient(135deg, #fef2f2 0%, #fffbeb 100%);
+    border: 1px solid rgba(220, 53, 69, 0.15);
+}
+[data-theme="dark"] .pinned-notice-board {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.08) 0%, rgba(255, 199, 44, 0.05) 100%) !important;
+    border-color: rgba(220, 53, 69, 0.3) !important;
+}
+
+/* Slow spin custom animation */
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+    animation: spin-slow 10s linear infinite;
+}
+
+/* Dark theme priority styles */
+[data-theme="dark"] .announcement-card.urgent {
+    background: linear-gradient(135deg, #1e293b 0%, rgba(220, 53, 69, 0.08) 100%) !important;
+    border-left-color: #f87171 !important;
+}
+[data-theme="dark"] .announcement-card.important {
+    background: linear-gradient(135deg, #1e293b 0%, rgba(255, 199, 44, 0.08) 100%) !important;
+    border-left-color: #fbbf24 !important;
+}
+[data-theme="dark"] .announcement-card.normal {
+    background: #1e293b !important;
+    border-left-color: #3b82f6 !important;
+}
 
 .event-card {
     transition: all 0.25s ease;

@@ -27,7 +27,7 @@ class UpdateUserRequest extends FormRequest
             'name' => 'sometimes|string|max:255',
             'email' => ['sometimes', 'string', 'email', Rule::unique('users')->ignore($userId)],
             'phone' => 'nullable|string|max:20',
-            'role' => ['sometimes', Rule::in(['student', 'staff', 'admin', 'club_admin'])],
+            'role' => ['sometimes', Rule::in(['student', 'staff', 'admin'])],
             'faculty' => 'nullable|string|max:255',
             'password' => 'sometimes|string|min:8',
             'is_verified' => 'boolean',

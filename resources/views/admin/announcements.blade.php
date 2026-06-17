@@ -44,8 +44,7 @@
                 <option value="general">General</option>
                 <option value="academic">Academic</option>
                 <option value="events">Events</option>
-                <option value="important">Important</option>
-                <option value="urgent">Urgent</option>
+                <option value="club">Club</option>
             </select>
         </div>
         <div class="flex items-end gap-2">
@@ -117,8 +116,7 @@
                         <option value="general">General</option>
                         <option value="academic">Academic</option>
                         <option value="events">Events</option>
-                        <option value="important">Important</option>
-                        <option value="urgent">Urgent</option>
+                        <option value="club">Club</option>
                     </select>
                 </div>
                 
@@ -251,8 +249,7 @@
                         const categoryColor = announcement.category === 'general' ? 'bg-blue-100 text-blue-800' :
                                              announcement.category === 'academic' ? 'bg-purple-100 text-purple-800' :
                                              announcement.category === 'events' ? 'bg-green-100 text-green-800' :
-                                             announcement.category === 'important' ? 'bg-red-100 text-red-800' :
-                                             announcement.category === 'urgent' ? 'bg-orange-100 text-orange-800' :
+                                             announcement.category === 'club' ? 'bg-teal-100 text-teal-800' :
                                              'bg-gray-100 text-gray-800';
 
                         const row = `
@@ -377,7 +374,7 @@
                     const categoryClass = announcement.category === 'general' ? 'bg-blue-100 text-blue-800' :
                                          announcement.category === 'academic' ? 'bg-purple-100 text-purple-800' :
                                          announcement.category === 'events' ? 'bg-green-100 text-green-800' :
-                                         announcement.category === 'important' ? 'bg-red-100 text-red-800' :
+                                         announcement.category === 'club' ? 'bg-teal-100 text-teal-800' :
                                          'bg-gray-100 text-gray-800';
                     document.getElementById('viewCategory').innerHTML = `<span class="badge ${categoryClass}">${announcement.category}</span>`;
                     const statusClass = announcement.status === 'published' ? 'bg-green-100 text-green-800' :

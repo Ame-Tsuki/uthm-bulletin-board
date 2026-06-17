@@ -25,7 +25,7 @@ class CustomRegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users', 'regex:/^[a-zA-Z0-9._%+-]+@(student\.)?uthm\.edu\.my$/i'],
             'phone' => ['nullable', 'string', 'regex:/^(\+?6?01)[0-46-9]-*[0-9]{7,8}$/'],
-            'role' => ['required', 'string', Rule::in(['student', 'staff', 'admin', 'club_admin'])],
+            'role' => ['required', 'string', Rule::in(['student', 'staff', 'admin'])],
             'faculty' => ['required_if:role,student', 'nullable', 'string', 'max:100'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'terms' => ['required', 'accepted'],

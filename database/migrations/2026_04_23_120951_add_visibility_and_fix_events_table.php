@@ -16,9 +16,9 @@ class AddVisibilityAndFixEventsTable extends Migration
             });
         }
         
-        // Also ensure the type column has 'important' option
-        // This is for MySQL
-        DB::statement("ALTER TABLE events MODIFY COLUMN type ENUM('lecture', 'deadline', 'exam', 'social', 'workshop', 'other', 'important') NOT NULL");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE events MODIFY COLUMN type ENUM('lecture', 'deadline', 'exam', 'social', 'workshop', 'other', 'important') NOT NULL");
+        }
     }
 
     public function down()
@@ -29,7 +29,8 @@ class AddVisibilityAndFixEventsTable extends Migration
             });
         }
         
-        // Revert type enum to original
-        DB::statement("ALTER TABLE events MODIFY COLUMN type ENUM('lecture', 'deadline', 'exam', 'social', 'workshop', 'other') NOT NULL");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE events MODIFY COLUMN type ENUM('lecture', 'deadline', 'exam', 'social', 'workshop', 'other') NOT NULL");
+        }
     }
 }

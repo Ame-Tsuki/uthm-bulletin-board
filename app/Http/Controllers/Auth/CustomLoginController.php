@@ -58,8 +58,6 @@ class CustomLoginController extends Controller
                 return redirect()->route('admin.dashboard');
             case 'staff':
                 return redirect()->route('staff.dashboard');
-            case 'club_admin':
-                return redirect()->route('club.dashboard');
             default:
                 return redirect()->route('dashboard');
         }

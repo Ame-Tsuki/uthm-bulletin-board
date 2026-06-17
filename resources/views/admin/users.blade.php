@@ -51,7 +51,6 @@
                 <option value="student">Student</option>
                 <option value="staff">Staff</option>
                 <option value="admin">Admin</option>
-                <option value="club_admin">Club Admin</option>
             </select>
         </div>
         <div>
@@ -153,7 +152,6 @@
                         <option value="student">Student</option>
                         <option value="staff">Staff</option>
                         <option value="admin">Admin</option>
-                        <option value="club_admin">Club Admin</option>
                     </select>
                 </div>
             </div>
@@ -226,7 +224,6 @@
     function roleBadgeClass(role) {
         if (role === 'admin') return 'bg-purple-100 text-purple-800';
         if (role === 'staff') return 'bg-yellow-100 text-yellow-800';
-        if (role === 'club_admin') return 'bg-indigo-100 text-indigo-800';
         return 'bg-blue-100 text-blue-800';
     }
 

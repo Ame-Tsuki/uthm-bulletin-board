@@ -24,7 +24,7 @@ class BulkActionRequest extends FormRequest
             'action' => ['required', Rule::in(['verify', 'unverify', 'delete', 'change_role'])],
             'user_ids' => 'required|array|min:1',
             'user_ids.*' => 'exists:users,id',
-            'role' => 'required_if:action,change_role|string|in:student,staff,admin,club_admin',
+            'role' => 'required_if:action,change_role|string|in:student,staff,admin',
         ];
     }
 }

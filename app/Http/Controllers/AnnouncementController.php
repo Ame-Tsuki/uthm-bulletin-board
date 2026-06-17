@@ -105,7 +105,7 @@ public function store(Request $request): RedirectResponse
     $validationRules = [
         'title' => 'required|string|max:255',
         'content' => 'required|string',
-        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:1024',
         'category' => 'required|in:academic,events,general,club',
         'priority' => 'nullable|in:urgent,important,normal',
         'department' => 'nullable|string|max:100',
@@ -467,7 +467,7 @@ public function update(Request $request, Announcement $announcement): RedirectRe
     $validationRules = [
         'title' => 'required|string|max:255',
         'content' => 'required|string',
-        'image' => $request->hasFile('image') ? 'required|image|mimes:jpeg,png,jpg,gif,webp|max:2048' : 'nullable',
+        'image' => $request->hasFile('image') ? 'required|image|mimes:jpeg,png,jpg,gif,webp|max:1024' : 'nullable',
         'category' => 'required|in:academic,events,general,club',
         'priority' => 'nullable|in:urgent,important,normal',
         'department' => 'nullable|string|max:100',

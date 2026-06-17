@@ -478,12 +478,9 @@
                         <button id="detail-edit-btn" onclick="editEventFromDetail()" class="text-blue-600 hover:text-blue-800" title="Edit event">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button id="detail-delete-btn" onclick="deleteEventFromDetail()" class="text-red-600 hover:text-red-800">
+                        <button id="detail-delete-btn" onclick="deleteEventFromDetail()" class="text-red-600 hover:text-red-800" title="Delete event">
                             <i class="fas fa-trash"></i>
                         </button>
-                        <a id="detail-open-link" href="#" target="_blank" class="text-gray-700 hover:text-gray-900 hidden" title="Open full page">
-                            <i class="fas fa-external-link-alt"></i>
-                        </a>
                         <button onclick="closeEventDetailModal()" class="text-gray-400 hover:text-gray-600">
                             <i class="fas fa-times"></i>
                         </button>
@@ -675,20 +672,11 @@
                     eventEl.className = `calendar-event ${getEventClass(event.type)}`;
                     eventEl.textContent = event.title;
                     eventEl.title = event.title;
-                    // Navigate to full event page on click
+                    // Open detail modal on click
                     eventEl.onclick = function(e) {
                         e.stopPropagation();
-                        window.location.href = `/events/${event.id}`;
+                        showEventDetail(event);
                     };
-
-                    // Small open-in-new-tab icon
-                    const openLink = document.createElement('a');
-                    openLink.href = `/events/${event.id}`;
-                    openLink.target = '_blank';
-                    openLink.className = 'ml-2 inline-block text-white/80';
-                    openLink.innerHTML = '<i class="fas fa-external-link-alt"></i>';
-                    eventEl.appendChild(openLink);
-
                     eventsContainer.appendChild(eventEl);
                 });
                 
@@ -771,8 +759,8 @@
             const eventDate = new Date(event.start_date);
             const div = document.createElement('div');
             div.className = 'flex items-center p-4 bg-white border rounded-xl hover:shadow-md transition cursor-pointer';
-            // Click the upcoming item to open the full event page
-            div.onclick = () => window.location.href = `/events/${event.id}`;
+            // Open detail modal on click
+            div.onclick = () => showEventDetail(event);
             div.innerHTML = `
                 <div class="mr-4 text-center min-w-[60px]">
                     <div class="font-bold text-xl text-gray-900">${eventDate.getDate()}</div>
@@ -788,7 +776,7 @@
                     </p>
                     <span class="inline-block mt-2 px-2 py-1 text-xs rounded-full ${getEventClass(event.type)}">${event.type}</span>
                     <div class="mt-3">
-                        <a href="/events/${event.id}" class="portal-btn-primary text-xs px-3 py-1.5">View</a>
+                        <a href="/events/${event.id}" onclick="event.stopPropagation()" class="portal-btn-primary text-xs px-3 py-1.5">View</a>
                     </div>
                 </div>
             `;
@@ -945,21 +933,12 @@
         document.getElementById('detail-edit-btn').classList.toggle('hidden', !canManage);
         document.getElementById('detail-delete-btn').classList.toggle('hidden', !canManage);
 
-        // Set link to full event page in the modal
-        const openLink = document.getElementById('detail-open-link');
-        if (openLink) {
-            openLink.href = `/events/${event.id}`;
-            openLink.classList.remove('hidden');
-        }
-
         document.getElementById('event-detail-modal').classList.remove('hidden');
     }
 
     function closeEventDetailModal() {
         document.getElementById('event-detail-modal').classList.add('hidden');
         currentDetailEvent = null;
-        const openLink = document.getElementById('detail-open-link');
-        if (openLink) openLink.classList.add('hidden');
     }
 
     function editEventFromDetail() {

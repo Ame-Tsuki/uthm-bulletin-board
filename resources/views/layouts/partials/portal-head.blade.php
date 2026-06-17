@@ -15,6 +15,7 @@
 </script>
 <script>
     tailwind.config = {
+        darkMode: ['selector', '[data-theme="dark"]'],
         theme: {
             extend: {
                 colors: {

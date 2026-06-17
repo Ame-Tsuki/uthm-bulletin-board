@@ -79,23 +79,33 @@
                 <span>Export Report</span>
                 <i class="fas fa-chevron-down text-xs ml-1"></i>
             </button>
-            <div id="exportMenu" class="hidden absolute right-0 mt-2 w-56 rounded-xl bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none z-50 py-1 border border-slate-100">
+            <div id="exportMenu" class="hidden absolute right-0 mt-2 w-60 rounded-xl bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none z-50 py-1 border border-slate-100">
                 <button onclick="triggerPDFExport()" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600 transition flex items-center gap-3 font-medium">
                     <i class="far fa-file-pdf text-red-500 text-base"></i>
-                    <span>Export PDF Report</span>
+                    <span>Export PDF Audit Report</span>
                 </button>
                 <button onclick="triggerCSVExport()" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-green-600 transition flex items-center gap-3 font-medium">
                     <i class="far fa-file-excel text-green-500 text-base"></i>
                     <span>Export Raw Data (CSV)</span>
                 </button>
-                <button onclick="triggerPNGExport('trendChart', 'Activity_Trends_Chart')" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 transition flex items-center gap-3 font-medium">
+                <button onclick="triggerPNGExport('trendChart', 'System_Activity_Trends')" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-purple-600 transition flex items-center gap-3 font-medium">
                     <i class="far fa-image text-purple-500 text-base"></i>
-                    <span>Download Trend Graph</span>
+                    <span>Download Activity Graph</span>
+                </button>
+                <button onclick="triggerPNGExport('communityTrendChart', 'Community_Engagement_Trends')" class="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition flex items-center gap-3 font-medium">
+                    <i class="far fa-image text-indigo-500 text-base"></i>
+                    <span>Download Community Graph</span>
                 </button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Section: System Overview Metrics -->
+<h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+    <span>System Core Metrics</span>
+    <span class="h-[1px] bg-slate-200 flex-1"></span>
+</h2>
 
 <!-- Key Performance Metrics Grid -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -160,6 +170,75 @@
     </div>
 </div>
 
+<!-- Section: Community Hub Engagement Metrics -->
+<h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+    <span>Community Hub Engagement</span>
+    <span class="h-[1px] bg-slate-200 flex-1"></span>
+</h2>
+
+<!-- Community Engagement Metrics Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Card: Total groups -->
+    <div class="analytics-card bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 font-semibold text-sm tracking-wide uppercase">Active Groups</span>
+            <div class="p-3 rounded-xl bg-indigo-50 text-indigo-600">
+                <i class="fas fa-users-cog text-lg"></i>
+            </div>
+        </div>
+        <h3 class="text-3xl font-extrabold text-slate-900 tracking-tight" id="totalGroupsCount">-</h3>
+        <p class="text-sm text-slate-500 mt-2 flex items-center gap-1.5">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+            <span>Active communities</span>
+        </p>
+    </div>
+
+    <!-- Card: Community Posts -->
+    <div class="analytics-card bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 font-semibold text-sm tracking-wide uppercase">Group Posts</span>
+            <div class="p-3 rounded-xl bg-violet-50 text-violet-600">
+                <i class="fas fa-mail-bulk text-lg"></i>
+            </div>
+        </div>
+        <h3 class="text-3xl font-extrabold text-slate-900 tracking-tight" id="newGroupPostsCount">-</h3>
+        <p class="text-xs text-slate-500 mt-2 truncate flex items-center gap-1.5">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>New: <span id="periodGroupPosts" class="font-bold">0</span> | Total: <span id="totalGroupPosts" class="font-bold">0</span></span>
+        </p>
+    </div>
+
+    <!-- Card: Comments -->
+    <div class="analytics-card bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 font-semibold text-sm tracking-wide uppercase">Post Comments</span>
+            <div class="p-3 rounded-xl bg-teal-50 text-teal-600">
+                <i class="fas fa-comments text-lg"></i>
+            </div>
+        </div>
+        <h3 class="text-3xl font-extrabold text-slate-900 tracking-tight" id="newGroupCommentsCount">-</h3>
+        <p class="text-xs text-slate-500 mt-2 truncate flex items-center gap-1.5">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>New: <span id="periodGroupComments" class="font-bold">0</span> | Total: <span id="totalGroupComments" class="font-bold">0</span></span>
+        </p>
+    </div>
+
+    <!-- Card: Likes -->
+    <div class="analytics-card bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 font-semibold text-sm tracking-wide uppercase">Post Likes</span>
+            <div class="p-3 rounded-xl bg-rose-50 text-rose-600">
+                <i class="fas fa-heart text-lg"></i>
+            </div>
+        </div>
+        <h3 class="text-3xl font-extrabold text-slate-900 tracking-tight" id="newGroupLikesCount">-</h3>
+        <p class="text-xs text-slate-500 mt-2 truncate flex items-center gap-1.5">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>New: <span id="periodGroupLikes" class="font-bold">0</span> | Total: <span id="totalGroupLikes" class="font-bold">0</span></span>
+        </p>
+    </div>
+</div>
+
 <!-- Secondary Stats (Views) -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-sm text-white p-6 relative overflow-hidden">
@@ -197,17 +276,17 @@
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 lg:col-span-2">
         <div class="flex items-center justify-between mb-6">
             <div>
-                <h3 class="text-lg font-bold text-slate-800">Activity Trends Over Time</h3>
+                <h3 class="text-lg font-bold text-slate-800">System Activity Trends Over Time</h3>
                 <p class="text-slate-500 text-sm">Registrations, announcements, and events</p>
             </div>
             <div class="flex items-center gap-2">
-                <span class="flex items-center gap-1 text-xs text-blue-600 font-semibold bg-blue-50 px-2 py-1 rounded-md">
+                <span class="flex items-center gap-1 text-xs text-blue-600 font-semibold bg-blue-50 px-2.5 py-1 rounded-lg">
                     <span class="w-2 h-2 bg-blue-500 rounded-full"></span> Users
                 </span>
-                <span class="flex items-center gap-1 text-xs text-amber-600 font-semibold bg-amber-50 px-2 py-1 rounded-md">
+                <span class="flex items-center gap-1 text-xs text-amber-600 font-semibold bg-amber-50 px-2.5 py-1 rounded-lg">
                     <span class="w-2 h-2 bg-amber-500 rounded-full"></span> Posts
                 </span>
-                <span class="flex items-center gap-1 text-xs text-rose-600 font-semibold bg-rose-50 px-2 py-1 rounded-md">
+                <span class="flex items-center gap-1 text-xs text-rose-600 font-semibold bg-rose-50 px-2.5 py-1 rounded-lg">
                     <span class="w-2 h-2 bg-rose-500 rounded-full"></span> Events
                 </span>
             </div>
@@ -243,8 +322,32 @@
     </div>
 </div>
 
-<!-- Detailed Stats & Activity Log -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Section: Community Hub Analytics Visualizer -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    <!-- Community Hub Trends Graph -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 lg:col-span-2">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h3 class="text-lg font-bold text-slate-800">Community Engagement Trends</h3>
+                <p class="text-slate-500 text-sm">Posts, comments, and post likes over time</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="flex items-center gap-1 text-xs text-indigo-600 font-semibold bg-indigo-50 px-2.5 py-1 rounded-lg">
+                    <span class="w-2 h-2 bg-indigo-500 rounded-full"></span> Posts
+                </span>
+                <span class="flex items-center gap-1 text-xs text-teal-600 font-semibold bg-teal-50 px-2.5 py-1 rounded-lg">
+                    <span class="w-2 h-2 bg-teal-500 rounded-full"></span> Comments
+                </span>
+                <span class="flex items-center gap-1 text-xs text-rose-600 font-semibold bg-rose-50 px-2.5 py-1 rounded-lg">
+                    <span class="w-2 h-2 bg-rose-500 rounded-full"></span> Likes
+                </span>
+            </div>
+        </div>
+        <div class="chart-container h-80">
+            <canvas id="communityTrendChart"></canvas>
+        </div>
+    </div>
+
     <!-- Events Breakdown Panel -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
         <h3 class="text-lg font-bold text-slate-800 mb-6">Events Overview</h3>
@@ -280,11 +383,14 @@
             </div>
         </div>
     </div>
+</div>
 
+<!-- Detailed Stats & Activity Log -->
+<div class="grid grid-cols-1 gap-8">
     <!-- Timeline Activity Logs Feed -->
-    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 lg:col-span-2">
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
         <h3 class="text-lg font-bold text-slate-800 mb-6">Recent System Activity Logs</h3>
-        <div id="activityFeed" class="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+        <div id="activityFeed" class="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
             <p class="text-slate-400 text-center py-12">Loading system activity feed...</p>
         </div>
     </div>
@@ -306,6 +412,7 @@
     let currentAnalyticsData = null;
     let trendChartInstance = null;
     let statusChartInstance = null;
+    let communityTrendChartInstance = null;
 
     document.addEventListener('DOMContentLoaded', function() {
         // Init Menu Controls
@@ -375,6 +482,20 @@
                     document.getElementById('totalViewsCount').textContent = Number(analytics.total_views ?? 0).toLocaleString();
                     document.getElementById('avgViewsCount').textContent = analytics.avg_views_per_announcement ?? 0;
                     
+                    // Update Community Hub metrics UI
+                    document.getElementById('totalGroupsCount').textContent = analytics.total_groups ?? 0;
+                    document.getElementById('newGroupPostsCount').textContent = analytics.new_group_posts ?? 0;
+                    document.getElementById('periodGroupPosts').textContent = analytics.new_group_posts ?? 0;
+                    document.getElementById('totalGroupPosts').textContent = analytics.total_group_posts ?? 0;
+                    
+                    document.getElementById('newGroupCommentsCount').textContent = analytics.new_group_comments ?? 0;
+                    document.getElementById('periodGroupComments').textContent = analytics.new_group_comments ?? 0;
+                    document.getElementById('totalGroupComments').textContent = analytics.total_group_comments ?? 0;
+                    
+                    document.getElementById('newGroupLikesCount').textContent = analytics.new_group_likes ?? 0;
+                    document.getElementById('periodGroupLikes').textContent = analytics.new_group_likes ?? 0;
+                    document.getElementById('totalGroupLikes').textContent = analytics.total_group_likes ?? 0;
+
                     // Update content stats counts
                     document.getElementById('publishedCount').textContent = analytics.announcements?.published ?? 0;
                     document.getElementById('pendingCount').textContent = analytics.announcements?.pending ?? 0;
@@ -388,6 +509,7 @@
                     // Render Charts
                     renderTrendGraph(analytics.trends);
                     renderStatusPieChart(analytics.announcements);
+                    renderCommunityTrendGraph(analytics.trends?.labels, analytics.community_trends);
                 }
             })
             .catch(error => {
@@ -542,6 +664,89 @@
         });
     }
 
+    // Chart.js: Community Trends Chart Builder
+    function renderCommunityTrendGraph(labels, communityTrends) {
+        const ctx = document.getElementById('communityTrendChart').getContext('2d');
+        
+        if (communityTrendChartInstance) {
+            communityTrendChartInstance.destroy();
+        }
+
+        if (!labels || !communityTrends) return;
+
+        // Custom gradients
+        const indigoGradient = ctx.createLinearGradient(0, 0, 0, 300);
+        indigoGradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+        indigoGradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+        const tealGradient = ctx.createLinearGradient(0, 0, 0, 300);
+        tealGradient.addColorStop(0, 'rgba(20, 184, 166, 0.4)');
+        tealGradient.addColorStop(1, 'rgba(20, 184, 166, 0.0)');
+
+        const pinkGradient = ctx.createLinearGradient(0, 0, 0, 300);
+        pinkGradient.addColorStop(0, 'rgba(244, 63, 94, 0.4)');
+        pinkGradient.addColorStop(1, 'rgba(244, 63, 94, 0.0)');
+
+        communityTrendChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Group Posts',
+                        data: communityTrends.posts,
+                        borderColor: '#6366f1',
+                        backgroundColor: indigoGradient,
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#6366f1',
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Post Comments',
+                        data: communityTrends.comments,
+                        borderColor: '#14b8a6',
+                        backgroundColor: tealGradient,
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#14b8a6',
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Post Likes',
+                        data: communityTrends.likes,
+                        borderColor: '#f43f5e',
+                        backgroundColor: pinkGradient,
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#f43f5e',
+                        pointHoverRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#64748b', font: { weight: 500 } }
+                    },
+                    y: {
+                        grid: { color: '#f1f5f9' },
+                        ticks: { color: '#64748b', precision: 0 }
+                    }
+                }
+            }
+        });
+    }
+
     // Render activity feed
     function loadActivityFeed() {
         fetch(activityUrl, {
@@ -558,7 +763,7 @@
                         const color = getActivityColor(activity.type);
                         container.innerHTML += `
                             <div class="activity-item flex items-start p-4 border-b border-slate-50 hover:bg-slate-50/50 rounded-xl transition">
-                                <div class="bg-${color}-50 p-2.5 rounded-xl mr-4 text-${color}-600">
+                                <div class="bg-${color}-55 p-2.5 rounded-xl mr-4 text-${color}-600 bg-${color}-50">
                                     <i class="fas ${icon} text-base"></i>
                                 </div>
                                 <div class="flex-1">
@@ -640,7 +845,7 @@
         const pageWidth = doc.internal.pageSize.width;
         const pageHeight = doc.internal.pageSize.height;
 
-        // Theme Style
+        // Page 1 Header
         doc.setFillColor(30, 41, 59); // Dark blue header
         doc.rect(0, 0, pageWidth, 42, 'F');
         
@@ -672,49 +877,53 @@
         doc.setDrawColor(226, 232, 240);
         doc.line(15, 90, pageWidth - 15, 90);
 
-        // 1. Summary
+        // 1. Executive Summary
         doc.setFont("helvetica", "bold");
         doc.setFontSize(13);
         doc.setTextColor(30, 41, 59);
-        doc.text("1. Executive Analytics Summary", 15, 103);
+        doc.text("1. Executive Analytics Summary", 15, 101);
         
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9.5);
         doc.setTextColor(71, 85, 105);
         
-        const summaryText = `This document provides the official audit report of the UTHM Digital Bulletin Board System's key performance indexes during the ${data.period} filter period. System telemetry registered ${data.new_users} new user registrations, ${data.new_announcements} announcements created, and ${data.new_events} events compiled. Cumulative announcement view logs recorded ${data.total_views} visual hits, averaging ${data.avg_views_per_announcement} views per post. Active server/database sessions peaked at ${data.active_sessions} concurrent connects.`;
+        const summaryText = `This report provides the official audit report of the UTHM Digital Bulletin Board System's key performance indexes during the ${data.period} filter period. System telemetry registered ${data.new_users} new user registrations, ${data.new_announcements} announcements, and ${data.new_events} events. In addition, the Community Hub recorded substantial engagement with ${data.total_groups} active groups, ${data.new_group_posts} posts during this period (totaling ${data.total_group_posts}), ${data.new_group_comments} comments (totaling ${data.total_group_comments}), and ${data.new_group_likes} likes (totaling ${data.total_group_likes}). Cumulative announcement view logs recorded ${data.total_views} hits, and active peak server/database sessions logged ${data.active_sessions} concurrent connects.`;
         const splitText = doc.splitTextToSize(summaryText, pageWidth - 30);
-        doc.text(splitText, 15, 112);
+        doc.text(splitText, 15, 110);
 
-        // 2. Metrics Table
+        // 2. Key Performance Metrics Table
         doc.setFont("helvetica", "bold");
         doc.setFontSize(13);
         doc.setTextColor(30, 41, 59);
-        doc.text("2. Key Performance Metrics", 15, 143);
+        doc.text("2. System & Community Core Metrics", 15, 145);
 
-        const tableY = 150;
-        const rowHeight = 7.5;
+        const tableY = 152;
+        const rowHeight = 7.0;
 
         // Table Header
         doc.setFillColor(241, 245, 249);
         doc.rect(15, tableY, pageWidth - 30, rowHeight, 'F');
         doc.setTextColor(30, 41, 59);
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(9);
-        doc.text("Metric Description", 20, tableY + 5);
-        doc.text("Report Value", 90, tableY + 5);
-        doc.text("Measurement Description", 125, tableY + 5);
+        doc.setFontSize(8.5);
+        doc.text("Metric Description", 20, tableY + 4.5);
+        doc.text("Report Value", 85, tableY + 4.5);
+        doc.text("Measurement Description", 115, tableY + 4.5);
 
         const rows = [
-            ["New Registered Users", String(data.new_users), "Created user profiles during period"],
+            ["New Users Registered", String(data.new_users), "Created user profiles during period"],
             ["New Announcements", String(data.new_announcements), "Announcements submitted by users"],
             ["New Events Created", String(data.new_events), "Activities logged into calendar"],
             ["Peak Active Sessions", String(data.active_sessions), "Peak concurrent connections logged"],
             ["Total Announcement Views", String(data.total_views), "Cumulative visual hits on posts"],
-            ["Avg Views Per Post", String(data.avg_views_per_announcement), "Engagement average per post"]
+            ["Active Community Groups", String(data.total_groups), "Total communities hosted in hub"],
+            ["New Group Posts", String(data.new_group_posts), `New group postings (Total: ${data.total_group_posts})`],
+            ["New Post Comments", String(data.new_group_comments), `New comments posted (Total: ${data.total_group_comments})`],
+            ["New Post Likes", String(data.new_group_likes), `Likes registered (Total: ${data.total_group_likes})`]
         ];
 
         doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
         doc.setTextColor(71, 85, 105);
         rows.forEach((row, idx) => {
             const currY = tableY + rowHeight + (idx * rowHeight);
@@ -725,9 +934,9 @@
             doc.setDrawColor(241, 245, 249);
             doc.line(15, currY + rowHeight, pageWidth - 15, currY + rowHeight);
 
-            doc.text(row[0], 20, currY + 5);
-            doc.text(row[1], 90, currY + 5);
-            doc.text(row[2], 125, currY + 5);
+            doc.text(row[0], 20, currY + 4.5);
+            doc.text(row[1], 85, currY + 4.5);
+            doc.text(row[2], 115, currY + 4.5);
         });
 
         // Footer Page 1
@@ -752,36 +961,36 @@
         doc.setTextColor(30, 41, 59);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(13);
-        doc.text("3. Chart & Graphical Visual Analysis", 15, 32);
+        doc.text("3. Chart & Graphical Visual Analysis", 15, 30);
 
         // Render Trend Chart PNG into PDF
         const trendCanvas = document.getElementById('trendChart');
         if (trendCanvas) {
             const trendPNG = trendCanvas.toDataURL('image/png', 1.0);
-            doc.addImage(trendPNG, 'PNG', 15, 38, 110, 52);
+            doc.addImage(trendPNG, 'PNG', 15, 35, 90, 45);
         }
 
-        // Render Status Doughnut Chart PNG into PDF
-        const statusCanvas = document.getElementById('statusChart');
-        if (statusCanvas) {
-            const statusPNG = statusCanvas.toDataURL('image/png', 1.0);
-            doc.addImage(statusPNG, 'PNG', 132, 38, 62, 52);
+        // Render Community Trend Chart PNG into PDF
+        const commCanvas = document.getElementById('communityTrendChart');
+        if (commCanvas) {
+            const commPNG = commCanvas.toDataURL('image/png', 1.0);
+            doc.addImage(commPNG, 'PNG', 110, 35, 90, 45);
         }
 
         doc.setFont("helvetica", "italic");
-        doc.setFontSize(8.5);
+        doc.setFontSize(8);
         doc.setTextColor(148, 163, 184);
-        doc.text("Figure 3.1: Historical user, post, and event trend logs", 15, 94);
-        doc.text("Figure 3.2: Current post status", 132, 94);
+        doc.text("Figure 3.1: Core activity trend logs", 15, 84);
+        doc.text("Figure 3.2: Community Hub engagement trends", 110, 84);
 
         // Recent Activity Timeline Table
         doc.setFont("helvetica", "bold");
         doc.setFontSize(13);
         doc.setTextColor(30, 41, 59);
-        doc.text("4. Recent Activity Log Entries", 15, 107);
+        doc.text("4. Recent Activity Log Entries", 15, 97);
 
-        const actTableY = 114;
-        const actRowH = 8.5;
+        const actTableY = 104;
+        const actRowH = 8.0;
 
         // Table Header
         doc.setFillColor(241, 245, 249);
@@ -789,13 +998,13 @@
         doc.setTextColor(30, 41, 59);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
-        doc.text("Log Description", 20, actTableY + 5.5);
-        doc.text("Timestamp", 152, actTableY + 5.5);
+        doc.text("Log Description", 20, actTableY + 5.0);
+        doc.text("Timestamp", 152, actTableY + 5.0);
 
         doc.setFont("helvetica", "normal");
         doc.setTextColor(71, 85, 105);
 
-        const activities = Array.from(document.querySelectorAll('.activity-item')).slice(0, 12);
+        const activities = Array.from(document.querySelectorAll('.activity-item')).slice(0, 14);
         if (activities.length > 0) {
             activities.forEach((act, i) => {
                 const currY = actTableY + actRowH + (i * actRowH);
@@ -810,11 +1019,11 @@
                 const time = act.querySelector('.flex-1 p.text-xs')?.textContent?.trim() || '';
                 const truncated = desc.length > 70 ? desc.substring(0, 67) + '...' : desc;
 
-                doc.text(truncated, 20, currY + 5.5);
-                doc.text(time, 152, currY + 5.5);
+                doc.text(truncated, 20, currY + 5.0);
+                doc.text(time, 152, currY + 5.0);
             });
         } else {
-            doc.text("No log entries recorded.", 20, actTableY + actRowH + 5.5);
+            doc.text("No log entries recorded.", 20, actTableY + actRowH + 5.0);
         }
 
         // Footer Page 2
@@ -851,7 +1060,14 @@
         csv += `New Events Created,${data.new_events}\n`;
         csv += `Peak Active Connections,${data.active_sessions}\n`;
         csv += `Total Announcement Views,${data.total_views}\n`;
-        csv += `Average Post Engagement Views,${data.avg_views_per_announcement}\n\n`;
+        csv += `Average Post Engagement Views,${data.avg_views_per_announcement}\n`;
+        csv += `Active Community Groups,${data.total_groups}\n`;
+        csv += `New Group Posts in Period,${data.new_group_posts}\n`;
+        csv += `Total Group Posts,${data.total_group_posts}\n`;
+        csv += `New Comments in Period,${data.new_group_comments}\n`;
+        csv += `Total Comments,${data.total_group_comments}\n`;
+        csv += `New Likes in Period,${data.new_group_likes}\n`;
+        csv += `Total Likes,${data.total_group_likes}\n\n`;
 
         // Block 2: Post status
         csv += "ANNOUNCEMENT STATUS BREAKDOWN,COUNT\n";

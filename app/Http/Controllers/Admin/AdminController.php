@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use App\Models\CommunityGroup;
+use App\Models\GroupPost;
+use App\Models\GroupPostLike;
+use App\Models\GroupPostComment;
 
 class AdminController extends Controller
 {
@@ -652,6 +656,13 @@ private function getRecentActivityData()
             'events' => []
         ];
 
+        // Calculate community hub historical trends
+        $communityTrends = [
+            'posts' => [],
+            'comments' => [],
+            'likes' => []
+        ];
+
         if ($period === 'day') {
             for ($i = 23; $i >= 0; $i--) {
                 $time = now()->subHours($i);
@@ -662,6 +673,10 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$hourStart, $hourEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$hourStart, $hourEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+
+                $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+                $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+                $communityTrends['likes'][] = GroupPostLike::whereBetween('created_at', [$hourStart, $hourEnd])->count();
             }
         } elseif ($period === 'week') {
             for ($i = 6; $i >= 0; $i--) {
@@ -673,6 +688,10 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+
+                $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $communityTrends['likes'][] = GroupPostLike::whereBetween('created_at', [$dayStart, $dayEnd])->count();
             }
         } elseif ($period === 'year') {
             for ($i = 11; $i >= 0; $i--) {
@@ -684,6 +703,10 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$monthStart, $monthEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$monthStart, $monthEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+
+                $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                $communityTrends['likes'][] = GroupPostLike::whereBetween('created_at', [$monthStart, $monthEnd])->count();
             }
         } else {
             // Default to 'month'
@@ -696,6 +719,10 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+
+                $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $communityTrends['likes'][] = GroupPostLike::whereBetween('created_at', [$dayStart, $dayEnd])->count();
             }
         }
 
@@ -720,7 +747,17 @@ private function getRecentActivityData()
                 'avg_views_per_announcement' => $announcementCount > 0
                     ? round($totalViews / $announcementCount, 2)
                     : 0,
-                'trends' => $trends
+                'trends' => $trends,
+                
+                // Community Hub metrics
+                'total_groups' => CommunityGroup::count(),
+                'total_group_posts' => GroupPost::count(),
+                'total_group_comments' => GroupPostComment::count(),
+                'total_group_likes' => GroupPostLike::count(),
+                'new_group_posts' => GroupPost::where('created_at', '>=', $since)->count(),
+                'new_group_comments' => GroupPostComment::where('created_at', '>=', $since)->count(),
+                'new_group_likes' => GroupPostLike::where('created_at', '>=', $since)->count(),
+                'community_trends' => $communityTrends
             ],
         ]);
     }
@@ -1095,6 +1132,13 @@ private function getRecentActivityData()
             'events' => []
         ];
 
+        // Calculate community hub historical trends
+        $communityTrends = [
+            'posts' => [],
+            'comments' => [],
+            'likes' => []
+        ];
+
         if ($period === 'day') {
             for ($i = 23; $i >= 0; $i--) {
                 $time = now()->subHours($i);
@@ -1105,6 +1149,10 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$hourStart, $hourEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$hourStart, $hourEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+
+                $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+                $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+                $communityTrends['likes'][] = GroupPostLike::whereBetween('created_at', [$hourStart, $hourEnd])->count();
             }
         } elseif ($period === 'week') {
             for ($i = 6; $i >= 0; $i--) {
@@ -1116,6 +1164,10 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+
+                $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $communityTrends['likes'][] = GroupPostLike::whereBetween('created_at', [$dayStart, $dayEnd])->count();
             }
         } elseif ($period === 'year') {
             for ($i = 11; $i >= 0; $i--) {
@@ -1127,6 +1179,10 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$monthStart, $monthEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$monthStart, $monthEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+
+                $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                $communityTrends['likes'][] = GroupPostLike::whereBetween('created_at', [$monthStart, $monthEnd])->count();
             }
         } else {
             // Default to 'month'
@@ -1139,6 +1195,10 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+
+                $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $communityTrends['likes'][] = GroupPostLike::whereBetween('created_at', [$dayStart, $dayEnd])->count();
             }
         }
 
@@ -1164,6 +1224,16 @@ private function getRecentActivityData()
                 ? round($totalViews / $announcementCount, 2)
                 : 0,
             'trends' => $trends,
+            
+            // Community Hub metrics
+            'total_groups' => CommunityGroup::count(),
+            'total_group_posts' => GroupPost::count(),
+            'total_group_comments' => GroupPostComment::count(),
+            'total_group_likes' => GroupPostLike::count(),
+            'new_group_posts' => GroupPost::where('created_at', '>=', $since)->count(),
+            'new_group_comments' => GroupPostComment::where('created_at', '>=', $since)->count(),
+            'new_group_likes' => GroupPostLike::where('created_at', '>=', $since)->count(),
+            'community_trends' => $communityTrends
         ];
 
         return response()->json([

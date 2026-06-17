@@ -644,6 +644,61 @@ private function getRecentActivityData()
         $totalViews = (int) Announcement::sum('view_count');
         $announcementCount = Announcement::count();
 
+        // Calculate historical trends
+        $trends = [
+            'labels' => [],
+            'users' => [],
+            'announcements' => [],
+            'events' => []
+        ];
+
+        if ($period === 'day') {
+            for ($i = 23; $i >= 0; $i--) {
+                $time = now()->subHours($i);
+                $hourStart = $time->copy()->startOfHour();
+                $hourEnd = $time->copy()->endOfHour();
+                
+                $trends['labels'][] = $time->format('H:00');
+                $trends['users'][] = User::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+                $trends['announcements'][] = Announcement::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+                $trends['events'][] = Event::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+            }
+        } elseif ($period === 'week') {
+            for ($i = 6; $i >= 0; $i--) {
+                $date = now()->subDays($i);
+                $dayStart = $date->copy()->startOfDay();
+                $dayEnd = $date->copy()->endOfDay();
+                
+                $trends['labels'][] = $date->format('D, M d');
+                $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+            }
+        } elseif ($period === 'year') {
+            for ($i = 11; $i >= 0; $i--) {
+                $month = now()->subMonths($i);
+                $monthStart = $month->copy()->startOfMonth();
+                $monthEnd = $month->copy()->endOfMonth();
+                
+                $trends['labels'][] = $month->format('M Y');
+                $trends['users'][] = User::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                $trends['announcements'][] = Announcement::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                $trends['events'][] = Event::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+            }
+        } else {
+            // Default to 'month'
+            for ($i = 29; $i >= 0; $i--) {
+                $date = now()->subDays($i);
+                $dayStart = $date->copy()->startOfDay();
+                $dayEnd = $date->copy()->endOfDay();
+                
+                $trends['labels'][] = $date->format('M d');
+                $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+            }
+        }
+
         return response()->json([
             'success' => true,
             'data' => [
@@ -665,6 +720,7 @@ private function getRecentActivityData()
                 'avg_views_per_announcement' => $announcementCount > 0
                     ? round($totalViews / $announcementCount, 2)
                     : 0,
+                'trends' => $trends
             ],
         ]);
     }
@@ -1028,6 +1084,64 @@ private function getRecentActivityData()
         $since = $this->periodStart($period);
         $today = now()->toDateString();
 
+        $totalViews = (int) Announcement::sum('view_count');
+        $announcementCount = Announcement::count();
+
+        // Calculate historical trends
+        $trends = [
+            'labels' => [],
+            'users' => [],
+            'announcements' => [],
+            'events' => []
+        ];
+
+        if ($period === 'day') {
+            for ($i = 23; $i >= 0; $i--) {
+                $time = now()->subHours($i);
+                $hourStart = $time->copy()->startOfHour();
+                $hourEnd = $time->copy()->endOfHour();
+                
+                $trends['labels'][] = $time->format('H:00');
+                $trends['users'][] = User::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+                $trends['announcements'][] = Announcement::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+                $trends['events'][] = Event::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+            }
+        } elseif ($period === 'week') {
+            for ($i = 6; $i >= 0; $i--) {
+                $date = now()->subDays($i);
+                $dayStart = $date->copy()->startOfDay();
+                $dayEnd = $date->copy()->endOfDay();
+                
+                $trends['labels'][] = $date->format('D, M d');
+                $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+            }
+        } elseif ($period === 'year') {
+            for ($i = 11; $i >= 0; $i--) {
+                $month = now()->subMonths($i);
+                $monthStart = $month->copy()->startOfMonth();
+                $monthEnd = $month->copy()->endOfMonth();
+                
+                $trends['labels'][] = $month->format('M Y');
+                $trends['users'][] = User::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                $trends['announcements'][] = Announcement::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                $trends['events'][] = Event::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+            }
+        } else {
+            // Default to 'month'
+            for ($i = 29; $i >= 0; $i--) {
+                $date = now()->subDays($i);
+                $dayStart = $date->copy()->startOfDay();
+                $dayEnd = $date->copy()->endOfDay();
+                
+                $trends['labels'][] = $date->format('M d');
+                $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+            }
+        }
+
         $report = [
             'period' => $period,
             'generated_at' => now()->toIso8601String(),
@@ -1045,7 +1159,11 @@ private function getRecentActivityData()
                 'upcoming' => Event::where('start_date', '>=', $today)->count(),
                 'past' => Event::where('start_date', '<', $today)->count(),
             ],
-            'total_views' => (int) Announcement::sum('view_count'),
+            'total_views' => $totalViews,
+            'avg_views_per_announcement' => $announcementCount > 0
+                ? round($totalViews / $announcementCount, 2)
+                : 0,
+            'trends' => $trends,
         ];
 
         return response()->json([

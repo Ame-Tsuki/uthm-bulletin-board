@@ -35,6 +35,46 @@ class EventController extends Controller
     }
 
     /**
+     * List all events matching filters (web view page)
+     */
+    public function listAll(Request $request)
+    {
+        $user = Auth::user();
+        $search = $request->get('search');
+        $type = $request->get('type', 'all');
+
+        $query = Event::with('creator');
+
+        if ($user->role === 'admin') {
+            $query->where('visibility', 'public');
+        } else {
+            $query->where(function($q) use ($user) {
+                $q->where('visibility', 'public')
+                  ->orWhere('user_id', $user->id);
+            });
+        }
+
+        if ($type && $type !== 'all') {
+            $query->where('type', $type);
+        }
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                  ->orWhere('description', 'LIKE', "%{$search}%")
+                  ->orWhere('location', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $events = $query->orderBy('start_date', 'asc')
+            ->orderBy('start_time', 'asc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('events.list', compact('events', 'user', 'search', 'type'));
+    }
+
+    /**
      * Toggle attendance for the authenticated user (web action)
      */
     public function toggleAttend(Request $request, Event $event)

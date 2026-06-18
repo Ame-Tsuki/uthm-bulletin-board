@@ -444,6 +444,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Featured Announcements Route
     Route::get('/announcements/featured', [AnnouncementController::class, 'getFeatured'])->name('announcements.featured');
     // Event web routes (view + attend) - simple blade views and RSVP
+    Route::get('/events-list', [EventController::class, 'listAll'])->name('events.list');
     Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
     Route::post('/events/{event}/attend', [EventController::class, 'toggleAttend'])->name('events.attend');
 

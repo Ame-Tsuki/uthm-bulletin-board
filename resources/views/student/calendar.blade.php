@@ -227,7 +227,7 @@
                                 <button id="month-view" class="px-3 py-1 rounded text-sm font-medium bg-white shadow text-uthm-blue">Month</button>
                                 <button id="week-view" class="px-3 py-1 rounded text-sm font-medium text-gray-600 hover:text-gray-900">Week</button>
                                 <button id="day-view" class="px-3 py-1 rounded text-sm font-medium text-gray-600 hover:text-gray-900">Day</button>
-                                <button id="list-view" class="px-3 py-1 rounded text-sm font-medium text-gray-600 hover:text-gray-900">List All</button>
+                                <a href="{{ route('events.list') }}" class="px-3 py-1 rounded text-sm font-medium text-gray-600 hover:text-gray-900 flex items-center">List All</a>
                             </div>
                             <div class="flex items-center space-x-2">
                                 <button id="prev-month" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600">
@@ -291,11 +291,6 @@
                     <div id="day-view-container" class="hidden">
                         <div id="day-grid" class="day-view-grid"></div>
                     </div>
-
-                    <!-- List View Container -->
-                    <div id="list-view-container" class="hidden p-6">
-                        <div id="list-grid" class="space-y-4"></div>
-                    </div>
                 </div>
 
                 <!-- Upcoming Events & Sidebar -->
@@ -304,7 +299,7 @@
                         <div class="portal-card">
                             <div class="flex justify-between items-center mb-3">
                                 <h3 class="portal-section-title">Upcoming Events This Week</h3>
-                                <a href="#" id="view-all-link" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">
+                                <a href="{{ route('events.list') }}" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">
                                     View All <i class="fas fa-arrow-right ml-1"></i>
                                 </a>
                             </div>
@@ -588,19 +583,10 @@
         const monthBtn = document.getElementById('month-view');
         const weekBtn = document.getElementById('week-view');
         const dayBtn = document.getElementById('day-view');
-        const listBtn = document.getElementById('list-view');
-        const viewAllLink = document.getElementById('view-all-link');
         
         if (monthBtn) monthBtn.addEventListener('click', () => setView('month'));
         if (weekBtn) weekBtn.addEventListener('click', () => setView('week'));
         if (dayBtn) dayBtn.addEventListener('click', () => setView('day'));
-        if (listBtn) listBtn.addEventListener('click', () => setView('list'));
-        if (viewAllLink) {
-            viewAllLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                setView('list');
-            });
-        }
     }
     
     function setView(view) {
@@ -609,17 +595,15 @@
         const monthBtn = document.getElementById('month-view');
         const weekBtn = document.getElementById('week-view');
         const dayBtn = document.getElementById('day-view');
-        const listBtn = document.getElementById('list-view');
         
         const monthView = document.getElementById('month-view-container');
         const weekView = document.getElementById('week-view-container');
         const dayView = document.getElementById('day-view-container');
-        const listView = document.getElementById('list-view-container');
         
         const activeClass = 'px-3 py-1 rounded text-sm font-medium bg-white shadow text-uthm-blue';
         const inactiveClass = 'px-3 py-1 rounded text-sm font-medium text-gray-600 hover:text-gray-900';
         
-        [monthBtn, weekBtn, dayBtn, listBtn].forEach(btn => {
+        [monthBtn, weekBtn, dayBtn].forEach(btn => {
             if (btn) {
                 btn.className = inactiveClass;
             }
@@ -628,7 +612,6 @@
         if (monthView) monthView.classList.add('hidden');
         if (weekView) weekView.classList.add('hidden');
         if (dayView) dayView.classList.add('hidden');
-        if (listView) listView.classList.add('hidden');
         
         if (view === 'month') {
             if (monthBtn) monthBtn.className = activeClass;
@@ -642,10 +625,6 @@
             if (dayBtn) dayBtn.className = activeClass;
             if (dayView) dayView.classList.remove('hidden');
             renderDayView();
-        } else if (view === 'list') {
-            if (listBtn) listBtn.className = activeClass;
-            if (listView) listView.classList.remove('hidden');
-            renderListView();
         }
     }
     
@@ -759,49 +738,7 @@
         }
     }
 
-    function renderListView() {
-        const listGrid = document.getElementById('list-grid');
-        if (!listGrid) return;
-        
-        const events = [...filteredEvents].sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
-        
-        if (events.length === 0) {
-            listGrid.innerHTML = `
-                <div class="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
-                    <i class="fas fa-calendar-times text-4xl mb-3 text-gray-300"></i>
-                    <p class="font-medium text-gray-600">No events found matching current filter/search</p>
-                </div>
-            `;
-            return;
-        }
-        
-        listGrid.innerHTML = '';
-        events.forEach(event => {
-            const eventDate = new Date(event.start_date);
-            const div = document.createElement('div');
-            div.className = `p-4 hover:shadow-md transition bg-white border rounded-xl flex items-center justify-between cursor-pointer`;
-            div.onclick = () => showEventDetail(event);
-            div.innerHTML = `
-                <div class="flex items-center gap-4">
-                    <div class="text-center bg-gray-50 p-2.5 rounded-lg border min-w-[70px]">
-                        <div class="font-bold text-lg text-gray-900">${eventDate.getDate()}</div>
-                        <div class="text-xs uppercase text-gray-500 font-semibold">${eventDate.toLocaleDateString('en-US', { month: 'short' })}</div>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-gray-900">${escapeHtml(event.title)}</h4>
-                        <p class="text-sm text-gray-500 mt-1">
-                            <i class="far fa-clock mr-1"></i> ${event.all_day ? 'All day' : (event.start_time || 'No time set')}
-                            ${event.location ? ` • <i class="fas fa-map-marker-alt mx-1"></i> ${escapeHtml(event.location)}` : ''}
-                        </p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="inline-block px-3 py-1 text-xs rounded-full font-semibold ${getEventClass(event.type)}">${event.type || 'other'}</span>
-                </div>
-            `;
-            listGrid.appendChild(div);
-        });
-    }
+
 
     function escapeHtml(text) {
         if (!text) return '';

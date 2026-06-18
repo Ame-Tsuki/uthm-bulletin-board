@@ -128,7 +128,8 @@ public function store(Request $request): RedirectResponse
         'expiry_date' => [
             'nullable',
             'date',
-            'after_or_equal:publish_date',
+            Rule::when($request->filled('publish_date'), 'after_or_equal:publish_date'),
+            Rule::when(!$request->filled('publish_date'), 'after_or_equal:today'),
             Rule::when($request->input('status') === 'published', 'after_or_equal:today'),
         ],
         'announcement_type' => 'required|in:official,unofficial',
@@ -185,6 +186,7 @@ public function store(Request $request): RedirectResponse
                 $validated['needs_verification'] = false;
                 $validated['verified_at'] = now();
                 $validated['verified_by'] = $user->id;
+                $validated['published_at'] = now();
             } else {
                 $validated['needs_verification'] = false;
             }
@@ -205,6 +207,7 @@ public function store(Request $request): RedirectResponse
         // Unofficial announcements can be published immediately by anyone
         if ($status === 'published') {
             $validated['status'] = 'published';
+            $validated['published_at'] = now();
         }
     }
     
@@ -490,7 +493,8 @@ public function update(Request $request, Announcement $announcement): RedirectRe
         'expiry_date' => [
             'nullable',
             'date',
-            'after_or_equal:publish_date',
+            Rule::when($request->filled('publish_date'), 'after_or_equal:publish_date'),
+            Rule::when(!$request->filled('publish_date'), 'after_or_equal:today'),
             Rule::when($request->input('status') === 'published', 'after_or_equal:today'),
         ],
         'announcement_type' => 'required|in:official,unofficial',
@@ -538,11 +542,13 @@ public function update(Request $request, Announcement $announcement): RedirectRe
                 $validated['needs_verification'] = false;
                 $validated['verified_at'] = now();
                 $validated['verified_by'] = $user->id;
+                $validated['published_at'] = now();
             } elseif ($validated['status'] === 'pending_verification') {
                 $validated['status'] = 'published';
                 $validated['needs_verification'] = false;
                 $validated['verified_at'] = now();
                 $validated['verified_by'] = $user->id;
+                $validated['published_at'] = now();
             } else {
                 $validated['needs_verification'] = false;
             }
@@ -569,6 +575,9 @@ public function update(Request $request, Announcement $announcement): RedirectRe
         // Unofficial announcements can be published immediately by anyone
         if ($validated['status'] === 'pending_verification') {
             $validated['status'] = 'published';
+            $validated['published_at'] = now();
+        } elseif ($validated['status'] === 'published') {
+            $validated['published_at'] = now();
         }
     }
     
@@ -811,6 +820,7 @@ public function update(Request $request, Announcement $announcement): RedirectRe
             'needs_verification' => false,
             'verified_at' => now(),
             'verified_by' => $user->id,
+            'published_at' => now(),
             'rejection_reason' => null,
             'rejected_at' => null,
             'rejected_by' => null,

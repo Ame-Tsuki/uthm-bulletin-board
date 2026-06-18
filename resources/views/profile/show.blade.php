@@ -133,6 +133,20 @@
                                         <p class="font-semibold text-gray-900">{{ $user->phone }}</p>
                                     </div>
                                     @endif
+                                    <div class="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                                        <p class="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1.5">My Interests</p>
+                                        @if(is_array($user->interests) && count($user->interests) > 0)
+                                            <div class="flex flex-wrap gap-1.5 mt-1">
+                                                @foreach($user->interests as $interest)
+                                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-uthm-blue-light text-uthm-blue border border-uthm-blue/10 hover:scale-105 transition-transform duration-150">
+                                                        <i class="fas fa-hashtag mr-1 opacity-70"></i>{{ $interest }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <p class="text-sm text-gray-500 italic">No interests added yet. Edit profile to add some!</p>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
 

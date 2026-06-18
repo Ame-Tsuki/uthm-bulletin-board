@@ -43,6 +43,27 @@ class ProfileTest extends TestCase
         $this->assertNull($user->email_verified_at);
     }
 
+    public function test_profile_interests_can_be_updated(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+                'interests' => ['Coding', 'Music'],
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile/edit');
+
+        $user->refresh();
+
+        $this->assertEquals(['Coding', 'Music'], $user->interests);
+    }
+
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
     {
         $user = User::factory()->create();

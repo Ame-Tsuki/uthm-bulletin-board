@@ -30,6 +30,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'google_token_expires_at',
         'google_calendar_id',
         'google_calendar_synced',
+        'interests',
     ];
 
     protected $hidden = [
@@ -41,6 +42,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'is_verified' => 'boolean',
         'is_banned' => 'boolean',
+        'interests' => 'array',
     ];
 
     public function isAdmin()

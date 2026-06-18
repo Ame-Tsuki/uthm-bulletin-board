@@ -85,6 +85,25 @@
             </div>
         </div>
 
+        <div class="mt-6 border-t border-gray-100 pt-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-2">My Interests & Hobbies</h3>
+            <p class="text-xs text-gray-500 mb-4">Select the interests you want to connect with. This helps you find relevant community groups.</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                @php
+                    $availableInterests = ['Drawing', 'Swimming', 'Science', 'Music', 'Gaming', 'Reading', 'Coding', 'Cooking', 'Photography', 'Sports'];
+                    $userInterests = $user->interests ?? [];
+                @endphp
+                @foreach($availableInterests as $interest)
+                    <label class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl cursor-pointer transition duration-150 select-none group">
+                        <input type="checkbox" name="interests[]" value="{{ $interest }}" 
+                               {{ in_array($interest, $userInterests) ? 'checked' : '' }}
+                               class="rounded border-gray-300 text-uthm-blue focus:ring-uthm-blue w-4 h-4 mr-2.5">
+                        <span class="text-sm text-gray-700 font-medium group-hover:text-gray-900">{{ $interest }}</span>
+                    </label>
+                @endforeach
+            </div>
+        </div>
+
         <div class="flex items-center gap-4 pt-4 border-t border-gray-100">
             <x-primary-button>
                 <span class="flex items-center gap-2">

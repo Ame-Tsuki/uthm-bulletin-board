@@ -48,7 +48,7 @@ class CommunityHubController extends Controller
             ->where('status', 'pending')
             ->with('group')
             ->get();
-        
+
         // Get all posts from groups user is member of
         $groupIds = GroupMember::where('user_id', $user->id)
             ->where('status', 'approved')
@@ -64,7 +64,30 @@ class CommunityHubController extends Controller
                 return $post;
             });
         
-        return view('student.community-hub', compact('allGroups', 'myGroups', 'pendingRequests', 'posts'));
+        // Fetch recommended groups based on user interests
+        $recommendedGroups = collect();
+        if ($user->interests && count($user->interests) > 0) {
+            $recQuery = CommunityGroup::withCount('members')
+                ->where('created_by', '!=', $user->id)
+                ->whereNotExists(function($query) use ($user) {
+                    $query->select(DB::raw(1))
+                        ->from('group_members')
+                        ->whereColumn('group_members.group_id', 'community_groups.id')
+                        ->where('group_members.user_id', $user->id)
+                        ->where('group_members.status', 'approved');
+                });
+                
+            $recQuery->where(function($q) use ($user) {
+                $q->whereIn('category', $user->interests);
+                foreach ($user->interests as $interest) {
+                    $q->orWhere('tags', 'like', '%"' . $interest . '"%');
+                }
+            });
+            
+            $recommendedGroups = $recQuery->take(6)->get();
+        }
+        
+        return view('student.community-hub', compact('allGroups', 'myGroups', 'pendingRequests', 'posts', 'recommendedGroups'));
     }
     
     public function create()
@@ -107,6 +130,7 @@ class CommunityHubController extends Controller
         'category' => 'required|string',
         'privacy' => 'required|in:public,by_approval',
         'max_members' => 'nullable|integer|min:1|max:10000',
+        'tags' => 'nullable|array',
     ], [
         'name.unique' => 'A group with this name already exists. Please choose a different name.',
         'name.required' => 'Group name is required.',
@@ -130,6 +154,7 @@ class CommunityHubController extends Controller
             'allow_posts' => true,
             'allow_events' => true,
             'require_approval' => $validated['privacy'] === 'by_approval',
+            'tags' => $request->input('tags', []),
         ]);
         
         GroupMember::create([

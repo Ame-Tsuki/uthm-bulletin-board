@@ -126,6 +126,16 @@
                         {{ Str::limit($group->description, 80) }}
                     </p>
                     
+                    @if(is_array($group->tags) && count($group->tags) > 0)
+                        <div class="flex flex-wrap gap-1 mt-2">
+                            @foreach($group->tags as $tag)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-medium border border-blue-100">
+                                    {{ $tag }}
+                                </span>
+                            @endforeach
+                        </div>
+                    @endif
+                    
                     <!-- Footer with Category and Leave Button -->
                     <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
                         <span class="text-xs px-2 py-1 bg-gray-100 rounded-full font-medium">
@@ -256,6 +266,48 @@
 
         <!-- Right Column: Discover Groups -->
         <div>
+            @if(isset($recommendedGroups) && $recommendedGroups->count() > 0)
+            <div class="bg-white rounded-xl shadow p-5 mb-6 border-l-4 border-uthm-blue">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg text-gray-900 flex items-center gap-2">
+                        <i class="fas fa-magic text-uthm-blue animate-pulse"></i> Recommended For You
+                    </h3>
+                    <span class="text-xs font-semibold text-uthm-blue bg-uthm-blue-light px-2.5 py-1 rounded-full">
+                        Based on your interests
+                    </span>
+                </div>
+                <div class="space-y-4">
+                    @foreach($recommendedGroups as $group)
+                    <div class="pb-3 last:pb-0 last:border-b-0 border-b border-gray-100">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <a href="{{ route($routePrefix . '.community-hub.show', $group->id) }}" class="hover:text-uthm-blue">
+                                    <h4 class="font-bold text-gray-900 text-sm hover:underline">{{ $group->name }}</h4>
+                                </a>
+                                <p class="text-xs text-gray-500 mt-0.5">{{ $group->category }} • {{ $group->members_count }}/{{ $group->max_members ?? '∞' }} members</p>
+                                @if(is_array($group->tags) && count($group->tags) > 0)
+                                    <div class="flex flex-wrap gap-1 mt-1.5">
+                                        @foreach($group->tags as $tag)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-medium border border-blue-100">
+                                                {{ $tag }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                            </div>
+                            <form action="{{ route($routePrefix . '.community-hub.join', $group->id) }}" method="POST" class="ml-2">
+                                @csrf
+                                <button type="submit" class="bg-uthm-blue text-white px-2.5 py-1 rounded text-xs whitespace-nowrap hover:bg-blue-700 transition">
+                                    Join
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
             <div class="bg-white rounded-xl shadow p-5 mb-6" id="discover">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="font-bold text-lg">Discover Groups</h3>
@@ -285,6 +337,15 @@
                                 </a>
                                 <p class="text-xs text-gray-500">{{ $group->category }} • {{ $group->members_count }}/{{ $group->max_members ?? '∞' }} members</p>
                                 <p class="text-sm text-gray-600 mt-1">{{ Str::limit($group->description, 50) }}</p>
+                                @if(is_array($group->tags) && count($group->tags) > 0)
+                                    <div class="flex flex-wrap gap-1 mt-1.5">
+                                        @foreach($group->tags as $tag)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[10px] font-medium border border-blue-100">
+                                                {{ $tag }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </div>
                             <form action="{{ route($routePrefix . '.community-hub.join', $group->id) }}" method="POST" class="ml-2">
                                 @csrf
@@ -395,6 +456,20 @@
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1">Max Members (Optional)</label>
                     <input type="number" name="max_members" class="w-full border rounded-lg p-2" placeholder="Leave empty for unlimited">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1.5">Group Tags of Interest</label>
+                    <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-100 max-h-36 overflow-y-auto">
+                        @php
+                            $availableTags = ['Drawing', 'Swimming', 'Science', 'Music', 'Gaming', 'Reading', 'Coding', 'Cooking', 'Photography', 'Sports'];
+                        @endphp
+                        @foreach($availableTags as $tag)
+                            <label class="flex items-center text-sm cursor-pointer select-none">
+                                <input type="checkbox" name="tags[]" value="{{ $tag }}" class="rounded border-gray-300 text-uthm-blue focus:ring-uthm-blue w-4 h-4 mr-2">
+                                <span class="text-gray-700">{{ $tag }}</span>
+                            </label>
+                        @endforeach
+                    </div>
                 </div>
                 <div class="flex gap-3">
                     <button type="button" onclick="closeCreateGroupModal()" class="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>

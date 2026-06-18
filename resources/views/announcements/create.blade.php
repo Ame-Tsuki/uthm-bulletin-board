@@ -350,6 +350,9 @@
                                 @enderror
                             </div>
 
+                            <!-- Hidden status field - set by button click to survive disableSubmitButtons() -->
+                            <input type="hidden" name="status" id="status-hidden" value="published">
+
                             <!-- Actions -->
                             <div class="flex flex-wrap gap-3 justify-end pt-4 border-t border-gray-100">
                                 <a href="{{ route('announcements.index') }}" 
@@ -357,15 +360,14 @@
                                     Cancel
                                 </a>
                                 <button type="submit" 
-                                        name="status" 
-                                        value="draft"
+                                        id="draft-button"
+                                        data-status="draft"
                                         class="px-5 py-2.5 bg-gray-150 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium transition-colors">
                                     <i class="fas fa-save mr-1.5"></i>Save Draft
                                 </button>
                                 <button type="submit" 
-                                        name="status" 
-                                        value="published"
                                         id="publish-button"
+                                        data-status="published"
                                         class="px-6 py-2.5 bg-uthm-blue hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-all shadow-sm hover:shadow flex items-center">
                                     <i class="fas fa-paper-plane mr-1.5" id="publish-icon"></i>
                                     <i class="fas fa-spinner fa-spin mr-1.5 hidden" id="publish-spinner"></i>
@@ -482,6 +484,13 @@
                 });
             }
             
+            // Capture status value BEFORE submit fires (clicking button sets hidden input)
+            document.querySelectorAll('button[data-status]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.getElementById('status-hidden').value = this.getAttribute('data-status');
+                });
+            });
+
             // Validate and show submit spinner
             if (form) {
                 form.addEventListener('submit', function(e) {
@@ -506,12 +515,15 @@
                     if (!isValid) {
                         e.preventDefault();
                     } else {
-                        // Show publish loading spinner
-                        const spinner = document.getElementById('publish-spinner');
-                        const icon = document.getElementById('publish-icon');
-                        if (spinner && icon) {
-                            spinner.classList.remove('hidden');
-                            icon.classList.add('hidden');
+                        // Show publish loading spinner only on publish button
+                        const statusVal = document.getElementById('status-hidden').value;
+                        if (statusVal === 'published') {
+                            const spinner = document.getElementById('publish-spinner');
+                            const icon = document.getElementById('publish-icon');
+                            if (spinner && icon) {
+                                spinner.classList.remove('hidden');
+                                icon.classList.add('hidden');
+                            }
                         }
                         disableSubmitButtons();
                     }

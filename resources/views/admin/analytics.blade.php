@@ -170,6 +170,75 @@
     </div>
 </div>
 
+<!-- Section: Content Moderation Metrics -->
+<h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+    <span>Content Moderation Reports</span>
+    <span class="h-[1px] bg-slate-200 flex-1"></span>
+</h2>
+
+<!-- Moderation Metrics Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Card: Total Reports -->
+    <div class="analytics-card bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 font-semibold text-sm tracking-wide uppercase">Total Reports</span>
+            <div class="p-3 rounded-xl bg-purple-50 text-purple-600">
+                <i class="fas fa-flag text-lg"></i>
+            </div>
+        </div>
+        <h3 class="text-3xl font-extrabold text-slate-900 tracking-tight" id="totalReportsCount">-</h3>
+        <p class="text-sm text-slate-500 mt-2 flex items-center gap-1.5">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+            <span>All-time user submissions</span>
+        </p>
+    </div>
+
+    <!-- Card: New Reports -->
+    <div class="analytics-card bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 font-semibold text-sm tracking-wide uppercase">New Reports</span>
+            <div class="p-3 rounded-xl bg-pink-50 text-pink-600">
+                <i class="fas fa-exclamation-triangle text-lg"></i>
+            </div>
+        </div>
+        <h3 class="text-3xl font-extrabold text-slate-900 tracking-tight" id="newReportsCount">-</h3>
+        <p class="text-sm text-slate-500 mt-2 flex items-center gap-1.5">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+            <span>Submitted this period</span>
+        </p>
+    </div>
+
+    <!-- Card: Pending Reports -->
+    <div class="analytics-card bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 font-semibold text-sm tracking-wide uppercase">Pending Review</span>
+            <div class="p-3 rounded-xl bg-amber-50 text-amber-600">
+                <i class="fas fa-hourglass-half text-lg"></i>
+            </div>
+        </div>
+        <h3 class="text-3xl font-extrabold text-slate-900 tracking-tight text-amber-600" id="pendingReportsCount">-</h3>
+        <p class="text-sm text-slate-500 mt-2 flex items-center gap-1.5">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+            <span>Action required</span>
+        </p>
+    </div>
+
+    <!-- Card: Actioned Reports -->
+    <div class="analytics-card bg-white rounded-2xl border border-slate-100 shadow-sm p-6 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-slate-400 font-semibold text-sm tracking-wide uppercase">Actioned Reports</span>
+            <div class="p-3 rounded-xl bg-emerald-50 text-emerald-600">
+                <i class="fas fa-check-circle text-lg"></i>
+            </div>
+        </div>
+        <h3 class="text-3xl font-extrabold text-slate-900 tracking-tight" id="actionedReportsCount">-</h3>
+        <p class="text-xs text-slate-500 mt-2 truncate flex items-center gap-1.5">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>Resolved: <span id="resolvedReportsCount" class="font-bold">0</span> | Dismissed: <span id="dismissedReportsCount" class="font-bold">0</span></span>
+        </p>
+    </div>
+</div>
+
 <!-- Section: Community Hub Engagement Metrics -->
 <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
     <span>Community Hub Engagement</span>
@@ -288,6 +357,9 @@
                 </span>
                 <span class="flex items-center gap-1 text-xs text-rose-600 font-semibold bg-rose-50 px-2.5 py-1 rounded-lg">
                     <span class="w-2 h-2 bg-rose-500 rounded-full"></span> Events
+                </span>
+                <span class="flex items-center gap-1 text-xs text-purple-600 font-semibold bg-purple-50 px-2.5 py-1 rounded-lg">
+                    <span class="w-2 h-2 bg-purple-500 rounded-full"></span> Reports
                 </span>
             </div>
         </div>
@@ -482,6 +554,14 @@
                     document.getElementById('totalViewsCount').textContent = Number(analytics.total_views ?? 0).toLocaleString();
                     document.getElementById('avgViewsCount').textContent = analytics.avg_views_per_announcement ?? 0;
                     
+                    // Update Content Moderation metrics UI
+                    document.getElementById('totalReportsCount').textContent = analytics.total_reports ?? 0;
+                    document.getElementById('newReportsCount').textContent = analytics.new_reports ?? 0;
+                    document.getElementById('pendingReportsCount').textContent = analytics.pending_reports ?? 0;
+                    document.getElementById('actionedReportsCount').textContent = (analytics.resolved_reports ?? 0) + (analytics.dismissed_reports ?? 0);
+                    document.getElementById('resolvedReportsCount').textContent = analytics.resolved_reports ?? 0;
+                    document.getElementById('dismissedReportsCount').textContent = analytics.dismissed_reports ?? 0;
+                    
                     // Update Community Hub metrics UI
                     document.getElementById('totalGroupsCount').textContent = analytics.total_groups ?? 0;
                     document.getElementById('newGroupPostsCount').textContent = analytics.new_group_posts ?? 0;
@@ -547,6 +627,10 @@
         roseGradient.addColorStop(0, 'rgba(239, 68, 68, 0.4)');
         roseGradient.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
 
+        const purpleGradient = ctx.createLinearGradient(0, 0, 0, 300);
+        purpleGradient.addColorStop(0, 'rgba(168, 85, 247, 0.4)');
+        purpleGradient.addColorStop(1, 'rgba(168, 85, 247, 0.0)');
+
         trendChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
@@ -583,6 +667,17 @@
                         tension: 0.35,
                         borderWidth: 2,
                         pointBackgroundColor: '#ef4444',
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Reports',
+                        data: trendData.reports,
+                        borderColor: '#a855f7',
+                        backgroundColor: purpleGradient,
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#a855f7',
                         pointHoverRadius: 6
                     }
                 ]
@@ -887,7 +982,7 @@
         doc.setFontSize(9.5);
         doc.setTextColor(71, 85, 105);
         
-        const summaryText = `This report provides the official audit report of the UTHM Digital Bulletin Board System's key performance indexes during the ${data.period} filter period. System telemetry registered ${data.new_users} new user registrations, ${data.new_announcements} announcements, and ${data.new_events} events. In addition, the Community Hub recorded substantial engagement with ${data.total_groups} active groups, ${data.new_group_posts} posts during this period (totaling ${data.total_group_posts}), ${data.new_group_comments} comments (totaling ${data.total_group_comments}), and ${data.new_group_likes} likes (totaling ${data.total_group_likes}). Cumulative announcement view logs recorded ${data.total_views} hits, and active peak server/database sessions logged ${data.active_sessions} concurrent connects.`;
+        const summaryText = `This report provides the official audit report of the UTHM Digital Bulletin Board System's key performance indexes during the ${data.period} filter period. System telemetry registered ${data.new_users} new user registrations, ${data.new_announcements} announcements, ${data.new_events} events, and ${data.new_reports ?? 0} moderation reports. In addition, the Community Hub recorded substantial engagement with ${data.total_groups} active groups, ${data.new_group_posts} posts during this period (totaling ${data.total_group_posts}), ${data.new_group_comments} comments (totaling ${data.total_group_comments}), and ${data.new_group_likes} likes (totaling ${data.total_group_likes}). Cumulative announcement view logs recorded ${data.total_views} hits, and active peak server/database sessions logged ${data.active_sessions} concurrent connects.`;
         const splitText = doc.splitTextToSize(summaryText, pageWidth - 30);
         doc.text(splitText, 15, 110);
 
@@ -919,7 +1014,11 @@
             ["Active Community Groups", String(data.total_groups), "Total communities hosted in hub"],
             ["New Group Posts", String(data.new_group_posts), `New group postings (Total: ${data.total_group_posts})`],
             ["New Post Comments", String(data.new_group_comments), `New comments posted (Total: ${data.total_group_comments})`],
-            ["New Post Likes", String(data.new_group_likes), `Likes registered (Total: ${data.total_group_likes})`]
+            ["New Post Likes", String(data.new_group_likes), `Likes registered (Total: ${data.total_group_likes})`],
+            ["Total Moderation Reports", String(data.total_reports ?? 0), "All-time accumulated user reports"],
+            ["New Reports in Period", String(data.new_reports ?? 0), "Reports submitted during this period"],
+            ["Pending Reports", String(data.pending_reports ?? 0), "Reports currently awaiting review"],
+            ["Resolved/Dismissed Reports", `${data.resolved_reports ?? 0} / ${data.dismissed_reports ?? 0}`, "Actioned / Ignored report counts"]
         ];
 
         doc.setFont("helvetica", "normal");
@@ -1068,6 +1167,14 @@
         csv += `Total Comments,${data.total_group_comments}\n`;
         csv += `New Likes in Period,${data.new_group_likes}\n`;
         csv += `Total Likes,${data.total_group_likes}\n\n`;
+
+        // Block 2.5: Moderation
+        csv += "CONTENT MODERATION REPORTS,COUNT\n";
+        csv += `Total Moderation Reports,${data.total_reports ?? 0}\n`;
+        csv += `New Moderation Reports,${data.new_reports ?? 0}\n`;
+        csv += `Pending Moderation Reports,${data.pending_reports ?? 0}\n`;
+        csv += `Resolved Moderation Reports,${data.resolved_reports ?? 0}\n`;
+        csv += `Dismissed Moderation Reports,${data.dismissed_reports ?? 0}\n\n`;
 
         // Block 2: Post status
         csv += "ANNOUNCEMENT STATUS BREAKDOWN,COUNT\n";

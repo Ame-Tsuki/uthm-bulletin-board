@@ -653,7 +653,8 @@ private function getRecentActivityData()
             'labels' => [],
             'users' => [],
             'announcements' => [],
-            'events' => []
+            'events' => [],
+            'reports' => []
         ];
 
         // Calculate community hub historical trends
@@ -673,6 +674,7 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$hourStart, $hourEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$hourStart, $hourEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+                $trends['reports'][] = AnnouncementReport::whereBetween('created_at', [$hourStart, $hourEnd])->count();
 
                 $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$hourStart, $hourEnd])->count();
                 $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$hourStart, $hourEnd])->count();
@@ -688,6 +690,7 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['reports'][] = AnnouncementReport::whereBetween('created_at', [$dayStart, $dayEnd])->count();
 
                 $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$dayStart, $dayEnd])->count();
@@ -703,6 +706,7 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$monthStart, $monthEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$monthStart, $monthEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                $trends['reports'][] = AnnouncementReport::whereBetween('created_at', [$monthStart, $monthEnd])->count();
 
                 $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$monthStart, $monthEnd])->count();
                 $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$monthStart, $monthEnd])->count();
@@ -719,6 +723,7 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['reports'][] = AnnouncementReport::whereBetween('created_at', [$dayStart, $dayEnd])->count();
 
                 $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$dayStart, $dayEnd])->count();
@@ -748,6 +753,13 @@ private function getRecentActivityData()
                     ? round($totalViews / $announcementCount, 2)
                     : 0,
                 'trends' => $trends,
+                
+                // Moderation metrics
+                'total_reports' => AnnouncementReport::count(),
+                'new_reports' => AnnouncementReport::where('created_at', '>=', $since)->count(),
+                'pending_reports' => AnnouncementReport::where('status', 'pending')->count(),
+                'resolved_reports' => AnnouncementReport::where('status', 'resolved')->count(),
+                'dismissed_reports' => AnnouncementReport::where('status', 'dismissed')->count(),
                 
                 // Community Hub metrics
                 'total_groups' => CommunityGroup::count(),
@@ -1129,7 +1141,8 @@ private function getRecentActivityData()
             'labels' => [],
             'users' => [],
             'announcements' => [],
-            'events' => []
+            'events' => [],
+            'reports' => []
         ];
 
         // Calculate community hub historical trends
@@ -1149,6 +1162,7 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$hourStart, $hourEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$hourStart, $hourEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$hourStart, $hourEnd])->count();
+                $trends['reports'][] = AnnouncementReport::whereBetween('created_at', [$hourStart, $hourEnd])->count();
 
                 $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$hourStart, $hourEnd])->count();
                 $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$hourStart, $hourEnd])->count();
@@ -1164,6 +1178,7 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['reports'][] = AnnouncementReport::whereBetween('created_at', [$dayStart, $dayEnd])->count();
 
                 $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$dayStart, $dayEnd])->count();
@@ -1179,6 +1194,7 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$monthStart, $monthEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$monthStart, $monthEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$monthStart, $monthEnd])->count();
+                $trends['reports'][] = AnnouncementReport::whereBetween('created_at', [$monthStart, $monthEnd])->count();
 
                 $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$monthStart, $monthEnd])->count();
                 $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$monthStart, $monthEnd])->count();
@@ -1195,6 +1211,7 @@ private function getRecentActivityData()
                 $trends['users'][] = User::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['announcements'][] = Announcement::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $trends['events'][] = Event::whereBetween('created_at', [$dayStart, $dayEnd])->count();
+                $trends['reports'][] = AnnouncementReport::whereBetween('created_at', [$dayStart, $dayEnd])->count();
 
                 $communityTrends['posts'][] = GroupPost::whereBetween('created_at', [$dayStart, $dayEnd])->count();
                 $communityTrends['comments'][] = GroupPostComment::whereBetween('created_at', [$dayStart, $dayEnd])->count();
@@ -1225,6 +1242,13 @@ private function getRecentActivityData()
                 : 0,
             'trends' => $trends,
             
+            // Moderation metrics
+            'total_reports' => AnnouncementReport::count(),
+            'new_reports' => AnnouncementReport::where('created_at', '>=', $since)->count(),
+            'pending_reports' => AnnouncementReport::where('status', 'pending')->count(),
+            'resolved_reports' => AnnouncementReport::where('status', 'resolved')->count(),
+            'dismissed_reports' => AnnouncementReport::where('status', 'dismissed')->count(),
+
             // Community Hub metrics
             'total_groups' => CommunityGroup::count(),
             'total_group_posts' => GroupPost::count(),

@@ -142,7 +142,7 @@ class CommunityHubController extends Controller
         
         DB::commit();
         
-        return redirect()->route('student.community-hub.show', $group->id)
+        return redirect()->route($this->getRoutePrefix() . '.community-hub.show', $group->id)
             ->with('success', 'Group "' . $group->name . '" created successfully!');
             
     } catch (\Exception $e) {
@@ -214,7 +214,7 @@ class CommunityHubController extends Controller
                 ]);
                 $group->increment('member_count');
                 DB::commit();
-                return redirect()->route('student.community-hub.show', $id)
+                return redirect()->route($this->getRoutePrefix() . '.community-hub.show', $id)
                     ->with('success', 'You joined "' . $group->name . '"!');
             } else {
                 // Private or approval required - send request
@@ -232,7 +232,7 @@ class CommunityHubController extends Controller
 
                 $title = "📥 New Group Join Request";
                 $message = "{$user->name} has requested to join your group '{$group->name}'.";
-                $url = route('student.community-hub.show', $group->id);
+                $url = route('community-hub.view', $group->id);
 
                 Notification::send($groupAdmins, new CommunityNotification($title, $message, $url));
 
@@ -270,7 +270,7 @@ class CommunityHubController extends Controller
             $member->delete();
             $group->decrement('member_count');
             DB::commit();
-            return redirect()->route('student.community-hub')->with('success', 'You have left the group.');
+            return redirect()->route($this->getRoutePrefix() . '.community-hub')->with('success', 'You have left the group.');
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Failed to leave group.');
@@ -314,7 +314,10 @@ class CommunityHubController extends Controller
             // 💡 OPTIONAL: Automatically flush matching request items when viewing the queue page
             $user->unreadNotifications()
                 ->where('data->title', '📥 New Group Join Request')
-                ->where('data->url', 'like', '%' . route('student.community-hub.show', $group->id) . '%')
+                ->where(function($q) use ($group) {
+                    $q->where('data->url', 'like', '%' . route('student.community-hub.show', $group->id) . '%')
+                      ->orWhere('data->url', 'like', '%' . route('community-hub.view', $group->id) . '%');
+                })
                 ->get()
                 ->markAsRead();
         }
@@ -364,7 +367,7 @@ class CommunityHubController extends Controller
 
         $title = "✍️ New Post in {$group->name}";
         $message = auth()->user()->name . " started a new conversation thread.";
-        $url = route('student.community-hub.show', $groupId);
+        $url = route('community-hub.view', $groupId);
 
         Notification::send($groupMembers, new CommunityNotification($title, $message, $url));
         
@@ -393,7 +396,7 @@ class CommunityHubController extends Controller
                 if ($postOwner) {
                     $title = "🗑️ Post Removed by Admin";
                     $message = "Your post inside the group has been deleted by a group administrator.";
-                    $url = route('student.community-hub.show', $groupId);
+                    $url = route('community-hub.view', $groupId);
                     
                     $postOwner->notify(new CommunityNotification($title, $message, $url));
                 }
@@ -440,7 +443,7 @@ class CommunityHubController extends Controller
                 if ($postOwner) {
                     $title = "❤️ Post Liked";
                     $message = auth()->user()->name . " liked your community post thread.";
-                    $url = route('student.community-hub.show', $groupId);
+                    $url = route('community-hub.view', $groupId);
 
                     $postOwner->notify(new CommunityNotification($title, $message, $url));
                 }
@@ -509,7 +512,7 @@ class CommunityHubController extends Controller
                 if ($postOwner) {
                     $title = "💬 New Comment Received";
                     $message = auth()->user()->name . " commented: \"" . \Str::limit($comment->content, 40) . "\"";
-                    $url = route('student.community-hub.show', $groupId);
+                    $url = route('community-hub.view', $groupId);
 
                     $postOwner->notify(new CommunityNotification($title, $message, $url));
                 }
@@ -667,7 +670,7 @@ class CommunityHubController extends Controller
             
             DB::commit();
             
-            return redirect()->route('student.community-hub')
+            return redirect()->route($this->getRoutePrefix() . '.community-hub')
                 ->with('success', 'Group deleted successfully.');
         } catch (\Exception $e) {
             DB::rollback();
@@ -774,7 +777,7 @@ class CommunityHubController extends Controller
             if ($targetUser) {
                 $title = "🎉 Request Approved!";
                 $message = "Your request to join the group '{$group->name}' has been approved.";
-                $url = route('student.community-hub.show', $groupId);
+                $url = route('community-hub.view', $groupId);
 
                 $targetUser->notify(new CommunityNotification($title, $message, $url));
             }
@@ -821,7 +824,7 @@ class CommunityHubController extends Controller
             if ($targetUser) {
                 $title = "❌ Join Request Declined";
                 $message = "Your request to join '{$group->name}' was declined by the administration.";
-                $url = route('student.community-hub');
+                $url = route('community-hub');
 
                 $targetUser->notify(new CommunityNotification($title, $message, $url));
             }
@@ -890,5 +893,11 @@ class CommunityHubController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to pin/unpin post. Please try again.');
         }
+    }
+
+    private function getRoutePrefix()
+    {
+        $role = auth()->user()->role;
+        return in_array($role, ['admin', 'staff', 'student']) ? $role : 'student';
     }
 }

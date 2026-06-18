@@ -367,6 +367,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/staff/community-hub/{groupId}/posts/{postId}', [CommunityHubController::class, 'editPost'])->name('staff.community-hub.post.edit');
         Route::delete('/staff/community-hub/{groupId}/posts/{postId}', [CommunityHubController::class, 'deletePost'])->name('staff.community-hub.post.delete');
         Route::post('/staff/community-hub/{groupId}/posts/{postId}/pin', [CommunityHubController::class, 'pinPost'])->name('staff.community-hub.post.pin');
+        Route::post('/staff/community-hub/{groupId}/posts/{postId}/like', [CommunityHubController::class, 'likePost'])->name('staff.community-hub.post.like');
+        Route::post('/staff/community-hub/{groupId}/posts/{postId}/comments', [CommunityHubController::class, 'createComment'])->name('staff.community-hub.post.comment.create');
+        Route::delete('/staff/community-hub/{groupId}/posts/{postId}/comments/{commentId}', [CommunityHubController::class, 'deleteComment'])->name('staff.community-hub.post.comment.delete');
+        Route::post('/staff/community-hub/check-group-name', [CommunityHubController::class, 'checkGroupName'])->name('staff.community-hub.check-group-name');
     });
 
     // ============================================
@@ -406,6 +410,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 return redirect()->route('student.community-hub');
         }
     })->name('community-hub');
+
+    Route::get('/community-hub/{id}', function ($id) {
+        $user = auth()->user();
+        $prefix = $user->role === 'admin' ? 'admin' : ($user->role === 'staff' ? 'staff' : 'student');
+        return redirect()->route($prefix . '.community-hub.show', $id);
+    })->name('community-hub.view');
 
     // ============================================
     // ANNOUNCEMENT ROUTES

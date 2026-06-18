@@ -1,5 +1,9 @@
 @extends('layouts.community')
 
+@php
+    $routePrefix = Auth::user()->role === 'admin' ? 'admin' : (Auth::user()->role === 'staff' ? 'staff' : 'student');
+@endphp
+
 @section('title', 'Create New Group')
 @section('page-title', 'Create New Group')
 @section('breadcrumb', 'Create Group')
@@ -32,7 +36,7 @@
             </div>
         @endif
         
-        <form action="{{ route('student.community-hub.store') }}" method="POST" id="createGroupForm">
+        <form action="{{ route($routePrefix . '.community-hub.store') }}" method="POST" id="createGroupForm">
             @csrf
             
             <!-- Debug: Display all errors -->
@@ -121,7 +125,7 @@
             </div>
             
             <div class="flex justify-end space-x-3">
-                <a href="{{ route('student.community-hub') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</a>
+                <a href="{{ route($routePrefix . '.community-hub') }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</a>
                 <button type="submit" id="submitBtn" class="px-4 py-2 bg-uthm-blue text-white rounded-lg hover:bg-blue-700">Create Group</button>
             </div>
         </form>
@@ -198,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
         checkTimeout = setTimeout(() => {
             const csrfToken = document.querySelector('input[name="_token"]').value;
             
-            fetch('{{ route("student.community-hub.check-group-name") }}', {
+            fetch('{{ route($routePrefix . ".community-hub.check-group-name") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

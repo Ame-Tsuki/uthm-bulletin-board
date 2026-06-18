@@ -1,5 +1,9 @@
 @extends('layouts.community')
 
+@php
+    $routePrefix = Auth::user()->role === 'admin' ? 'admin' : (Auth::user()->role === 'staff' ? 'staff' : 'student');
+@endphp
+
 @section('title', 'Community Hub')
 
 @section('page-title', 'Community Hub')
@@ -102,7 +106,7 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             @foreach($myGroups as $group)
-            <a href="{{ route('student.community-hub.show', $group->id) }}" class="block group">
+            <a href="{{ route($routePrefix . '.community-hub.show', $group->id) }}" class="block group">
                 <div class="bg-white rounded-lg shadow p-4 h-full flex flex-col hover:shadow-md transition-shadow duration-200">
                     <!-- Group Header -->
                     <div class="flex items-center justify-between mb-3">
@@ -127,7 +131,7 @@
                         <span class="text-xs px-2 py-1 bg-gray-100 rounded-full font-medium">
                             {{ $group->category }}
                         </span>
-                        <form action="{{ route('student.community-hub.leave', $group->id) }}" method="POST" onclick="event.stopPropagation()">
+                        <form action="{{ route($routePrefix . '.community-hub.leave', $group->id) }}" method="POST" onclick="event.stopPropagation()">
                             @csrf
                             <button type="submit" class="text-red-600 text-sm hover:text-red-700 font-medium transition-colors">
                                 Leave
@@ -255,14 +259,14 @@
             <div class="bg-white rounded-xl shadow p-5 mb-6" id="discover">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="font-bold text-lg">Discover Groups</h3>
-                    <form action="{{ route('student.community-hub') }}" method="GET" class="flex items-center gap-2">
+                    <form action="{{ route($routePrefix . '.community-hub') }}" method="GET" class="flex items-center gap-2">
                         <input type="search" name="q" value="{{ request('q') }}" placeholder="Search groups by name, category, or description..."
                                class="px-3 py-2 border rounded-lg text-sm w-56 focus:ring-2 focus:ring-uthm-blue" />
                         <button type="submit" class="bg-uthm-blue text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700">
                             <i class="fas fa-search"></i>
                         </button>
                         @if(request('q'))
-                            <a href="{{ route('student.community-hub') }}" class="ml-2 text-sm text-gray-500 hover:underline">Clear</a>
+                            <a href="{{ route($routePrefix . '.community-hub') }}" class="ml-2 text-sm text-gray-500 hover:underline">Clear</a>
                         @endif
                     </form>
                 </div>
@@ -276,13 +280,13 @@
                     <div class="border-b border-gray-100 pb-3">
                         <div class="flex justify-between items-start">
                             <div class="flex-1">
-                                <a href="{{ route('student.community-hub.show', $group->id) }}" class="hover:text-uthm-blue">
+                                <a href="{{ route($routePrefix . '.community-hub.show', $group->id) }}" class="hover:text-uthm-blue">
                                     <h4 class="font-bold text-gray-900">{{ $group->name }}</h4>
                                 </a>
                                 <p class="text-xs text-gray-500">{{ $group->category }} • {{ $group->members_count }}/{{ $group->max_members ?? '∞' }} members</p>
                                 <p class="text-sm text-gray-600 mt-1">{{ Str::limit($group->description, 50) }}</p>
                             </div>
-                            <form action="{{ route('student.community-hub.join', $group->id) }}" method="POST" class="ml-2">
+                            <form action="{{ route($routePrefix . '.community-hub.join', $group->id) }}" method="POST" class="ml-2">
                                 @csrf
                                 <button type="submit" class="bg-uthm-blue text-white px-3 py-1 rounded text-sm whitespace-nowrap hover:bg-blue-700 transition">
                                     Join
@@ -360,7 +364,7 @@
                 </div>
             @endif
             
-            <form action="{{ route('student.community-hub.store') }}" method="POST">
+            <form action="{{ route($routePrefix . '.community-hub.store') }}" method="POST">
                 @csrf
                 <div class="mb-3">
                     <label class="block text-sm font-medium mb-1">Group Name *</label>
@@ -426,7 +430,7 @@
         // Like post function (AJAX)
         async function likePost(groupId, postId) {
             try {
-                const response = await fetch(`/student/community-hub/${groupId}/posts/${postId}/like`, {
+                const response = await fetch(`/{{ $routePrefix }}/community-hub/${groupId}/posts/${postId}/like`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -483,7 +487,7 @@
             }
             
             try {
-                const response = await fetch(`/student/community-hub/${groupId}/posts/${postId}/comments`, {
+                const response = await fetch(`/{{ $routePrefix }}/community-hub/${groupId}/posts/${postId}/comments`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -549,7 +553,7 @@
             if (!confirm('Delete this comment?')) return;
             
             try {
-                const response = await fetch(`/student/community-hub/${groupId}/posts/${postId}/comments/${commentId}`, {
+                const response = await fetch(`/{{ $routePrefix }}/community-hub/${groupId}/posts/${postId}/comments/${commentId}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

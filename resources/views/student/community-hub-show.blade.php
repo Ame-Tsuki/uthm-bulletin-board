@@ -1,5 +1,9 @@
 @extends('layouts.community')
 
+@php
+    $routePrefix = Auth::user()->role === 'admin' ? 'admin' : (Auth::user()->role === 'staff' ? 'staff' : 'student');
+@endphp
+
 @section('title', $group->name)
 
 @section('page-title', 'Community Hub')
@@ -7,7 +11,7 @@
 
 @section('community-content')
     <!-- Back button -->
-    <a href="{{ route('student.community-hub') }}" class="inline-flex items-center text-uthm-blue hover:text-blue-700 mb-4 transition-colors">
+    <a href="{{ route($routePrefix . '.community-hub') }}" class="inline-flex items-center text-uthm-blue hover:text-blue-700 mb-4 transition-colors">
         <i class="fas fa-arrow-left mr-2"></i> Back to Community Hub
     </a>
     
@@ -45,7 +49,7 @@
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-2">
                         @if(!$userMember)
-                            <form action="{{ route('student.community-hub.join', $group->id) }}" method="POST" class="inline">
+                            <form action="{{ route($routePrefix . '.community-hub.join', $group->id) }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit" class="bg-uthm-blue text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
                                     <i class="fas fa-user-plus mr-2"></i> Join Group
@@ -53,7 +57,7 @@
                             </form>
                         @else
                             @if($userMember->role !== 'admin')
-                                <form action="{{ route('student.community-hub.leave', $group->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to leave this group?')">
+                                <form action="{{ route($routePrefix . '.community-hub.leave', $group->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to leave this group?')">
                                     @csrf
                                     <button type="submit" class="bg-red-100 text-red-700 px-6 py-2 rounded-lg hover:bg-red-200 transition">
                                         <i class="fas fa-sign-out-alt mr-2"></i> Leave
@@ -65,7 +69,7 @@
                                 <button type="button" onclick="toggleEditModal()" class="bg-yellow-100 text-yellow-700 px-6 py-2 rounded-lg hover:bg-yellow-200 transition">
                                     <i class="fas fa-edit mr-2"></i> Edit
                                 </button>
-                                <form action="{{ route('student.community-hub.destroy', $group->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure? This will permanently delete the group and all its content.')">
+                                <form action="{{ route($routePrefix . '.community-hub.destroy', $group->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure? This will permanently delete the group and all its content.')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="bg-red-100 text-red-700 px-6 py-2 rounded-lg hover:bg-red-200 transition">
@@ -133,7 +137,7 @@
                 <!-- Create Post Form (if member) -->
                 @if($userMember && $group->allow_posts)
                     <div class="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
-                        <form action="{{ route('student.community-hub.post.create', $group->id) }}" method="POST">
+                        <form action="{{ route($routePrefix . '.community-hub.post.create', $group->id) }}" method="POST">
                             @csrf
                             <div class="flex items-start space-x-4">
                                 <div class="w-10 h-10 bg-uthm-blue-light rounded-full flex items-center justify-center shrink-0">
@@ -177,7 +181,7 @@
                     <span>Edit</span>
                 </button>
 
-                <form action="{{ route('student.community-hub.post.delete', [$group->id, $post->id]) }}" method="POST" class="inline" onsubmit="return confirm('Delete this post?')">
+                <form action="{{ route($routePrefix . '.community-hub.post.delete', [$group->id, $post->id]) }}" method="POST" class="inline" onsubmit="return confirm('Delete this post?')">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="text-red-600 hover:text-red-800 text-sm flex items-center gap-2">
@@ -275,13 +279,13 @@
                                 <p class="font-medium text-sm text-gray-900">{{ $request->user->name }}</p>
                                 <p class="text-xs text-gray-500 mb-2">{{ $request->user->uthm_id }}</p>
                                 <div class="flex gap-2">
-                                    <form action="{{ route('student.community-hub.join-request.approve', [$group->id, $request->id]) }}" method="POST" class="flex-1">
+                                    <form action="{{ route($routePrefix . '.community-hub.join-request.approve', [$group->id, $request->id]) }}" method="POST" class="flex-1">
                                         @csrf
                                         <button type="submit" class="w-full bg-green-100 text-green-700 text-xs px-2 py-1 rounded hover:bg-green-200">
                                             <i class="fas fa-check mr-1"></i> Approve
                                         </button>
                                     </form>
-                                    <form action="{{ route('student.community-hub.join-request.reject', [$group->id, $request->id]) }}" method="POST" class="flex-1">
+                                    <form action="{{ route($routePrefix . '.community-hub.join-request.reject', [$group->id, $request->id]) }}" method="POST" class="flex-1">
                                         @csrf
                                         <button type="submit" class="w-full bg-red-100 text-red-700 text-xs px-2 py-1 rounded hover:bg-red-200">
                                             <i class="fas fa-times mr-1"></i> Reject
@@ -317,7 +321,7 @@
                             </div>
                             
                             @if($userMember && $userMember->role === 'admin' && !$group->isCreator($member->user_id) && $member->user_id !== Auth::id())
-                                <form action="{{ route('student.community-hub.member.remove', [$group->id, $member->user_id]) }}" method="POST" class="inline" onsubmit="return confirm('Remove this member?')">
+                                <form action="{{ route($routePrefix . '.community-hub.member.remove', [$group->id, $member->user_id]) }}" method="POST" class="inline" onsubmit="return confirm('Remove this member?')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:text-red-800 text-xs">
@@ -344,7 +348,7 @@
                 </button>
             </div>
             
-            <form action="{{ route('student.community-hub.update', $group->id) }}" method="POST" class="p-6 space-y-4">
+            <form action="{{ route($routePrefix . '.community-hub.update', $group->id) }}" method="POST" class="p-6 space-y-4">
                 @csrf
                 @method('PUT')
                 
@@ -427,7 +431,7 @@
 
             // Populate and open modal
             textarea.value = content;
-            form.action = `/student/community-hub/${groupId}/posts/${postId}`;
+            form.action = `/{{ $routePrefix }}/community-hub/${groupId}/posts/${postId}`;
             modal.classList.remove('hidden');
             textarea.focus();
         }
@@ -442,7 +446,7 @@
 
         async function likePost(groupId, postId) {
         try {
-            const response = await fetch(`/student/community-hub/${groupId}/posts/${postId}/like`, {
+            const response = await fetch(`/{{ $routePrefix }}/community-hub/${groupId}/posts/${postId}/like`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -492,7 +496,7 @@
             }
             
             try {
-                const response = await fetch(`/student/community-hub/${groupId}/posts/${postId}/comments`, {
+                const response = await fetch(`/{{ $routePrefix }}/community-hub/${groupId}/posts/${postId}/comments`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -563,7 +567,7 @@
             if (!confirm('Delete this comment?')) return;
             
             try {
-                const response = await fetch(`/student/community-hub/${groupId}/posts/${postId}/comments/${commentId}`, {
+                const response = await fetch(`/{{ $routePrefix }}/community-hub/${groupId}/posts/${postId}/comments/${commentId}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

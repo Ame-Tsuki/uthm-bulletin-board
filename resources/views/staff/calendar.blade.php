@@ -193,6 +193,7 @@
                                 <button id="month-view" class="px-3 py-1 rounded text-sm font-medium bg-white shadow text-uthm-blue">Month</button>
                                 <button id="week-view" class="px-3 py-1 rounded text-sm font-medium text-gray-600 hover:text-gray-900">Week</button>
                                 <button id="day-view" class="px-3 py-1 rounded text-sm font-medium text-gray-600 hover:text-gray-900">Day</button>
+                                <button id="list-view" class="px-3 py-1 rounded text-sm font-medium text-gray-600 hover:text-gray-900">List All</button>
                             </div>
                             <div class="flex items-center space-x-2">
                                 <button id="prev-month" class="p-2 rounded-lg hover:bg-gray-100 text-gray-600">
@@ -226,22 +227,40 @@
                     </div>
                 </div>
 
-                <!-- Calendar Grid -->
+                <!-- Calendar Content Container -->
                 <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                    <div class="grid grid-cols-7 bg-white border-b">
-                        <div class="calendar-weekday">Sunday</div>
-                        <div class="calendar-weekday">Monday</div>
-                        <div class="calendar-weekday">Tuesday</div>
-                        <div class="calendar-weekday">Wednesday</div>
-                        <div class="calendar-weekday">Thursday</div>
-                        <div class="calendar-weekday">Friday</div>
-                        <div class="calendar-weekday">Saturday</div>
-                    </div>
-                    <div id="calendar-grid" class="calendar-grid">
-                        <div class="col-span-7 p-8 text-center">
-                            <div class="loading-spinner mx-auto mb-2"></div>
-                            <p class="text-gray-500">Loading calendar...</p>
+                    <!-- Month View Container -->
+                    <div id="month-view-container">
+                        <div class="grid grid-cols-7 bg-white border-b">
+                            <div class="calendar-weekday">Sunday</div>
+                            <div class="calendar-weekday">Monday</div>
+                            <div class="calendar-weekday">Tuesday</div>
+                            <div class="calendar-weekday">Wednesday</div>
+                            <div class="calendar-weekday">Thursday</div>
+                            <div class="calendar-weekday">Friday</div>
+                            <div class="calendar-weekday">Saturday</div>
                         </div>
+                        <div id="calendar-grid" class="calendar-grid">
+                            <div class="col-span-7 p-8 text-center">
+                                <div class="loading-spinner mx-auto mb-2"></div>
+                                <p class="text-gray-500">Loading calendar...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Week View Container -->
+                    <div id="week-view-container" class="hidden">
+                        <div id="week-grid" class="week-view-grid"></div>
+                    </div>
+
+                    <!-- Day View Container -->
+                    <div id="day-view-container" class="hidden">
+                        <div id="day-grid" class="day-view-grid"></div>
+                    </div>
+
+                    <!-- List View Container -->
+                    <div id="list-view-container" class="hidden p-6">
+                        <div id="list-grid" class="space-y-4"></div>
                     </div>
                 </div>
 
@@ -251,7 +270,7 @@
                         <div class="portal-card">
                             <div class="flex justify-between items-center mb-3">
                                 <h3 class="portal-section-title">Upcoming Events This Week</h3>
-                                <a href="#" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">
+                                <a href="#" id="view-all-link" class="text-uthm-blue hover:text-blue-700 text-sm font-medium">
                                     View All <i class="fas fa-arrow-right ml-1"></i>
                                 </a>
                             </div>
@@ -520,6 +539,7 @@
     let currentSearchTerm = '';
     let currentDetailEvent = null;
     let googleConnected = false;
+    let currentView = 'month';
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -527,17 +547,256 @@
         setupFilters();
         checkGoogleStatus();
         loadEvents();
+        setupViewSwitching();
     });
+    
+    function setupViewSwitching() {
+        const monthBtn = document.getElementById('month-view');
+        const weekBtn = document.getElementById('week-view');
+        const dayBtn = document.getElementById('day-view');
+        const listBtn = document.getElementById('list-view');
+        const viewAllLink = document.getElementById('view-all-link');
+        
+        if (monthBtn) monthBtn.addEventListener('click', () => setView('month'));
+        if (weekBtn) weekBtn.addEventListener('click', () => setView('week'));
+        if (dayBtn) dayBtn.addEventListener('click', () => setView('day'));
+        if (listBtn) listBtn.addEventListener('click', () => setView('list'));
+        if (viewAllLink) {
+            viewAllLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                setView('list');
+            });
+        }
+    }
+    
+    function setView(view) {
+        currentView = view;
+        
+        const monthBtn = document.getElementById('month-view');
+        const weekBtn = document.getElementById('week-view');
+        const dayBtn = document.getElementById('day-view');
+        const listBtn = document.getElementById('list-view');
+        
+        const monthView = document.getElementById('month-view-container');
+        const weekView = document.getElementById('week-view-container');
+        const dayView = document.getElementById('day-view-container');
+        const listView = document.getElementById('list-view-container');
+        
+        const activeClass = 'px-3 py-1 rounded text-sm font-medium bg-white shadow text-uthm-blue';
+        const inactiveClass = 'px-3 py-1 rounded text-sm font-medium text-gray-600 hover:text-gray-900';
+        
+        [monthBtn, weekBtn, dayBtn, listBtn].forEach(btn => {
+            if (btn) {
+                btn.className = inactiveClass;
+            }
+        });
+        
+        if (monthView) monthView.classList.add('hidden');
+        if (weekView) weekView.classList.add('hidden');
+        if (dayView) dayView.classList.add('hidden');
+        if (listView) listView.classList.add('hidden');
+        
+        if (view === 'month') {
+            if (monthBtn) monthBtn.className = activeClass;
+            if (monthView) monthView.classList.remove('hidden');
+            renderCalendar();
+        } else if (view === 'week') {
+            if (weekBtn) weekBtn.className = activeClass;
+            if (weekView) weekView.classList.remove('hidden');
+            renderWeekView();
+        } else if (view === 'day') {
+            if (dayBtn) dayBtn.className = activeClass;
+            if (dayView) dayView.classList.remove('hidden');
+            renderDayView();
+        } else if (view === 'list') {
+            if (listBtn) listBtn.className = activeClass;
+            if (listView) listView.classList.remove('hidden');
+            renderListView();
+        }
+    }
+    
+    function renderWeekView() {
+        const weekContainer = document.getElementById('week-grid');
+        if (!weekContainer) return;
+        
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+        
+        const shortDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        
+        let html = `<div class="grid grid-cols-7 border-b bg-gray-50">`;
+        
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(startOfWeek);
+            date.setDate(startOfWeek.getDate() + i);
+            const isToday = new Date().toDateString() === date.toDateString();
+            html += `<div class="p-4 text-center ${isToday ? 'bg-blue-50' : ''}">
+                        <div class="font-semibold text-gray-700">${shortDays[i]}</div>
+                        <div class="text-sm ${isToday ? 'text-blue-600 font-bold' : 'text-gray-600'}">${date.getDate()}</div>
+                    </div>`;
+        }
+        html += `</div><div class="grid grid-cols-7 min-h-[400px]">`;
+        
+        for (let i = 0; i < 7; i++) {
+            const currentDay = new Date(startOfWeek);
+            currentDay.setDate(startOfWeek.getDate() + i);
+            const dateStr = currentDay.toISOString().split('T')[0];
+            
+            const dayEvents = filteredEvents.filter(event => {
+                if (!event.start_date) return false;
+                return new Date(event.start_date).toISOString().split('T')[0] === dateStr;
+            });
+            
+            html += `<div class="p-2 border-r min-h-[400px] bg-white">`;
+            if (dayEvents.length > 0) {
+                dayEvents.forEach(event => {
+                    html += `<div class="week-event ${getEventClass(event.type)} mb-2 p-2 rounded cursor-pointer text-xs font-semibold" onclick="showEventDetailById(${event.id})">
+                                <div class="truncate">${escapeHtml(event.title)}</div>
+                            </div>`;
+                });
+            } else {
+                html += `<div class="text-center text-gray-400 text-xs mt-4">No events</div>`;
+            }
+            html += `</div>`;
+        }
+        
+        html += `</div>`;
+        weekContainer.innerHTML = html;
+    }
+    
+    function renderDayView() {
+        const dayContainer = document.getElementById('day-grid');
+        if (!dayContainer) return;
+        
+        const hours = ['12:00 AM', '1:00 AM', '2:00 AM', '3:00 AM', '4:00 AM', '5:00 AM', 
+                       '6:00 AM', '7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
+                       '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM',
+                       '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM', '10:00 PM', '11:00 PM'];
+        
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const dayEvents = filteredEvents.filter(event => {
+            if (!event.start_date) return false;
+            return new Date(event.start_date).toISOString().split('T')[0] === dateStr;
+        });
+        
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        let html = `<div class="p-4 border-b bg-gray-50">
+                        <h2 class="text-lg font-bold text-gray-800">
+                            ${dayNames[currentDate.getDay()]}, ${monthNames[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}
+                        </h2>
+                    </div><div class="divide-y">`;
+        
+        hours.forEach(hour => {
+            html += `<div class="time-slot flex hover:bg-gray-50 transition cursor-pointer" onclick="openEventModalWithDate('${dateStr}')">
+                        <div class="w-24 p-3 text-xs font-semibold text-gray-500 border-r">${hour}</div>
+                        <div class="flex-1 p-2 min-h-[60px]">`;
+            
+            const hourEvents = dayEvents.filter(event => {
+                const eventHour = new Date(event.start_date).getHours();
+                return eventHour === parseInt(hour) || (hour === '12:00 AM' && eventHour === 0);
+            });
+            
+            hourEvents.forEach(event => {
+                html += `<div class="day-event ${getEventClass(event.type)} mb-2 p-2 rounded cursor-pointer font-semibold text-xs" onclick="event.stopPropagation(); showEventDetailById(${event.id})">
+                            <div>${escapeHtml(event.title)}</div>
+                        </div>`;
+            });
+            
+            html += `</div></div>`;
+        });
+        
+        html += `</div>`;
+        dayContainer.innerHTML = html;
+    }
+ 
+    function openEventModalWithDate(date) {
+        openEventModal();
+        const startDateInput = document.getElementById('event-start-date');
+        if (startDateInput) startDateInput.value = date;
+    }
+ 
+    function showEventDetailById(id) {
+        const event = allEvents.find(e => e.id === id);
+        if (event) {
+            showEventDetail(event);
+        }
+    }
+ 
+    function renderListView() {
+        const listGrid = document.getElementById('list-grid');
+        if (!listGrid) return;
+        
+        const events = [...filteredEvents].sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+        
+        if (events.length === 0) {
+            listGrid.innerHTML = `
+                <div class="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
+                    <i class="fas fa-calendar-times text-4xl mb-3 text-gray-300"></i>
+                    <p class="font-medium text-gray-600">No events found matching current filter/search</p>
+                </div>
+            `;
+            return;
+        }
+        
+        listGrid.innerHTML = '';
+        events.forEach(event => {
+            const eventDate = new Date(event.start_date);
+            const div = document.createElement('div');
+            div.className = `p-4 hover:shadow-md transition bg-white border rounded-xl flex items-center justify-between cursor-pointer`;
+            div.onclick = () => showEventDetail(event);
+            div.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="text-center bg-gray-50 p-2.5 rounded-lg border min-w-[70px]">
+                        <div class="font-bold text-lg text-gray-900">${eventDate.getDate()}</div>
+                        <div class="text-xs uppercase text-gray-500 font-semibold">${eventDate.toLocaleDateString('en-US', { month: 'short' })}</div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900">${escapeHtml(event.title)}</h4>
+                        <p class="text-sm text-gray-500 mt-1">
+                            <i class="far fa-clock mr-1"></i> ${event.all_day ? 'All day' : (event.start_time || 'No time set')}
+                            ${event.location ? ` • <i class="fas fa-map-marker-alt mx-1"></i> ${escapeHtml(event.location)}` : ''}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="inline-block px-3 py-1 text-xs rounded-full font-semibold ${getEventClass(event.type)}">${event.type || 'other'}</span>
+                </div>
+            `;
+            listGrid.appendChild(div);
+        });
+    }
+ 
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
     
     // Setup navigation
     function setupNavigation() {
         document.getElementById('prev-month').addEventListener('click', function() {
-            currentDate.setMonth(currentDate.getMonth() - 1);
+            if (currentView === 'month') {
+                currentDate.setMonth(currentDate.getMonth() - 1);
+            } else if (currentView === 'week') {
+                currentDate.setDate(currentDate.getDate() - 7);
+            } else if (currentView === 'day') {
+                currentDate.setDate(currentDate.getDate() - 1);
+            }
             loadEvents();
         });
         
         document.getElementById('next-month').addEventListener('click', function() {
-            currentDate.setMonth(currentDate.getMonth() + 1);
+            if (currentView === 'month') {
+                currentDate.setMonth(currentDate.getMonth() + 1);
+            } else if (currentView === 'week') {
+                currentDate.setDate(currentDate.getDate() + 7);
+            } else if (currentView === 'day') {
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
             loadEvents();
         });
         
@@ -561,7 +820,7 @@
                 applyFilter();
             });
         });
-
+ 
         const searchInput = document.getElementById('calendar-search');
         if (searchInput) {
             searchInput.addEventListener('input', function() {
@@ -578,7 +837,7 @@
         if (currentFilter !== 'all') {
             events = events.filter(event => event.type === currentFilter);
         }
-
+ 
         if (currentSearchTerm) {
             events = events.filter(event => {
                 const title = event.title ? event.title.toLowerCase() : '';
@@ -591,7 +850,16 @@
         }
         
         filteredEvents = events;
-        renderCalendar();
+        
+        if (currentView === 'month') {
+            renderCalendar();
+        } else if (currentView === 'week') {
+            renderWeekView();
+        } else if (currentView === 'day') {
+            renderDayView();
+        } else if (currentView === 'list') {
+            renderListView();
+        }
         renderUpcomingEvents();
     }
     

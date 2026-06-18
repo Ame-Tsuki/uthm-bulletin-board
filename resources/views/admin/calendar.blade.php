@@ -284,6 +284,10 @@
                     <i class="fas fa-calendar-day"></i>
                     <span>Day</span>
                 </button>
+                <button onclick="setView('list')" id="listViewBtn" class="view-btn-inactive px-4 py-2 rounded-lg transition flex items-center gap-2">
+                    <i class="fas fa-list"></i>
+                    <span>List All</span>
+                </button>
             </div>
         </div>
     </div>
@@ -310,6 +314,11 @@
     <!-- Day View -->
     <div id="dayView" class="hidden">
         <div id="dayGrid" class="day-view-grid"></div>
+    </div>
+
+    <!-- List View -->
+    <div id="listView" class="hidden p-6">
+        <div id="listGrid" class="space-y-4"></div>
     </div>
 </div>
 
@@ -518,6 +527,8 @@
                     renderWeekView();
                 } else if (currentView === 'day') {
                     renderDayView();
+                } else if (currentView === 'list') {
+                    renderListView();
                 }
                 renderUpcomingEventsList();
             });
@@ -592,40 +603,92 @@
         const monthBtn = document.getElementById('monthViewBtn');
         const weekBtn = document.getElementById('weekViewBtn');
         const dayBtn = document.getElementById('dayViewBtn');
+        const listBtn = document.getElementById('listViewBtn');
         const monthView = document.getElementById('monthView');
         const weekView = document.getElementById('weekView');
         const dayView = document.getElementById('dayView');
+        const listView = document.getElementById('listView');
         
         const activeClass = 'view-btn-active px-4 py-2 rounded-lg transition flex items-center gap-2';
         const inactiveClass = 'view-btn-inactive px-4 py-2 rounded-lg transition flex items-center gap-2';
         
+        if (monthBtn) monthBtn.className = inactiveClass;
+        if (weekBtn) weekBtn.className = inactiveClass;
+        if (dayBtn) dayBtn.className = inactiveClass;
+        if (listBtn) listBtn.className = inactiveClass;
+        
+        if (monthView) monthView.classList.add('hidden');
+        if (weekView) weekView.classList.add('hidden');
+        if (dayView) dayView.classList.add('hidden');
+        if (listView) listView.classList.add('hidden');
+        
         if (view === 'month') {
-            monthBtn.className = activeClass;
-            weekBtn.className = inactiveClass;
-            dayBtn.className = inactiveClass;
+            if (monthBtn) monthBtn.className = activeClass;
             if (monthView) monthView.classList.remove('hidden');
-            if (weekView) weekView.classList.add('hidden');
-            if (dayView) dayView.classList.add('hidden');
             loadAllData();
         } else if (view === 'week') {
-            weekBtn.className = activeClass;
-            monthBtn.className = inactiveClass;
-            dayBtn.className = inactiveClass;
-            if (monthView) monthView.classList.add('hidden');
+            if (weekBtn) weekBtn.className = activeClass;
             if (weekView) weekView.classList.remove('hidden');
-            if (dayView) dayView.classList.add('hidden');
             renderWeekView();
         } else if (view === 'day') {
-            dayBtn.className = activeClass;
-            monthBtn.className = inactiveClass;
-            weekBtn.className = inactiveClass;
-            if (monthView) monthView.classList.add('hidden');
-            if (weekView) weekView.classList.add('hidden');
+            if (dayBtn) dayBtn.className = activeClass;
             if (dayView) dayView.classList.remove('hidden');
             renderDayView();
+        } else if (view === 'list') {
+            if (listBtn) listBtn.className = activeClass;
+            if (listView) listView.classList.remove('hidden');
+            renderListView();
         }
     }
     
+    function renderListView() {
+        const listGrid = document.getElementById('listGrid');
+        if (!listGrid) return;
+        
+        const events = getFilteredEvents().sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+        
+        if (events.length === 0) {
+            listGrid.innerHTML = `
+                <div class="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
+                    <i class="fas fa-calendar-times text-4xl mb-3 text-gray-300"></i>
+                    <p class="font-medium text-gray-600">No events found matching current filter/search</p>
+                </div>
+            `;
+            return;
+        }
+        
+        listGrid.innerHTML = '';
+        events.forEach(event => {
+            const eventDate = new Date(event.start_date);
+            const div = document.createElement('div');
+            div.className = `p-4 hover:shadow-md transition bg-white border rounded-xl flex items-center justify-between cursor-pointer event-list-item`;
+            div.onclick = () => showEventDetails(event);
+            div.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="text-center bg-gray-50 p-2.5 rounded-lg border min-w-[70px]">
+                        <div class="font-bold text-lg text-gray-900">${eventDate.getDate()}</div>
+                        <div class="text-xs uppercase text-gray-500 font-semibold">${eventDate.toLocaleDateString('en-US', { month: 'short' })}</div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-950">${escapeHtml(event.title)}</h4>
+                        <p class="text-sm text-gray-500 mt-1">
+                            <i class="far fa-clock mr-1"></i> ${event.all_day ? 'All day' : (event.start_time || 'No time set')}
+                            ${event.location ? ` • <i class="fas fa-map-marker-alt mx-1"></i> ${escapeHtml(event.location)}` : ''}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="inline-block px-3 py-1 text-xs rounded-full font-semibold event-${event.type || 'important'}">${event.type || 'important'}</span>
+                    <div class="flex space-x-1">
+                        <button onclick="event.stopPropagation(); editEvent(${event.id})" class="text-blue-600 hover:text-blue-800 p-1.5 hover:bg-blue-50 rounded"><i class="fas fa-edit"></i></button>
+                        <button onclick="event.stopPropagation(); openDeleteModal(${event.id})" class="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+            listGrid.appendChild(div);
+        });
+    }
+
     function formatEventDate(dateStr) {
         if (!dateStr) return '';
         return dateStr.includes('T') ? dateStr.split('T')[0] : String(dateStr).substring(0, 10);

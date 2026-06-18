@@ -184,6 +184,11 @@
                             <p class="text-gray-500 text-sm">Track your lectures, deadlines, and events</p>
                         </div>
                         <div class="flex items-center space-x-4">
+                            <!-- Search Bar -->
+                            <div class="relative">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="calendar-search" placeholder="Search events..." class="pl-9 pr-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm w-48">
+                            </div>
                             <div class="flex bg-gray-100 p-1 rounded-lg">
                                 <button id="month-view" class="px-3 py-1 rounded text-sm font-medium bg-white shadow text-uthm-blue">Month</button>
                                 <button id="week-view" class="px-3 py-1 rounded text-sm font-medium text-gray-600 hover:text-gray-900">Week</button>
@@ -512,6 +517,7 @@
     let allEvents = [];
     let filteredEvents = [];
     let currentFilter = 'all';
+    let currentSearchTerm = '';
     let currentDetailEvent = null;
     let googleConnected = false;
     
@@ -555,15 +561,36 @@
                 applyFilter();
             });
         });
+
+        const searchInput = document.getElementById('calendar-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                currentSearchTerm = this.value.toLowerCase();
+                applyFilter();
+            });
+        }
     }
     
     // Apply filter
     function applyFilter() {
-        if (currentFilter === 'all') {
-            filteredEvents = [...allEvents];
-        } else {
-            filteredEvents = allEvents.filter(event => event.type === currentFilter);
+        let events = [...allEvents];
+        
+        if (currentFilter !== 'all') {
+            events = events.filter(event => event.type === currentFilter);
         }
+
+        if (currentSearchTerm) {
+            events = events.filter(event => {
+                const title = event.title ? event.title.toLowerCase() : '';
+                const desc = event.description ? event.description.toLowerCase() : '';
+                const loc = event.location ? event.location.toLowerCase() : '';
+                return title.includes(currentSearchTerm) || 
+                       desc.includes(currentSearchTerm) || 
+                       loc.includes(currentSearchTerm);
+            });
+        }
+        
+        filteredEvents = events;
         renderCalendar();
         renderUpcomingEvents();
     }

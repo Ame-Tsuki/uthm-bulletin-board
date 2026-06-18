@@ -265,6 +265,12 @@
                 </button>
             </div>
             
+            <!-- Search Bar -->
+            <div class="relative min-w-[200px]">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="calendar-search" placeholder="Search events..." class="pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm w-full">
+            </div>
+            
             <div class="flex gap-2 bg-gray-100 rounded-lg p-1">
                 <button onclick="setView('month')" id="monthViewBtn" class="view-btn-active px-4 py-2 rounded-lg transition flex items-center gap-2">
                     <i class="fas fa-calendar-alt"></i>
@@ -478,6 +484,22 @@
     let allEvents = [];
     let deleteEventId = null;
     let currentView = 'month';
+    let currentSearchTerm = '';
+    let upcomingEventsList = [];
+    
+    function getFilteredEvents() {
+        if (!currentSearchTerm) {
+            return allEvents;
+        }
+        return allEvents.filter(event => {
+            const title = event.title ? event.title.toLowerCase() : '';
+            const desc = event.description ? event.description.toLowerCase() : '';
+            const loc = event.location ? event.location.toLowerCase() : '';
+            return title.includes(currentSearchTerm) || 
+                   desc.includes(currentSearchTerm) || 
+                   loc.includes(currentSearchTerm);
+        });
+    }
     
     document.addEventListener('DOMContentLoaded', function() {
         loadAllData();
@@ -485,6 +507,21 @@
         checkGoogleStatus();
         updateYearDisplay();
         updateMonthDisplay();
+        
+        const searchInput = document.getElementById('calendar-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                currentSearchTerm = this.value.toLowerCase();
+                if (currentView === 'month') {
+                    renderCalendar();
+                } else if (currentView === 'week') {
+                    renderWeekView();
+                } else if (currentView === 'day') {
+                    renderDayView();
+                }
+                renderUpcomingEventsList();
+            });
+        }
         
         document.getElementById('connect-google-btn')?.addEventListener('click', connectGoogle);
         document.getElementById('disconnect-google-btn')?.addEventListener('click', disconnectGoogle);
@@ -744,7 +781,7 @@
             const isToday = today.getDate() === day && today.getMonth() === currentDate.getMonth() && today.getFullYear() === currentDate.getFullYear();
             const cell = createDayCell(day, isToday ? 'today' : '');
             
-            const dayEvents = allEvents.filter(event => {
+            const dayEvents = getFilteredEvents().filter(event => {
                 if (!event.start_date) return false;
                 const eventDate = new Date(event.start_date);
                 return eventDate.getDate() === day && eventDate.getMonth() === currentDate.getMonth() && eventDate.getFullYear() === currentDate.getFullYear();
@@ -799,7 +836,7 @@
             currentDay.setDate(startOfWeek.getDate() + i);
             const dateStr = currentDay.toISOString().split('T')[0];
             
-            const dayEvents = allEvents.filter(event => {
+            const dayEvents = getFilteredEvents().filter(event => {
                 if (!event.start_date) return false;
                 return new Date(event.start_date).toISOString().split('T')[0] === dateStr;
             });
@@ -831,7 +868,7 @@
                        '6:00 PM', '7:00 PM', '8:00 PM', '9:00 PM', '10:00 PM', '11:00 PM'];
         
         const dateStr = currentDate.toISOString().split('T')[0];
-        const dayEvents = allEvents.filter(event => {
+        const dayEvents = getFilteredEvents().filter(event => {
             if (!event.start_date) return false;
             return new Date(event.start_date).toISOString().split('T')[0] === dateStr;
         });
@@ -895,40 +932,56 @@
             }
             
             const data = await response.json();
-            const eventsArray = Array.isArray(data) ? data : (data.data || []);
-            const publicEvents = eventsArray.filter(e => e.visibility === 'public');
-            
-            if (publicEvents.length === 0) {
-                container.innerHTML = '<div class="p-8 text-center text-gray-500"><i class="fas fa-calendar-alt text-3xl mb-2 text-gray-300"></i><p>No upcoming important dates</p></div>';
-                return;
-            }
-            
-            container.innerHTML = '';
-            publicEvents.slice(0, 10).forEach(event => {
-                const eventDate = new Date(event.start_date);
-                const div = document.createElement('div');
-                div.className = 'p-4 hover:bg-gray-50 cursor-pointer transition border-b';
-                div.onclick = () => showEventDetails(event);
-                div.innerHTML = `
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <h4 class="font-semibold text-gray-800">${escapeHtml(event.title)}</h4>
-                            <p class="text-sm text-gray-600 mt-1">${eventDate.toLocaleDateString()}</p>
-                            <span class="inline-block mt-2 text-xs text-purple-600"><i class="fas fa-globe mr-1"></i> Public</span>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button onclick="event.stopPropagation(); editEvent(${event.id})" class="text-blue-500 hover:text-blue-700 p-1"><i class="fas fa-edit"></i></button>
-                            <button onclick="event.stopPropagation(); openDeleteModal(${event.id})" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
+            upcomingEventsList = Array.isArray(data) ? data : (data.data || []);
+            renderUpcomingEventsList();
         } catch (error) {
             console.error('Error loading upcoming events:', error);
             const container = document.getElementById('upcomingEvents');
             if (container) container.innerHTML = '<div class="p-8 text-center text-red-500">Error loading events</div>';
         }
+    }
+
+    function renderUpcomingEventsList() {
+        const container = document.getElementById('upcomingEvents');
+        if (!container) return;
+        
+        const publicEvents = upcomingEventsList.filter(e => e.visibility === 'public');
+        
+        const filtered = currentSearchTerm ? publicEvents.filter(event => {
+            const title = event.title ? event.title.toLowerCase() : '';
+            const desc = event.description ? event.description.toLowerCase() : '';
+            const loc = event.location ? event.location.toLowerCase() : '';
+            return title.includes(currentSearchTerm) || 
+                   desc.includes(currentSearchTerm) || 
+                   loc.includes(currentSearchTerm);
+        }) : publicEvents;
+        
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="p-8 text-center text-gray-500"><i class="fas fa-calendar-alt text-3xl mb-2 text-gray-300"></i><p>No upcoming important dates</p></div>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        filtered.slice(0, 10).forEach(event => {
+            const eventDate = new Date(event.start_date);
+            const div = document.createElement('div');
+            div.className = 'p-4 hover:bg-gray-50 cursor-pointer transition border-b';
+            div.onclick = () => showEventDetails(event);
+            div.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-gray-800">${escapeHtml(event.title)}</h4>
+                        <p class="text-sm text-gray-600 mt-1">${eventDate.toLocaleDateString()}</p>
+                        <span class="inline-block mt-2 text-xs text-purple-600"><i class="fas fa-globe mr-1"></i> Public</span>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="event.stopPropagation(); editEvent(${event.id})" class="text-blue-500 hover:text-blue-700 p-1"><i class="fas fa-edit"></i></button>
+                        <button onclick="event.stopPropagation(); openDeleteModal(${event.id})" class="text-red-500 hover:text-red-700 p-1"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
     }
     
     async function saveEvent(eventData, isEdit = false, eventId = null) {

@@ -648,8 +648,26 @@
         function initializeSearch() {
             const searchInput = document.getElementById('search-input');
             if (searchInput) {
-                searchInput.addEventListener('keyup', function() {
-                    filterAnnouncements();
+                // Prefill from URL query parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const currentSearch = urlParams.get('search');
+                if (currentSearch) {
+                    searchInput.value = currentSearch;
+                }
+
+                searchInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = this.value.trim();
+                        const newUrl = new URL(window.location.href);
+                        if (val) {
+                            newUrl.searchParams.set('search', val);
+                        } else {
+                            newUrl.searchParams.delete('search');
+                        }
+                        newUrl.searchParams.set('page', 1);
+                        window.location.href = newUrl.toString();
+                    }
                 });
             }
         }

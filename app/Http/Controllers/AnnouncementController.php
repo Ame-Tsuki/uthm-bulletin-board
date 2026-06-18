@@ -39,7 +39,7 @@ class AnnouncementController extends Controller
     /**
      * Display a listing of announcements.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
         // Get authenticated user
         $user = auth()->user();
@@ -48,6 +48,7 @@ class AnnouncementController extends Controller
         $hasOfficialColumn = Schema::hasColumn('announcements', 'is_official');
         
         $highPriorityAnnouncements = collect();
+        $search = $request->input('search');
         
         if ($hasOfficialColumn) {
             $query = Announcement::with('author');
@@ -62,8 +63,15 @@ class AnnouncementController extends Controller
             if (Schema::hasColumn('announcements', 'is_banned')) {
                 $query->notBanned();
             }
+
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('title', 'like', '%' . $search . '%')
+                      ->orWhere('content', 'like', '%' . $search . '%');
+                });
+            }
             
-            $announcements = $query->latest()->paginate(10);
+            $announcements = $query->latest()->paginate(10)->withQueryString();
             
             // Get active high priority announcements for the Notice Board block
             $hpQuery = Announcement::with('author')->visibleOnBoard()->whereIn('priority', ['urgent', 'important']);
@@ -73,7 +81,14 @@ class AnnouncementController extends Controller
             $highPriorityAnnouncements = $hpQuery->latest()->get();
         } else {
             // Show all announcements if column doesn't exist
-            $announcements = Announcement::with('author')->latest()->paginate(10);
+            $query = Announcement::with('author');
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('title', 'like', '%' . $search . '%')
+                      ->orWhere('content', 'like', '%' . $search . '%');
+                });
+            }
+            $announcements = $query->latest()->paginate(10)->withQueryString();
         }
         
         // Return view with data

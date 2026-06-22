@@ -295,7 +295,9 @@ public function store(Request $request): RedirectResponse
     public function show($id): View
     {
         // Manually resolve the announcement since route uses {id} instead of {announcement}
-        $announcement = Announcement::with('author')->find($id);
+        $announcement = Announcement::with(['author', 'questions' => function($query) {
+            $query->orderBy('created_at', 'asc');
+        }, 'questions.asker', 'questions.answerer'])->find($id);
 
         if ($announcement) {
             $announcement->refresh();

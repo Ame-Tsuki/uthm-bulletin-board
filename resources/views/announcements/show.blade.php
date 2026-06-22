@@ -308,6 +308,232 @@
                 </div>
             </div>
 
+            <!-- Q&A / FAQ Section -->
+            <div id="questions-section" class="mt-8 bg-white rounded-xl shadow-lg overflow-hidden p-8">
+                <div class="flex items-center justify-between border-b border-gray-200 pb-4 mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">
+                        <i class="fas fa-comments text-blue-500 mr-2"></i>Questions & Answers (FAQ)
+                    </h2>
+                    @php
+                        $answeredQuestions = $announcement->questions->filter(fn($q) => $q->isAnswered());
+                        $unansweredQuestions = $announcement->questions->filter(fn($q) => !$q->isAnswered());
+                    @endphp
+                    <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
+                        {{ $answeredQuestions->count() }} {{ Str::plural('FAQ', $answeredQuestions->count()) }}
+                    </span>
+                </div>
+
+                <!-- Session Status Messages -->
+                @if(session('success'))
+                    <div class="mb-6 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg flex items-center shadow-sm">
+                        <i class="fas fa-check-circle text-lg mr-2 text-green-500"></i>
+                        <span>{{ session('success') }}</span>
+                    </div>
+                @endif
+
+                @if($errors->any())
+                    <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg shadow-sm">
+                        <div class="flex items-center mb-2 font-semibold">
+                            <i class="fas fa-exclamation-circle text-lg mr-2 text-red-500"></i>
+                            <span>Please correct the errors below:</span>
+                        </div>
+                        <ul class="list-disc pl-5 space-y-1 text-sm">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <!-- ============================================ -->
+                <!-- CREATOR / MODERATOR ANSWER PANEL -->
+                <!-- ============================================ -->
+                @php
+                    $isCreatorOrStaff = ($announcement->author_id === auth()->id()) || in_array(auth()->user()->role, ['admin', 'staff']);
+                    $myUnansweredQuestions = $unansweredQuestions->filter(fn($q) => $q->user_id === auth()->id());
+                @endphp
+
+                @if($isCreatorOrStaff)
+                    @if($unansweredQuestions->count() > 0)
+                        <div class="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-xl">
+                            <h3 class="text-lg font-bold text-amber-900 mb-4 flex items-center">
+                                <i class="fas fa-question-circle mr-2 text-amber-500"></i>
+                                Unanswered Questions ({{ $unansweredQuestions->count() }})
+                            </h3>
+                            <div class="space-y-6">
+                                @foreach($unansweredQuestions as $question)
+                                    <div class="bg-white p-5 rounded-lg border border-amber-100 shadow-sm">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                                Unanswered Question
+                                            </span>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-xs text-gray-500">
+                                                    {{ $question->created_at->diffForHumans() }}
+                                                </span>
+                                                <form action="{{ route('announcements.questions.destroy', $question->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this question?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-500 hover:text-red-700 text-sm p-1" title="Delete Question">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <p class="text-gray-800 font-medium mb-4">{{ $question->question_text }}</p>
+                                        
+                                        <!-- Answer Form -->
+                                        <form action="{{ route('announcements.questions.answer', $question->id) }}" method="POST" class="space-y-3">
+                                            @csrf
+                                            <div>
+                                                <textarea name="answer_text" rows="3" required
+                                                          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                                                          placeholder="Write a public answer to this question..."></textarea>
+                                            </div>
+                                            <div class="flex justify-end">
+                                                <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold rounded-lg shadow-sm transition">
+                                                    Publish Answer
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @else
+                    <!-- For regular users: Show their own pending unanswered questions -->
+                    @if($myUnansweredQuestions->count() > 0)
+                        <div class="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-xl">
+                            <h3 class="text-lg font-bold text-blue-900 mb-4 flex items-center">
+                                <i class="fas fa-clock mr-2 text-blue-500 animate-pulse"></i>
+                                Your Questions Pending Answer
+                            </h3>
+                            <div class="space-y-4">
+                                @foreach($myUnansweredQuestions as $question)
+                                    <div class="bg-white p-4 rounded-lg border border-blue-100 shadow-sm relative group">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <span class="text-xs text-blue-600 font-semibold">Pending Creator Answer</span>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-xs text-gray-400">
+                                                    {{ $question->created_at->diffForHumans() }}
+                                                </span>
+                                                <form action="{{ route('announcements.questions.destroy', $question->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete your question?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-500 hover:text-red-700 text-sm p-1" title="Delete Question">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <p class="text-gray-800 font-medium">{{ $question->question_text }}</p>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @endif
+
+                <!-- ============================================ -->
+                <!-- MAIN FAQ LIST (ANSWERED QUESTIONS) -->
+                <!-- ============================================ -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-list-ol mr-2 text-blue-500"></i>Frequently Asked Questions
+                    </h3>
+                    
+                    @if($answeredQuestions->count() > 0)
+                        <div class="space-y-6">
+                            @foreach($answeredQuestions as $question)
+                                <div id="question-{{ $question->id }}" class="p-6 bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200 rounded-xl relative group shadow-sm">
+                                    
+                                    <!-- Delete Button for authorized users -->
+                                    @if($question->user_id === auth()->id() || $announcement->author_id === auth()->id() || in_array(auth()->user()->role, ['admin', 'staff']))
+                                        <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <form action="{{ route('announcements.questions.destroy', $question->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this FAQ?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-500 hover:text-red-700 p-1" title="Delete FAQ">
+                                                    <i class="fas fa-trash text-sm"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
+
+                                    <!-- Question Text -->
+                                    <div class="flex items-start mb-4">
+                                        <div class="bg-blue-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-0.5 shadow-sm">Q</div>
+                                        <div class="flex-1">
+                                            <p class="text-gray-900 font-semibold">{{ $question->question_text }}</p>
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                @if($question->user_id === auth()->id())
+                                                    <span class="font-medium text-blue-600">Anonymous (You)</span>
+                                                @else
+                                                    <span>Anonymous User</span>
+                                                @endif
+                                                • {{ $question->created_at->diffForHumans() }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Answer Text -->
+                                    <div class="flex items-start pl-9 border-l-2 border-blue-200">
+                                        <div class="bg-green-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-0.5 shadow-sm">A</div>
+                                        <div class="flex-1">
+                                            <p class="text-gray-800 whitespace-pre-line leading-relaxed">{{ $question->answer_text }}</p>
+                                            <p class="text-xs text-gray-500 mt-2">
+                                                Answered by <span class="font-semibold text-gray-700">{{ $question->answerer->name ?? 'Author' }}</span> 
+                                                @if($question->answered_by === $announcement->author_id)
+                                                    <span class="text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-medium">Creator</span>
+                                                @else
+                                                    <span class="text-xs px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 font-medium">Staff/Admin</span>
+                                                @endif
+                                                • {{ $question->answered_at ? $question->answered_at->diffForHumans() : '' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                            <i class="fas fa-comments text-gray-300 text-5xl mb-4"></i>
+                            <p class="text-gray-500 font-medium">No questions have been answered yet.</p>
+                            <p class="text-sm text-gray-400 mt-1">Have a query? Ask a question below!</p>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- ============================================ -->
+                <!-- ASK A QUESTION FORM -->
+                <!-- ============================================ -->
+                @if($announcement->author_id !== auth()->id())
+                    <div class="border-t border-gray-200 pt-6 mt-8">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-paper-plane mr-2 text-blue-500"></i>Ask a Question
+                        </h3>
+                        <form action="{{ route('announcements.questions.store', $announcement->id) }}" method="POST" class="space-y-4">
+                            @csrf
+                            <div>
+                                <textarea name="question_text" rows="3" required
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                          placeholder="Type your question here... (e.g. Where is the venue? Is this open to all faculties?)"></textarea>
+                            </div>
+                            <div class="flex items-center justify-between flex-wrap gap-3">
+                                <div class="flex items-center text-sm text-gray-500">
+                                    <i class="fas fa-lock text-blue-500 mr-2"></i>
+                                    <span>Your question will be posted anonymously to other users. Only your question and the creator's answer will be visible publicly.</span>
+                                </div>
+                                <button type="submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition">
+                                    Submit Question
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                @endif
+            </div>
+
         </div>
     </div>
 

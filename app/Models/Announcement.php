@@ -75,6 +75,11 @@ class Announcement extends Model
         return $this->hasMany(AnnouncementReport::class);
     }
 
+    public function questions(): HasMany
+    {
+        return $this->hasMany(AnnouncementQuestion::class);
+    }
+
     public function scopeNotBanned($query)
     {
         return $query->where('is_banned', false)->where('status', '!=', 'banned');

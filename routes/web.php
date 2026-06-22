@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\CustomRegisterController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\AnnouncementQuestionController;
 use App\Http\Controllers\AnnouncementReportController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\ProfileController;
@@ -440,6 +441,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/announcements/{announcement}/toggle-official', [AnnouncementController::class, 'toggleOfficialStatus'])->name('announcements.toggle-official');
     Route::post('/announcements/{announcement}/toggle-featured', [AnnouncementController::class, 'toggleUserFeatured'])->name('announcements.toggle-featured');
     Route::post('/announcements/{announcement}/report', [AnnouncementReportController::class, 'store'])->name('announcements.report');
+
+    // Announcement Q&A Routes
+    Route::post('/announcements/{announcement}/questions', [AnnouncementQuestionController::class, 'store'])->name('announcements.questions.store');
+    Route::post('/announcements/questions/{question}/answer', [AnnouncementQuestionController::class, 'answer'])->name('announcements.questions.answer');
+    Route::delete('/announcements/questions/{question}', [AnnouncementQuestionController::class, 'destroy'])->name('announcements.questions.destroy');
 
     // Featured Announcements Route
     Route::get('/announcements/featured', [AnnouncementController::class, 'getFeatured'])->name('announcements.featured');

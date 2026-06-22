@@ -34,6 +34,7 @@ class Announcement extends Model
         'verified_at',          // Add this for approval system
         'verified_by',          // Add this for approval system
         'rejection_reason',     // Add this for approval system
+        'approval_notes',       // Add this for approval system
         'rejected_at',          // Add this for approval system
         'rejected_by',          // Add this for approval system
         'department',           // Add this for categorization

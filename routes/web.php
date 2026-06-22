@@ -453,6 +453,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     
     Route::middleware('role:admin,staff')->group(function () {
+        Route::get('/announcements/{id}/details', [AnnouncementController::class, 'getDetails'])->name('announcements.details');
         Route::patch('/announcements/{id}/approve', [AnnouncementController::class, 'approve'])->name('announcements.approve');
         Route::patch('/announcements/{id}/reject', [AnnouncementController::class, 'reject'])->name('announcements.reject');
         // Verification queue removed; moderators review posts via the announcement page.

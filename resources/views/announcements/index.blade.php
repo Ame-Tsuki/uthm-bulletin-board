@@ -469,53 +469,7 @@
         @endauth
     </div>
 
-    <!-- Approve Modal -->
-    <div id="approveModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-lg bg-white">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-gray-900">Approve Announcement</h3>
-                <button onclick="closeApproveModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <p class="text-gray-600 mb-4">Are you sure you want to approve "<span id="approveTitle" class="font-semibold"></span>"?</p>
-            <p class="text-sm text-gray-500 mb-6">Approved announcements will be published and visible to all users.</p>
-            <div class="flex justify-end gap-3">
-                <button onclick="closeApproveModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                    Cancel
-                </button>
-                <button onclick="confirmApprove()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                    Yes, Approve
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reject Modal -->
-    <div id="rejectModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-lg bg-white">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-gray-900">Reject Announcement</h3>
-                <button onclick="closeRejectModal()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <p class="text-gray-600 mb-4">Reject "<span id="rejectTitle" class="font-semibold"></span>"</p>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Reason for rejection *</label>
-                <textarea id="rejectionReason" rows="3" placeholder="Please provide a reason for rejecting this announcement..." 
-                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"></textarea>
-            </div>
-            <div class="flex justify-end gap-3">
-                <button onclick="closeRejectModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                    Cancel
-                </button>
-                <button onclick="confirmReject()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                    Yes, Reject
-                </button>
-            </div>
-        </div>
-    </div>
+    @include('announcements.partials.detailed-verify-modal')
 
     <!-- Toast Notification -->
     <div id="toast" class="toast-notification hidden">
@@ -839,140 +793,7 @@
             }
         }
 
-        // Approve/Reject Functions
-        function openApproveModal(id, title) {
-            currentAnnouncementId = id;
-            currentAnnouncementTitle = title;
-            document.getElementById('approveTitle').textContent = title;
-            document.getElementById('approveModal').classList.remove('hidden');
-        }
 
-        function closeApproveModal() {
-            document.getElementById('approveModal').classList.add('hidden');
-            currentAnnouncementId = null;
-        }
-
-        function openRejectModal(id, title) {
-            currentAnnouncementId = id;
-            currentAnnouncementTitle = title;
-            document.getElementById('rejectTitle').textContent = title;
-            document.getElementById('rejectionReason').value = '';
-            document.getElementById('rejectModal').classList.remove('hidden');
-        }
-
-        function closeRejectModal() {
-            document.getElementById('rejectModal').classList.add('hidden');
-            currentAnnouncementId = null;
-        }
-
-       function confirmApprove() {
-    if (!currentAnnouncementId) return;
-    
-    console.log('Approving announcement ID:', currentAnnouncementId);
-    
-    // Get CSRF token
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    
-    if (!csrfToken) {
-        console.error('CSRF token not found');
-        showToast('Security token not found. Please refresh the page.', 'error');
-        return;
-    }
-    
-    fetch(`/announcements/${currentAnnouncementId}/approve`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => {
-        console.log('Response status:', response.status);
-        if (!response.ok) {
-            return response.text().then(text => {
-                console.error('Error response:', text);
-                throw new Error(`HTTP ${response.status}: ${text.substring(0, 200)}`);
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Approve response:', data);
-        if (data.success) {
-            showToast(data.message || 'Announcement approved successfully!', 'success');
-            closeApproveModal();
-            // Reload the page after 1.5 seconds
-            setTimeout(() => {
-                location.reload();
-            }, 1500);
-        } else {
-            showToast(data.message || 'Error approving announcement', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Fetch error:', error);
-        showToast('Error: ' + error.message, 'error');
-    });
-}
-
-function confirmReject() {
-    if (!currentAnnouncementId) return;
-    
-    const reason = document.getElementById('rejectionReason').value.trim();
-    if (!reason) {
-        showToast('Please provide a reason for rejection', 'error');
-        return;
-    }
-    
-    console.log('Rejecting announcement ID:', currentAnnouncementId);
-    
-    // Get CSRF token
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    
-    if (!csrfToken) {
-        console.error('CSRF token not found');
-        showToast('Security token not found. Please refresh the page.', 'error');
-        return;
-    }
-    
-    fetch(`/announcements/${currentAnnouncementId}/reject`, {
-        method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({ reason: reason })
-    })
-    .then(response => {
-        console.log('Response status:', response.status);
-        if (!response.ok) {
-            return response.text().then(text => {
-                console.error('Error response:', text);
-                throw new Error(`HTTP ${response.status}: ${text.substring(0, 200)}`);
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Reject response:', data);
-        if (data.success) {
-            showToast(data.message || 'Announcement rejected successfully', 'success');
-            closeRejectModal();
-            // Reload the page after 1.5 seconds
-            setTimeout(() => {
-                location.reload();
-            }, 1500);
-        } else {
-            showToast(data.message || 'Error rejecting announcement', 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Fetch error:', error);
-        showToast('Error: ' + error.message, 'error');
-    });
-}
 
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
@@ -999,14 +820,7 @@ function confirmReject() {
             }, 3000);
         }
 
-        // Close modals when clicking outside
-        window.addEventListener('click', function(event) {
-            const approveModal = document.getElementById('approveModal');
-            const rejectModal = document.getElementById('rejectModal');
-            
-            if (event.target === approveModal) closeApproveModal();
-            if (event.target === rejectModal) closeRejectModal();
-        });
+
     </script>
     @include('announcements.partials.calendar-assets')
 <!-- Mobile Sidebar Script -->

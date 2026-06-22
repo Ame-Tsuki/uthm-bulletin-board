@@ -911,17 +911,9 @@ private function getRecentActivityData()
     /**
      * Approve an announcement
      */
-    public function approveAnnouncement($id)
+    public function approveAnnouncement(Request $request, $id)
     {
-        $announcement = \App\Models\Announcement::findOrFail($id);
-        $announcement->status = 'published';
-        $announcement->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Announcement approved successfully',
-            'data' => $announcement
-        ]);
+        return app(\App\Http\Controllers\AnnouncementController::class)->approve($request, $id);
     }
 
     /**
@@ -929,20 +921,7 @@ private function getRecentActivityData()
      */
     public function rejectAnnouncement(Request $request, $id)
     {
-        $validated = $request->validate([
-            'reason' => 'required|string|max:500'
-        ]);
-
-        $announcement = \App\Models\Announcement::findOrFail($id);
-        $announcement->status = 'rejected';
-        $announcement->rejection_reason = $validated['reason'];
-        $announcement->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Announcement rejected successfully',
-            'data' => $announcement
-        ]);
+        return app(\App\Http\Controllers\AnnouncementController::class)->reject($request, $id);
     }
 
     /**

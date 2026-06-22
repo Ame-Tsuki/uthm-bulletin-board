@@ -201,6 +201,8 @@
         </div>
     </div>
 </div>
+
+@include('announcements.partials.detailed-verify-modal')
 @endsection
 
 @section('scripts')
@@ -274,11 +276,8 @@
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     ${announcement.status === 'pending_verification' ? `
-                                        <button onclick="approveAnnouncement(${announcement.id})" class="text-purple-600 hover:text-purple-800 transition" title="Approve">
-                                            <i class="fas fa-check-circle"></i>
-                                        </button>
-                                        <button onclick="rejectAnnouncement(${announcement.id})" class="text-orange-600 hover:text-orange-800 transition" title="Reject">
-                                            <i class="fas fa-times-circle"></i>
+                                        <button onclick="openDetailedVerifyModal(${announcement.id})" class="text-purple-600 hover:text-purple-800 transition" title="Verify & Moderate">
+                                            <i class="fas fa-shield-alt"></i>
                                         </button>
                                     ` : ''}
                                     <button onclick="deleteAnnouncement(${announcement.id})" class="text-red-600 hover:text-red-800 transition" title="Delete">
@@ -436,53 +435,6 @@
         }
     }
 
-    function approveAnnouncement(id) {
-        if (confirm('Are you sure you want to approve this announcement? It will be published immediately.')) {
-            fetch(`/admin/announcements/${id}/approve`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadAnnouncements();
-                    showNotification('Announcement approved successfully', 'success');
-                } else {
-                    showNotification(data.message || 'Error approving announcement', 'error');
-                }
-            })
-            .catch(() => showNotification('Error approving announcement', 'error'));
-        }
-    }
-
-    function rejectAnnouncement(id) {
-        const reason = prompt('Enter rejection reason (required):');
-        if (reason && reason.trim() !== '') {
-            fetch(`/admin/announcements/${id}/reject`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-                },
-                body: JSON.stringify({ reason: reason.trim() })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadAnnouncements();
-                    showNotification('Announcement rejected successfully', 'success');
-                } else {
-                    showNotification(data.message || 'Error rejecting announcement', 'error');
-                }
-            })
-            .catch(() => showNotification('Error rejecting announcement', 'error'));
-        } else if (reason !== null) {
-            showNotification('Please provide a reason for rejection', 'error');
-        }
-    }
 
     function showNotification(message, type = 'success') {
         const notification = document.createElement('div');

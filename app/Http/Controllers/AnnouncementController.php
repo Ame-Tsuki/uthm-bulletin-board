@@ -814,9 +814,9 @@ public function update(Request $request, Announcement $announcement): RedirectRe
         }
 
         // Update announcement
-        $announcement->update([
+        $updateData = [
             'status' => 'published',
-            'is_official' => true,
+            'is_official' => $request->has('is_official') ? (bool)$request->input('is_official') : true,
             'needs_verification' => false,
             'verified_at' => now(),
             'verified_by' => $user->id,
@@ -824,7 +824,26 @@ public function update(Request $request, Announcement $announcement): RedirectRe
             'rejection_reason' => null,
             'rejected_at' => null,
             'rejected_by' => null,
-        ]);
+        ];
+
+        if ($request->filled('category')) {
+            $updateData['category'] = $request->input('category');
+        }
+
+        if ($request->filled('priority')) {
+            $updateData['priority'] = $request->input('priority');
+        }
+
+        if ($request->has('is_featured')) {
+            $updateData['is_featured'] = (bool)$request->input('is_featured');
+            $updateData['featured_at'] = $updateData['is_featured'] ? now() : null;
+        }
+
+        if ($request->has('approval_notes')) {
+            $updateData['approval_notes'] = $request->input('approval_notes');
+        }
+
+        $announcement->update($updateData);
 
         Log::info('Announcement approved successfully: ' . $announcement->id);
 
@@ -835,6 +854,9 @@ public function update(Request $request, Announcement $announcement): RedirectRe
             $author = \App\Models\User::find($announcement->author_id);
             $title = "✅ Your Announcement Has Been Approved";
             $message = "Your announcement '" . $announcement->title . "' has been approved and is now live.";
+            if ($announcement->approval_notes) {
+                $message .= "\n\nFeedback: " . $announcement->approval_notes;
+            }
             $url = route('announcements.show', $announcement->id);
             
             \Illuminate\Support\Facades\Notification::send($author, new \App\Notifications\AnnouncementNotification($title, $message, $url, $announcement->id));
@@ -903,6 +925,12 @@ public function update(Request $request, Announcement $announcement): RedirectRe
             }
             
             $reason = $request->input('reason');
+            $rejectionCategory = $request->input('rejection_category');
+            
+            $fullRejectionReason = $reason;
+            if ($rejectionCategory && $rejectionCategory !== 'Other') {
+                $fullRejectionReason = "[" . $rejectionCategory . "] " . $reason;
+            }
             
             // Check if announcement is pending verification
             if ($announcement->status !== 'pending_verification') {
@@ -917,12 +945,26 @@ public function update(Request $request, Announcement $announcement): RedirectRe
             $announcement->update([
                 'status' => 'rejected',
                 'needs_verification' => false,
-                'rejection_reason' => $reason,
+                'rejection_reason' => $fullRejectionReason,
                 'rejected_at' => now(),
                 'rejected_by' => $user->id,
                 'verified_at' => null,
                 'verified_by' => null,
             ]);
+            
+            // ============================================
+            // SEND NOTIFICATION TO THE AUTHOR (CREATOR)
+            // ============================================
+            if ($announcement->author_id !== $user->id) {
+                $author = \App\Models\User::find($announcement->author_id);
+                $title = "❌ Your Announcement Has Been Rejected";
+                $notifMessage = "Your announcement '" . $announcement->title . "' has been rejected. Reason: " . $fullRejectionReason;
+                $url = route('announcements.my-announcements') . '?status=rejected';
+                
+                \Illuminate\Support\Facades\Notification::send($author, new \App\Notifications\AnnouncementNotification($title, $notifMessage, $url, $announcement->id));
+                
+                Log::info("Rejection notification sent to author ID: {$announcement->author_id}");
+            }
             
             $message = 'Announcement "' . $announcement->title . '" has been rejected.';
             
@@ -944,6 +986,55 @@ public function update(Request $request, Announcement $announcement): RedirectRe
                 return response()->json(['success' => false, 'message' => 'Error rejecting announcement: ' . $e->getMessage()], 500);
             }
             return redirect()->back()->with('error', 'Error rejecting announcement: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get detailed announcement info for verification modal
+     */
+    public function getDetails($id): JsonResponse
+    {
+        try {
+            $announcement = Announcement::with('author')->findOrFail($id);
+            
+            // Decoded moderation results
+            $moderationResults = null;
+            if ($announcement->moderation_results) {
+                $moderationResults = json_decode($announcement->moderation_results, true);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $announcement->id,
+                    'title' => $announcement->title,
+                    'content' => $announcement->content,
+                    'category' => $announcement->category,
+                    'priority' => $announcement->priority,
+                    'is_official' => (bool)$announcement->is_official,
+                    'is_featured' => (bool)$announcement->is_featured,
+                    'status' => $announcement->status,
+                    'image_url' => $announcement->image_url,
+                    'created_at' => $announcement->created_at->toIso8601String(),
+                    'author' => [
+                        'name' => $announcement->author->name ?? 'Anonymous',
+                        'role' => $announcement->author->role ?? 'student',
+                        'uthm_id' => $announcement->author->uthm_id ?? 'N/A'
+                    ],
+                    'moderation' => [
+                        'flagged' => (bool)$announcement->moderation_flagged,
+                        'toxicity_score' => $moderationResults['toxicity_score'] ?? null,
+                        'reason' => $moderationResults['reason'] ?? null,
+                        'allowed' => $moderationResults['allowed'] ?? true
+                    ]
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error loading announcement details: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading announcement details: ' . $e->getMessage()
+            ], 500);
         }
     }
 

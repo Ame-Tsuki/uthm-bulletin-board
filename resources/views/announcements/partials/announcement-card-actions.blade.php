@@ -13,16 +13,10 @@
 
     @if(($showApprove ?? false) && in_array($user->role ?? 'guest', ['admin', 'staff']) && $announcement->status === 'pending_verification')
         <button type="button"
-                onclick="openApproveModal({{ $announcement->id }}, '{{ addslashes($announcement->title) }}')"
-                class="inline-flex items-center px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shrink-0"
-                title="Approve">
-            <i class="fas fa-check mr-1"></i> Approve
-        </button>
-        <button type="button"
-                onclick="openRejectModal({{ $announcement->id }}, '{{ addslashes($announcement->title) }}')"
-                class="inline-flex items-center px-3 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors shrink-0"
-                title="Reject">
-            <i class="fas fa-times mr-1"></i> Reject
+                onclick="openDetailedVerifyModal({{ $announcement->id }})"
+                class="inline-flex items-center px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors shrink-0"
+                title="Verify Announcement">
+            <i class="fas fa-shield-alt mr-1"></i> Verify
         </button>
     @endif
 

@@ -330,7 +330,7 @@
             return;
         }
 
-        const method = id ? 'PUT' : 'POST';
+        const method = id ? 'PATCH' : 'POST';
         const url = id ? `/admin/announcements/${id}` : '/admin/announcements';
 
         fetch(url, {

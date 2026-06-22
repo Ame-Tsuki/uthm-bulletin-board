@@ -60,7 +60,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
         
         // RESTful endpoints (generic routes last)
         Route::post('/', [AdminController::class, 'storeAnnouncement'])->name('store');
-        Route::patch('/{id}', [AdminController::class, 'updateAnnouncement'])->name('update');
+        Route::match(['PUT', 'PATCH'], '/{id}', [AdminController::class, 'updateAnnouncement'])->name('update');
         Route::delete('/{id}', [AdminController::class, 'deleteAnnouncement'])->name('destroy');
     });
 
